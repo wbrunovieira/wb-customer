@@ -2,13 +2,19 @@ import { execSync } from 'child_process'
 import { randomUUID } from 'crypto'
 import { PrismaClient } from '@prisma/client'
 
+// Capture the original DATABASE_URL before any test modifies process.env
+const ORIGINAL_DATABASE_URL = process.env.DATABASE_URL!
+
 let prisma: PrismaClient
 let schemaName: string
 
 export async function setupE2E() {
-  schemaName = `test_${randomUUID().replace(/-/g, '_')}`
+  // Generate a short schema name: "t" + first 8 chars of UUID (no dashes)
+  const shortId = randomUUID().replace(/-/g, '').slice(0, 16)
+  schemaName = `t_${shortId}`
 
-  const baseUrl = process.env.DATABASE_URL!
+  // Always build the schema URL from the original base URL (not a previously modified one)
+  const baseUrl = ORIGINAL_DATABASE_URL.split('?')[0]
   const schemaUrl = `${baseUrl}?schema=${schemaName}`
 
   process.env.DATABASE_URL = schemaUrl

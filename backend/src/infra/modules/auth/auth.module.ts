@@ -6,6 +6,8 @@ import { Env } from '@/env/env'
 import { ITokenService } from '@/domain/auth/application/services/i-token.service'
 import { JwtTokenService } from '@/infra/auth/services/jwt-token.service'
 import { JwtStrategy } from '@/infra/auth/strategies/jwt.strategy'
+import { AuthController } from '@/infra/controllers/auth.controller'
+import { UsersController } from '@/infra/controllers/users.controller'
 import { CreateUserUseCase } from '@/domain/auth/application/use-cases/create-user.use-case'
 import { AuthenticateUserUseCase } from '@/domain/auth/application/use-cases/authenticate-user.use-case'
 import { RefreshAccessTokenUseCase } from '@/domain/auth/application/use-cases/refresh-access-token.use-case'
@@ -24,6 +26,7 @@ import { UpdateUserProfileUseCase } from '@/domain/auth/application/use-cases/up
       }),
     }),
   ],
+  controllers: [AuthController, UsersController],
   providers: [
     JwtStrategy,
     { provide: ITokenService, useClass: JwtTokenService },

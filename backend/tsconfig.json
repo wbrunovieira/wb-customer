@@ -22,7 +22,8 @@
       "@/domain/*": ["src/domain/*"],
       "@/infra/*": ["src/infra/*"],
       "@/env/*": ["src/env/*"],
-      "@/test/*": ["test/*"]
+      "@/test/*": ["test/*"],
+      "@/app.module": ["src/app.module"]
     }
   }
 }
