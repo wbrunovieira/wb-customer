@@ -13,6 +13,15 @@ export const envSchema = z.object({
   SEED_ADMIN_PASSWORD: z.string().min(8),
   STORAGE_ADAPTER: z.enum(['local', 'google-drive']).default('local'),
   CALENDAR_ADAPTER: z.enum(['mock', 'google-calendar']).default('mock'),
+  // Google OAuth (optional — required only when CALENDAR_ADAPTER=google-calendar)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().optional(),
+  // Transcription service (optional)
+  TRANSCRIPTOR_BASE_URL: z.string().url().optional(),
+  TRANSCRIPTOR_API_KEY: z.string().optional(),
+  // Cron security
+  CRON_SECRET: z.string().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>

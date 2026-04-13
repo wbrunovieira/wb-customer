@@ -114,6 +114,7 @@ model Customer {
   employees   CustomerEmployee[]
   activities  CustomerActivity[]
   documents   Document[]
+  meetings    Meeting[]
 
   @@index([categoryId])
   @@map("customers")
@@ -130,7 +131,8 @@ model Contact {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  customer Customer @relation(fields: [customerId], references: [id])
+  customer Customer  @relation(fields: [customerId], references: [id])
+  meetings Meeting[]
 
   @@index([customerId])
   @@map("contacts")
@@ -204,4 +206,89 @@ model Document {
 
   @@index([customerId])
   @@map("documents")
+}
+
+// ─────────────────────────────────────────
+// MEETINGS
+// ─────────────────────────────────────────
+
+enum MeetingStatus {
+  scheduled
+  ended
+  cancelled
+}
+
+model MeetingType {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  description     String?
+  durationMinutes Int       @default(60) @map("duration_minutes")
+  color           String    @default("#3B82F6")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  meetings Meeting[]
+
+  @@map("meeting_types")
+}
+
+model Meeting {
+  id                  String        @id @default(uuid())
+  customerId          String        @map("customer_id")
+  contactId           String?       @map("contact_id")
+  meetingTypeId       String?       @map("meeting_type_id")
+  title               String
+  description         String?
+  startAt             DateTime      @map("start_at")
+  endAt               DateTime?     @map("end_at")
+  actualStartAt       DateTime?     @map("actual_start_at")
+  actualEndAt         DateTime?     @map("actual_end_at")
+  googleEventId       String?       @unique @map("google_event_id")
+  meetLink            String?       @map("meet_link")
+  attendees           Json          @default("[]")    // [{email, responseStatus, organizer?, self?}]
+  status              MeetingStatus @default(scheduled)
+  scheduledByUserId   String        @map("scheduled_by_user_id")
+
+  // Recording
+  recordingDriveId    String?       @map("recording_drive_id")
+  recordingUrl        String?       @map("recording_url")
+  recordingMovedAt    DateTime?     @map("recording_moved_at")
+
+  // Transcription
+  transcriptionJobId  String?       @map("transcription_job_id")
+  transcriptText      String?       @map("transcript_text")
+  transcribedAt       DateTime?     @map("transcribed_at")
+  nativeTranscriptUrl String?       @map("native_transcript_url")
+  meetingSummary      String?       @map("meeting_summary")
+
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  contact     Contact?     @relation(fields: [contactId], references: [id])
+  meetingType MeetingType? @relation(fields: [meetingTypeId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+  @@index([startAt])
+  @@map("meetings")
+}
+
+// ─────────────────────────────────────────
+// GOOGLE OAUTH
+// ─────────────────────────────────────────
+
+model GoogleToken {
+  id           String   @id
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  scope        String
+  email        String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("google_tokens")
 }
