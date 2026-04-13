@@ -16,6 +16,16 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common'
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { Request as ExpressRequest } from 'express'
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
@@ -38,30 +48,61 @@ interface AuthenticatedRequest extends ExpressRequest {
 }
 
 class CreateCustomerDto {
+  @ApiProperty({ example: 'Acme Corp' })
   name!: string
+
+  @ApiProperty({ example: 'contact@acme.com' })
   email!: string
+
+  @ApiPropertyOptional({ example: '+5511999999999' })
   phone?: string
+
+  @ApiPropertyOptional({ example: '12.345.678/0001-99', description: 'CNPJ' })
   document?: string
+
+  @ApiPropertyOptional({ example: 'https://acme.com' })
   website?: string
+
+  @ApiPropertyOptional({ example: 'Important enterprise client' })
   notes?: string
+
+  @ApiPropertyOptional({ example: 'uuid', description: 'Category ID' })
   categoryId?: string
 }
 
 class UpdateCustomerDto {
+  @ApiPropertyOptional({ example: 'Acme Corp' })
   name?: string
+
+  @ApiPropertyOptional({ example: 'contact@acme.com' })
   email?: string
+
+  @ApiPropertyOptional({ example: '+5511999999999', nullable: true })
   phone?: string | null
+
+  @ApiPropertyOptional({ example: '12.345.678/0001-99', nullable: true })
   document?: string | null
+
+  @ApiPropertyOptional({ example: 'https://acme.com', nullable: true })
   website?: string | null
+
+  @ApiPropertyOptional({ example: 'Notes here', nullable: true })
   notes?: string | null
+
+  @ApiPropertyOptional({ example: 'active', enum: ['active', 'inactive', 'prospect', 'churned'] })
   status?: string
+
+  @ApiPropertyOptional({ example: 'uuid', nullable: true, description: 'Category ID' })
   categoryId?: string | null
 }
 
 class AssignEmployeeDto {
+  @ApiProperty({ example: 'uuid', description: 'User ID to assign' })
   userId!: string
 }
 
+@ApiTags('Customers')
+@ApiBearerAuth()
 @Controller('customers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CustomersController {
@@ -77,6 +118,12 @@ export class CustomersController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new customer' })
+  @ApiBody({ type: CreateCustomerDto })
+  @ApiResponse({ status: 201, description: 'Customer created', schema: { example: { customerId: 'uuid' } } })
+  @ApiResponse({ status: 409, description: 'Customer email already exists' })
+  @ApiResponse({ status: 400, description: 'Invalid data or category not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(
     @Body() body: CreateCustomerDto,
     @Request() req: AuthenticatedRequest,
@@ -97,6 +144,15 @@ export class CustomersController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List customers with optional filters' })
+  @ApiQuery({ name: 'status', required: false, example: 'active', enum: ['active', 'inactive', 'prospect', 'churned'] })
+  @ApiQuery({ name: 'search', required: false, description: 'Search by name or email' })
+  @ApiQuery({ name: 'employeeId', required: false, description: 'Filter by assigned employee' })
+  @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated list of customers' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async list(
     @Query('status') status?: string,
     @Query('search') search?: string,
@@ -129,6 +185,11 @@ export class CustomersController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a customer by ID' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiResponse({ status: 200, description: 'Customer details with contacts and employees' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async get(@Param('id') id: string) {
     const result = await this.getCustomer.execute({ customerId: id })
 
@@ -163,6 +224,14 @@ export class CustomersController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Update a customer' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiBody({ type: UpdateCustomerDto })
+  @ApiResponse({ status: 204, description: 'Customer updated' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  @ApiResponse({ status: 409, description: 'Email already in use by another customer' })
+  @ApiResponse({ status: 400, description: 'Invalid status or category not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async update(
     @Param('id') id: string,
     @Body() body: UpdateCustomerDto,
@@ -187,6 +256,12 @@ export class CustomersController {
   @Delete(':id')
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft-delete a customer (admin only)' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiResponse({ status: 204, description: 'Customer deleted' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  @ApiResponse({ status: 403, description: 'Insufficient role' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async delete(
     @Param('id') id: string,
     @Request() req: AuthenticatedRequest,
@@ -202,6 +277,13 @@ export class CustomersController {
   @Post(':id/employees')
   @Roles('admin', 'manager')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Assign an employee to a customer (admin/manager only)' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiBody({ type: AssignEmployeeDto })
+  @ApiResponse({ status: 204, description: 'Employee assigned' })
+  @ApiResponse({ status: 404, description: 'Customer or user not found' })
+  @ApiResponse({ status: 403, description: 'Insufficient role' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async assign(
     @Param('id') id: string,
     @Body() body: AssignEmployeeDto,
@@ -219,6 +301,13 @@ export class CustomersController {
   @Delete(':id/employees/:userId')
   @Roles('admin', 'manager')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove an employee from a customer (admin/manager only)' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiParam({ name: 'userId', description: 'User ID to remove' })
+  @ApiResponse({ status: 204, description: 'Employee removed' })
+  @ApiResponse({ status: 404, description: 'Customer or assignment not found' })
+  @ApiResponse({ status: 403, description: 'Insufficient role' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeEmp(
     @Param('id') id: string,
     @Param('userId') userId: string,
@@ -234,6 +323,13 @@ export class CustomersController {
   }
 
   @Get(':id/activities')
+  @ApiOperation({ summary: 'List activity log for a customer' })
+  @ApiParam({ name: 'id', description: 'Customer ID' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated activity log' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getActivities(
     @Param('id') id: string,
     @Query('page') page?: string,

@@ -10,6 +10,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger'
+import { ApiPropertyOptional } from '@nestjs/swagger'
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
@@ -18,11 +27,18 @@ import { UpdateUserProfileUseCase } from '@/domain/auth/application/use-cases/up
 import { UserNotFoundError } from '@/domain/auth/domain/exceptions/user-not-found.error'
 
 class UpdateProfileDto {
+  @ApiPropertyOptional({ example: 'John Doe' })
   name?: string
+
+  @ApiPropertyOptional({ example: '+5511999999999', nullable: true })
   phone?: string | null
+
+  @ApiPropertyOptional({ example: 'https://example.com/avatar.png', nullable: true })
   avatarUrl?: string | null
 }
 
+@ApiTags('Users')
+@ApiBearerAuth()
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
@@ -33,6 +49,12 @@ export class UsersController {
 
   @Get()
   @Roles('admin', 'manager')
+  @ApiOperation({ summary: 'List all users (admin/manager only)' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated list of users' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Insufficient role' })
   async list(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -47,6 +69,11 @@ export class UsersController {
 
   @Patch(':id/profile')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiBody({ type: UpdateProfileDto })
+  @ApiResponse({ status: 204, description: 'Profile updated' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateProfile(
     @Param('id') id: string,
     @Body() body: UpdateProfileDto,
