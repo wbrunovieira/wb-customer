@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import swc from 'unplugin-swc'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -17,6 +18,11 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  resolve: {
+    alias: {
+      '@/app.module': resolve(__dirname, 'src/app.module.ts'),
+    },
+  },
   test: {
     globals: true,
     root: './',

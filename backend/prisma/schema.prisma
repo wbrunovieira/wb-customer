@@ -57,3 +57,108 @@ model RefreshToken {
 
   @@map("refresh_tokens")
 }
+
+// ─────────────────────────────────────────
+// CUSTOMERS
+// ─────────────────────────────────────────
+
+enum CustomerStatus {
+  lead
+  active
+  inactive
+}
+
+enum CustomerActivityType {
+  created
+  updated
+  assigned
+  contact_added
+  document_uploaded
+  meeting_scheduled
+  meeting_completed
+  note_added
+}
+
+model CustomerCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  customers Customer[]
+
+  @@map("customer_categories")
+}
+
+model Customer {
+  id              String         @id @default(uuid())
+  name            String
+  email           String         @unique
+  phone           String?
+  document        String?        @unique
+  website         String?
+  notes           String?
+  status          CustomerStatus @default(lead)
+  categoryId      String?        @map("category_id")
+  driveFolderId   String?        @map("drive_folder_id")
+  createdByUserId String         @map("created_by_user_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  category    CustomerCategory?  @relation(fields: [categoryId], references: [id])
+  contacts    Contact[]
+  employees   CustomerEmployee[]
+  activities  CustomerActivity[]
+
+  @@index([categoryId])
+  @@map("customers")
+}
+
+model Contact {
+  id         String   @id @default(uuid())
+  customerId String   @map("customer_id")
+  name       String
+  email      String?
+  phone      String?
+  role       String?
+  isPrimary  Boolean  @default(false) @map("is_primary")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("contacts")
+}
+
+model CustomerEmployee {
+  customerId String   @map("customer_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy String   @map("assigned_by")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@id([customerId, userId])
+  @@index([userId])
+  @@map("customer_employees")
+}
+
+model CustomerActivity {
+  id          String               @id @default(uuid())
+  customerId  String               @map("customer_id")
+  userId      String               @map("user_id")
+  type        CustomerActivityType
+  description String
+  metadata    Json?
+  createdAt   DateTime             @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_activities")
+}
