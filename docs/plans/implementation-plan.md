@@ -1,7 +1,8 @@
 # WB Customer — Plano de Implementação
 
 > **Última revisão:** 2026-04-13  
-> Decisões arquiteturais registradas após sessão de refinamento.
+> Decisões arquiteturais registradas após sessão de refinamento.  
+> **2026-04-13 (portal):** decisões do portal do cliente registradas.
 
 ---
 
@@ -19,8 +20,15 @@ Sistema de gestão de clientes com controle de histórico, ações, documentos, 
 | Auth | Só o admin cria contas de funcionários e define a senha diretamente |
 | Auth | Multi-sessão permitida (mesmo usuário em vários dispositivos) |
 | Auth | Reset de senha: implementar depois, quando app estiver no ar |
-| Roles | `admin` → acesso total; `manager` → acesso parcial (a definir); `employee` → acesso básico; `customer` → acesso futuro (TBD) |
+| Roles | `admin` → acesso total; `manager` → acesso parcial (a definir); `employee` → acesso básico; `customer` → portal do cliente (Fase 5) |
 | Permissões | Futuro: delegação granular de tarefas (reuniões, todos) entre funcionários. Arquitetura deve suportar isso sem reescrever |
+| Portal Cliente | O cliente acessa o mesmo sistema (mesma URL), mas com role `customer`. Vê somente os dados da própria empresa |
+| Portal Cliente | `UserIdentity` com role `customer` é vinculado a um `Customer` via tabela `CustomerUser` (campo `customerId`) |
+| Portal Cliente | `CustomerUser.customerRole`: `master` (primeiro usuário, criado pelo admin) e `member` (sub-usuários, criados pelo master). Outros sub-roles a definir |
+| Portal Cliente | Admin cria o usuário master com email + senha definida. Master pode criar/gerenciar os próprios sub-usuários |
+| Portal Cliente | `customerId` incluído no payload do JWT para usuários com role `customer`, permitindo filtro automático por empresa |
+| Portal Cliente | Páginas do cliente (Fase 5): (1) gestão de usuários da empresa, (2) lista de reuniões da empresa (read-only) |
+| Portal Cliente | Rotas do portal prefixadas em `/api/v1/portal/` para separar visualmente das rotas internas |
 | Clientes | Cliente = empresa. Pode ter múltiplos **contatos** (pessoas). Reuniões/registros vinculados ao contato específico |
 | Clientes | Um cliente pode ter múltiplos funcionários responsáveis (many-to-many) |
 | Clientes | Quando funcionário é desativado: admin reatribui manualmente |
@@ -46,10 +54,19 @@ Sistema de gestão de clientes com controle de histórico, ações, documentos, 
 admin    → cria/gerencia tudo, vê ações de todos os funcionários
 manager  → subconjunto de recursos (a definir quando houver necessidade)
 employee → acesso aos próprios clientes e tarefas delegadas
-customer → acesso futuro (TBD — algumas informações a definir)
+customer → portal do cliente — vê apenas dados da própria empresa
+```
+
+### Sub-roles do Portal (CustomerUserRole)
+
+```
+master → criado pelo admin; pode criar/gerenciar sub-usuários da empresa; vê todas as páginas do portal
+member → criado pelo master; acesso a definir (TBD)
 ```
 
 > A arquitetura de autorização deve usar uma estrutura extensível (ex: resource-based permissions futuramente), mas por ora `UserRole` enum com guard é suficiente.
+>
+> Para o portal, o `customerId` no JWT é a principal fronteira de segurança: garante que usuários `customer` nunca acessem dados de outro cliente.
 
 ---
 
@@ -87,7 +104,12 @@ enum UserRole {
   admin
   manager
   employee
-  customer
+  customer        // portal do cliente — vinculado a um Customer via CustomerUser
+}
+
+enum CustomerUserRole {
+  master          // criado pelo admin; pode gerenciar sub-usuários
+  member          // criado pelo master; acesso a definir
 }
 
 model UserIdentity {
@@ -223,6 +245,22 @@ model CustomerEmployee {
 
   @@id([customerId, userId])
   @@index([userId])
+}
+
+// Vincula um UserIdentity (role=customer) a uma empresa específica
+model CustomerUser {
+  id           String           @id @default(uuid())
+  userId       String           @unique        // UserIdentity.id
+  customerId   String
+  customerRole CustomerUserRole @default(member)
+  createdAt    DateTime         @default(now())
+  createdBy    String                          // userId do admin/master que criou
+  deletedAt    DateTime?
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_users")
 }
 
 model CustomerActivity {
@@ -610,6 +648,26 @@ PATCH  /api/v1/meeting-types/:id
 DELETE /api/v1/meeting-types/:id
 ```
 
+### Customer Portal Access (admin gerencia)
+```
+POST   /api/v1/customers/:id/portal-users          # admin cria usuário master para um cliente
+GET    /api/v1/customers/:id/portal-users          # admin lista usuários do portal do cliente
+DELETE /api/v1/customers/:id/portal-users/:userId  # admin revoga acesso
+```
+
+### Portal do Cliente (role=customer)
+```
+# Gestão de usuários da empresa (master only)
+POST   /api/v1/portal/users              # master cria sub-usuário (member)
+GET    /api/v1/portal/users              # master lista usuários da empresa
+PATCH  /api/v1/portal/users/:id          # master atualiza sub-usuário
+DELETE /api/v1/portal/users/:id          # master desativa sub-usuário
+
+# Reuniões (read-only — todas as reuniões vinculadas à empresa)
+GET    /api/v1/portal/meetings           # lista reuniões da empresa
+GET    /api/v1/portal/meetings/:id       # detalhe da reunião
+```
+
 ### SSE
 ```
 GET    /api/v1/events              # Server-Sent Events stream (autenticado)
@@ -900,15 +958,112 @@ interface ICalendarAdapter {
 
 ---
 
+---
+
+## FASE 5 — Portal do Cliente
+
+### Escopo
+- `CustomerUser` model: vincula `UserIdentity` (role=customer) a uma empresa (`Customer`)
+- `CustomerUserRole` enum: `master` | `member`
+- Admin cria o usuário master de um cliente (email + senha definida)
+- Master pode criar/desativar sub-usuários (members) da própria empresa
+- `customerId` incluído no JWT payload para role `customer`
+- Guard `CustomerPortalGuard`: extrai `customerId` do JWT e injeta no request
+- Rotas `/api/v1/portal/*` acessíveis somente por role `customer`
+- Rotas `/api/v1/customers/:id/portal-users` acessíveis somente por `admin`
+
+### Novo modelo Prisma
+```prisma
+enum CustomerUserRole {
+  master
+  member
+}
+
+model CustomerUser {
+  id           String           @id @default(uuid())
+  userId       String           @unique
+  customerId   String
+  customerRole CustomerUserRole @default(member)
+  createdAt    DateTime         @default(now())
+  createdBy    String
+  deletedAt    DateTime?
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_users")
+}
+```
+
+### JWT — payload para role `customer`
+```typescript
+// access token payload
+{
+  userId: string
+  role: 'customer'
+  customerId: string        // ← adicionado para usuários do portal
+  customerRole: 'master' | 'member'
+}
+```
+
+### Entidades e VOs
+- `CustomerUser` (entity no domínio `customers`)
+- Exceções: `CustomerUserAlreadyExistsError`, `CustomerUserNotFoundError`
+
+### Repositório
+- `ICustomerUserRepository`: `create`, `findByUserId`, `findByCustomerId`, `softDelete`
+
+### Casos de Uso (admin)
+- `CreateCustomerPortalUserUseCase` — cria UserIdentity (role=customer) + CustomerUser (master); admin define senha
+- `ListCustomerPortalUsersUseCase` — lista usuários do portal de um cliente
+- `RevokeCustomerPortalAccessUseCase` — soft delete UserIdentity + CustomerUser
+
+### Casos de Uso (portal — master)
+- `CreateCustomerSubUserUseCase` — master cria member da própria empresa
+- `ListCustomerSubUsersUseCase` — master lista membros da empresa
+- `UpdateCustomerSubUserUseCase` — master atualiza dados do member
+- `DeactivateCustomerSubUserUseCase` — master desativa member
+
+### Casos de Uso (portal — todos)
+- `ListPortalMeetingsUseCase` — lista reuniões da empresa do usuário logado (read-only)
+- `GetPortalMeetingUseCase` — detalhe de uma reunião da empresa
+
+### Guards
+- `CustomerPortalGuard`: verifica role=customer + injeta `customerId` do JWT no request
+- `CustomerRoleGuard` (sub-role): `@CustomerRoles('master')` para rotas exclusivas do master
+
+### Testes Fase 5
+
+**Unit:**
+- `CustomerUser` entity
+- Todos os use-cases com in-memory repos
+
+**E2E (test/e2e/portal/):**
+- Admin cria portal user master → login → vê reuniões
+- Master cria member → member loga → vê reuniões
+- Customer não acessa rotas de `/api/v1/customers` (403)
+- Member não acessa rotas de gestão de usuários (403)
+- Customer não vê dados de outro cliente (404/403)
+
+### Entregáveis Fase 5
+- [ ] Migration com `customer_users` e enum `CustomerUserRole`
+- [ ] Testes unit passando
+- [ ] Testes e2e passando
+- [ ] `tsc --noEmit` sem erros
+- [ ] Frontend: página de gestão de usuários (master) + página de reuniões
+- [ ] Commit + push GitHub
+
+---
+
 ## Fases Futuras (backlog)
 
 | Feature | Fase |
 |---------|------|
-| Notificações Gmail API | 5 |
-| SSE (Server-Sent Events) notificações in-app | 5 |
-| Acesso do cliente ao sistema (portal) | 6 |
+| Notificações Gmail API | 6 |
+| SSE (Server-Sent Events) notificações in-app | 6 |
 | Delegação de tarefas (todos) entre funcionários | 7 |
 | Reset de senha por email | 8 |
+| Sub-roles do portal (`member` com permissões granulares) | 8 |
 | LGPD — exclusão de dados pessoais | Última |
 | SaaS / multi-tenant | Pós-produto |
 
@@ -920,8 +1075,9 @@ interface ICalendarAdapter {
 |------|---------|------|-----|-----------|----------|--------|
 | 1 | Auth + Usuários | ✅ | ✅ | ✅ | Login | ✅ |
 | 2 | Clientes + Contatos | ✅ | ✅ | ✅ | CRUD | ✅ |
-| 3 | Documentos + Drive | ✅ | ✅ | ✅ | Upload/View | ✅ |
-| 4 | Reuniões + Meet | ✅ | ✅ | ✅ | Agenda | ✅ |
+| 3 | Documentos + Drive | — | — | — | Upload/View | — |
+| 4 | Reuniões + Meet | — | — | — | Agenda | — |
+| 5 | Portal do Cliente | — | — | — | Usuários + Reuniões | — |
 
 ---
 
