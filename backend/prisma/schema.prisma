@@ -113,6 +113,7 @@ model Customer {
   contacts    Contact[]
   employees   CustomerEmployee[]
   activities  CustomerActivity[]
+  documents   Document[]
 
   @@index([categoryId])
   @@map("customers")
@@ -161,4 +162,46 @@ model CustomerActivity {
 
   @@index([customerId])
   @@map("customer_activities")
+}
+
+// ─────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────
+
+enum DocumentType {
+  proposal
+  contract
+  addendum
+  other
+}
+
+enum DocumentStatus {
+  pending_signature
+  signed
+  expired
+  cancelled
+}
+
+model Document {
+  id               String         @id @default(uuid())
+  customerId       String         @map("customer_id")
+  type             DocumentType
+  title            String
+  driveFileId      String         @map("drive_file_id")
+  driveViewUrl     String         @map("drive_view_url")
+  driveDownloadUrl String         @map("drive_download_url")
+  mimeType         String         @map("mime_type")
+  sizeBytes        Int?           @map("size_bytes")
+  signedAt         DateTime?      @map("signed_at")
+  notes            String?
+  status           DocumentStatus @default(pending_signature)
+  uploadedByUserId String         @map("uploaded_by_user_id")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  deletedAt        DateTime?      @map("deleted_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("documents")
 }

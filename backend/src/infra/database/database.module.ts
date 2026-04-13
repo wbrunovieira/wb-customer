@@ -20,6 +20,10 @@ import { PrismaCustomerCategoryRepository } from './prisma/repositories/customer
 import { PrismaContactRepository } from './prisma/repositories/customers/prisma-contact.repository'
 import { PrismaCustomerActivityRepository } from './prisma/repositories/customers/prisma-customer-activity.repository'
 import { LocalCustomerFolderService } from '@/infra/adapters/storage/local-customer-folder.service'
+import { IDocumentRepository } from '@/domain/documents/application/repositories/i-document.repository'
+import { IStorageAdapter } from '@/domain/documents/application/services/i-storage.adapter'
+import { PrismaDocumentRepository } from './prisma/repositories/documents/prisma-document.repository'
+import { LocalStorageAdapter } from '@/infra/adapters/storage/local-storage.adapter'
 
 @Global()
 @Module({
@@ -37,6 +41,9 @@ import { LocalCustomerFolderService } from '@/infra/adapters/storage/local-custo
     { provide: IContactRepository, useClass: PrismaContactRepository },
     { provide: ICustomerActivityRepository, useClass: PrismaCustomerActivityRepository },
     { provide: ICustomerFolderService, useClass: LocalCustomerFolderService },
+    // Documents
+    { provide: IDocumentRepository, useClass: PrismaDocumentRepository },
+    { provide: IStorageAdapter, useClass: LocalStorageAdapter },
   ],
   exports: [
     PrismaService,
@@ -50,6 +57,8 @@ import { LocalCustomerFolderService } from '@/infra/adapters/storage/local-custo
     IContactRepository,
     ICustomerActivityRepository,
     ICustomerFolderService,
+    IDocumentRepository,
+    IStorageAdapter,
   ],
 })
 export class DatabaseModule {}

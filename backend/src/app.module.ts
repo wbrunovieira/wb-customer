@@ -5,6 +5,7 @@ import { HealthController } from '@/infra/controllers/health.controller'
 import { DatabaseModule } from '@/infra/database/database.module'
 import { AuthModule } from '@/infra/modules/auth/auth.module'
 import { CustomersModule } from '@/infra/modules/customers/customers.module'
+import { DocumentsModule } from '@/infra/modules/documents/documents.module'
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CustomersModule } from '@/infra/modules/customers/customers.module'
     DatabaseModule,
     AuthModule,
     CustomersModule,
+    DocumentsModule,
   ],
   controllers: [HealthController],
 })
