@@ -1,0 +1,8 @@
+version: 2
+# Paths with test/example credentials — not real secrets
+ignore-paths:
+  - backend/test/**
+  - backend/.env.test
+  - backend/.env.example
+  - "**/*.spec.ts"
+  - "**/*.e2e.spec.ts"
