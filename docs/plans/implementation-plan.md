@@ -160,21 +160,35 @@ enum CustomerActivityType {
   note_added
 }
 
+model CustomerCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  customers Customer[]
+}
+
 model Customer {
-  id              String         @id @default(uuid())
-  name            String                          // nome da empresa
-  email           String         @unique          // email principal da empresa
+  id              String            @id @default(uuid())
+  name            String                               // nome da empresa
+  email           String            @unique            // email principal da empresa
   phone           String?
-  document        String?        @unique          // CNPJ
+  document        String?           @unique            // CNPJ
   website         String?
   notes           String?
-  status          CustomerStatus @default(lead)
-  driveFolderId   String?                         // pasta criada no Drive no cadastro
+  status          CustomerStatus    @default(lead)
+  categoryId      String?
+  driveFolderId   String?                              // pasta criada no Drive no cadastro
   createdByUserId String
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   deletedAt       DateTime?
 
+  category    CustomerCategory?
   contacts    Contact[]
   employees   CustomerEmployee[]
   documents   Document[]
@@ -536,10 +550,18 @@ PATCH  /api/v1/users/:id         # admin atualiza funcionário
 DELETE /api/v1/users/:id         # admin desativa funcionário (soft)
 ```
 
+### Customer Categories (admin)
+```
+POST   /api/v1/customer-categories
+GET    /api/v1/customer-categories
+PATCH  /api/v1/customer-categories/:id
+DELETE /api/v1/customer-categories/:id
+```
+
 ### Customers
 ```
 POST   /api/v1/customers
-GET    /api/v1/customers          # ?status=&search=&employeeId=&page=&limit=
+GET    /api/v1/customers          # ?status=&search=&employeeId=&categoryId=&page=&limit=
 GET    /api/v1/customers/:id
 PATCH  /api/v1/customers/:id
 DELETE /api/v1/customers/:id      # admin only, soft delete
@@ -708,23 +730,29 @@ CALENDAR_ADAPTER=mock        # mock | google-calendar
 
 ### Escopo
 - Domínio `customers` completo
-- CRUD de clientes (empresa)
+- CRUD de categorias de clientes (admin)
+- CRUD de clientes (empresa), incluindo campo `categoryId`
 - CRUD de contatos por cliente
 - Atribuição de funcionários ao cliente (many-to-many)
 - Audit log de atividades
 
 ### Entidades e VOs
-- `Customer` (aggregate root)
-- `Contact` (entity dentro do aggregate customer)
+- `CustomerCategory` (aggregate root)
+- `Customer` (aggregate root) — inclui `categoryId?`
+- `Contact` (entity)
 - `CustomerActivity` (entity)
 - VOs: `CustomerStatus`, `Cnpj`
 - Eventos: `CustomerCreatedEvent`, `CustomerUpdatedEvent`, `CustomerAssignedEvent`
 
 ### Casos de Uso
+- `CreateCustomerCategoryUseCase`
+- `ListCustomerCategoriesUseCase`
+- `UpdateCustomerCategoryUseCase`
+- `DeleteCustomerCategoryUseCase` — soft delete (admin)
 - `CreateCustomerUseCase` — cria cliente + cria pasta no Drive (adapter)
 - `UpdateCustomerUseCase`
 - `GetCustomerUseCase`
-- `ListCustomersUseCase` — paginado, filtros (status, search, employeeId)
+- `ListCustomersUseCase` — paginado, filtros (status, search, employeeId, categoryId)
 - `DeleteCustomerUseCase` — soft delete (admin)
 - `AssignEmployeeUseCase` — vincula funcionário ao cliente
 - `RemoveEmployeeUseCase` — desvincula funcionário
@@ -736,13 +764,15 @@ CALENDAR_ADAPTER=mock        # mock | google-calendar
 ### Testes Fase 2
 
 **Unit:**
+- `CustomerCategory` entity
 - `Customer` entity
 - `Cnpj` VO — válido/inválido
 - `CustomerStatus` VO
 - Todos os use-cases com in-memory repositories
 
 **E2E (test/e2e/customers/):**
-- CRUD completo de clientes
+- CRUD completo de categorias
+- CRUD completo de clientes (incluindo categoryId)
 - Permissões por role (admin vs employee)
 - CRUD de contatos
 - Assign/remove employee
