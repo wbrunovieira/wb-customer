@@ -118,6 +118,7 @@ export class CustomersController {
   ) {}
 
   @Post()
+  @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Create a new customer' })
   @ApiBody({ type: CreateCustomerDto })
   @ApiResponse({ status: 201, description: 'Customer created', schema: { example: { customerId: 'uuid' } } })
@@ -144,6 +145,7 @@ export class CustomersController {
   }
 
   @Get()
+  @Roles('admin', 'manager', 'employee')
   @ApiOperation({ summary: 'List customers with optional filters' })
   @ApiQuery({ name: 'status', required: false, example: 'active', enum: ['active', 'inactive', 'prospect', 'churned'] })
   @ApiQuery({ name: 'search', required: false, description: 'Search by name or email' })

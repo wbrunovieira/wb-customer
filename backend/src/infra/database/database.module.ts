@@ -24,6 +24,14 @@ import { IDocumentRepository } from '@/domain/documents/application/repositories
 import { IStorageAdapter } from '@/domain/documents/application/services/i-storage.adapter'
 import { PrismaDocumentRepository } from './prisma/repositories/documents/prisma-document.repository'
 import { LocalStorageAdapter } from '@/infra/adapters/storage/local-storage.adapter'
+import { ICustomerUserRepository } from '@/domain/customers/application/repositories/i-customer-user.repository'
+import { PrismaCustomerUserRepository } from './prisma/repositories/customers/prisma-customer-user.repository'
+import { ICustomerPortalLookup } from '@/domain/auth/application/services/i-customer-portal-lookup'
+import { CustomerPortalLookup } from '@/infra/adapters/portal/customer-portal-lookup'
+import { IMeetingRepository } from '@/domain/meetings/application/repositories/i-meeting.repository'
+import { IMeetingTypeRepository } from '@/domain/meetings/application/repositories/i-meeting-type.repository'
+import { PrismaMeetingRepository } from './prisma/repositories/meetings/prisma-meeting.repository'
+import { PrismaMeetingTypeRepository } from './prisma/repositories/meetings/prisma-meeting-type.repository'
 
 @Global()
 @Module({
@@ -44,6 +52,12 @@ import { LocalStorageAdapter } from '@/infra/adapters/storage/local-storage.adap
     // Documents
     { provide: IDocumentRepository, useClass: PrismaDocumentRepository },
     { provide: IStorageAdapter, useClass: LocalStorageAdapter },
+    // Customer Portal
+    { provide: ICustomerUserRepository, useClass: PrismaCustomerUserRepository },
+    { provide: ICustomerPortalLookup, useClass: CustomerPortalLookup },
+    // Meetings
+    { provide: IMeetingRepository, useClass: PrismaMeetingRepository },
+    { provide: IMeetingTypeRepository, useClass: PrismaMeetingTypeRepository },
   ],
   exports: [
     PrismaService,
@@ -59,6 +73,10 @@ import { LocalStorageAdapter } from '@/infra/adapters/storage/local-storage.adap
     ICustomerFolderService,
     IDocumentRepository,
     IStorageAdapter,
+    ICustomerUserRepository,
+    ICustomerPortalLookup,
+    IMeetingRepository,
+    IMeetingTypeRepository,
   ],
 })
 export class DatabaseModule {}

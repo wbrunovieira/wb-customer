@@ -109,15 +109,40 @@ model Customer {
   updatedAt       DateTime       @updatedAt @map("updated_at")
   deletedAt       DateTime?      @map("deleted_at")
 
-  category    CustomerCategory?  @relation(fields: [categoryId], references: [id])
-  contacts    Contact[]
-  employees   CustomerEmployee[]
-  activities  CustomerActivity[]
-  documents   Document[]
-  meetings    Meeting[]
+  category     CustomerCategory?  @relation(fields: [categoryId], references: [id])
+  contacts     Contact[]
+  employees    CustomerEmployee[]
+  activities   CustomerActivity[]
+  documents    Document[]
+  meetings     Meeting[]
+  portalUsers  CustomerUser[]
 
   @@index([categoryId])
   @@map("customers")
+}
+
+// ─────────────────────────────────────────
+// CUSTOMER PORTAL
+// ─────────────────────────────────────────
+
+enum CustomerUserRole {
+  master
+  member
+}
+
+model CustomerUser {
+  id           String           @id @default(uuid())
+  userId       String           @unique @map("user_id")
+  customerId   String           @map("customer_id")
+  customerRole CustomerUserRole @default(member) @map("customer_role")
+  createdBy    String           @map("created_by")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  deletedAt    DateTime?        @map("deleted_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_users")
 }
 
 model Contact {

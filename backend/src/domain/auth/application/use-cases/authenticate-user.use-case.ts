@@ -4,6 +4,7 @@ import { IUserIdentityRepository } from '../repositories/i-user-identity.reposit
 import { IUserAuthorizationRepository } from '../repositories/i-user-authorization.repository'
 import { IRefreshTokenRepository } from '../repositories/i-refresh-token.repository'
 import { ITokenService } from '../services/i-token.service'
+import { ICustomerPortalLookup } from '../services/i-customer-portal-lookup'
 import { Email } from '../../enterprise/value-objects/email.vo'
 import { Password } from '../../enterprise/value-objects/password.vo'
 import { RefreshToken } from '../../enterprise/entities/refresh-token'
@@ -19,6 +20,8 @@ export interface AuthenticateUserResponse {
   refreshToken: string
   userId: string
   role: string
+  customerId?: string
+  customerRole?: string
 }
 
 export type AuthenticateUserResult = Either<
@@ -33,6 +36,7 @@ export class AuthenticateUserUseCase {
     private readonly userAuthorizationRepo: IUserAuthorizationRepository,
     private readonly refreshTokenRepo: IRefreshTokenRepository,
     private readonly tokenService: ITokenService,
+    private readonly customerPortalLookup: ICustomerPortalLookup,
   ) {}
 
   async execute(
@@ -53,9 +57,21 @@ export class AuthenticateUserUseCase {
     )
     if (!authorization) return left(new InvalidCredentialsError())
 
+    let customerId: string | undefined
+    let customerRole: string | undefined
+
+    if (authorization.role.value === 'customer') {
+      const portalData = await this.customerPortalLookup.findByUserId(identity.id.value)
+      if (!portalData) return left(new InvalidCredentialsError())
+      customerId = portalData.customerId
+      customerRole = portalData.customerRole
+    }
+
     const accessToken = this.tokenService.generateAccessToken({
       sub: identity.id.value,
       role: authorization.role.value,
+      customerId,
+      customerRole,
     })
 
     const rawRefreshToken = this.tokenService.generateRefreshToken()
@@ -74,6 +90,8 @@ export class AuthenticateUserUseCase {
       refreshToken: rawRefreshToken,
       userId: identity.id.value,
       role: authorization.role.value,
+      customerId,
+      customerRole,
     })
   }
 }

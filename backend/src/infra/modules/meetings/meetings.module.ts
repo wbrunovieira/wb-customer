@@ -24,8 +24,6 @@ import { IMeetingTypeRepository } from '@/domain/meetings/application/repositori
 import { GoogleCalendarAdapter } from '@/infra/adapters/calendar/google-calendar.adapter'
 import { MockCalendarAdapter } from '@/infra/adapters/calendar/mock-calendar.adapter'
 import { GoogleTokenService } from '@/infra/adapters/calendar/google-token.service'
-import { PrismaMeetingRepository } from '@/infra/database/prisma/repositories/meetings/prisma-meeting.repository'
-import { PrismaMeetingTypeRepository } from '@/infra/database/prisma/repositories/meetings/prisma-meeting-type.repository'
 import { Env } from '@/env/env'
 
 @Module({
@@ -39,9 +37,6 @@ import { Env } from '@/env/env'
     GoogleOAuthController,
   ],
   providers: [
-    // Repositories
-    { provide: IMeetingRepository, useClass: PrismaMeetingRepository },
-    { provide: IMeetingTypeRepository, useClass: PrismaMeetingTypeRepository },
     // Token service
     { provide: IGoogleTokenService, useClass: GoogleTokenService },
     // Calendar adapter — swap based on CALENDAR_ADAPTER env var

@@ -1,6 +1,8 @@
 export interface TokenPayload {
   sub: string
   role: string
+  customerId?: string
+  customerRole?: string
 }
 
 export abstract class ITokenService {

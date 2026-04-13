@@ -7,6 +7,7 @@ import { AuthModule } from '@/infra/modules/auth/auth.module'
 import { CustomersModule } from '@/infra/modules/customers/customers.module'
 import { DocumentsModule } from '@/infra/modules/documents/documents.module'
 import { MeetingsModule } from '@/infra/modules/meetings/meetings.module'
+import { PortalModule } from '@/infra/modules/portal/portal.module'
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MeetingsModule } from '@/infra/modules/meetings/meetings.module'
     CustomersModule,
     DocumentsModule,
     MeetingsModule,
+    PortalModule,
   ],
   controllers: [HealthController],
 })

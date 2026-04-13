@@ -7,6 +7,7 @@ import { InMemoryUserAuthorizationRepository } from '@/test/repositories/auth/in
 import { InMemoryRefreshTokenRepository } from '@/test/repositories/auth/in-memory-refresh-token.repository'
 import { InMemoryAuthUnitOfWork } from '@/test/repositories/auth/in-memory-auth-unit-of-work'
 import { FakeTokenService } from '@/test/repositories/auth/fake-token.service'
+import { FakeCustomerPortalLookup } from '@/test/repositories/auth/fake-customer-portal-lookup'
 import { InvalidCredentialsError } from '../../domain/exceptions/invalid-credentials.error'
 
 let identityRepo: InMemoryUserIdentityRepository
@@ -14,6 +15,7 @@ let profileRepo: InMemoryUserProfileRepository
 let authorizationRepo: InMemoryUserAuthorizationRepository
 let refreshTokenRepo: InMemoryRefreshTokenRepository
 let tokenService: FakeTokenService
+let portalLookup: FakeCustomerPortalLookup
 let sut: AuthenticateUserUseCase
 
 beforeEach(async () => {
@@ -22,6 +24,7 @@ beforeEach(async () => {
   authorizationRepo = new InMemoryUserAuthorizationRepository()
   refreshTokenRepo = new InMemoryRefreshTokenRepository()
   tokenService = new FakeTokenService()
+  portalLookup = new FakeCustomerPortalLookup()
 
   const createUser = new CreateUserUseCase(
     identityRepo,
@@ -42,6 +45,7 @@ beforeEach(async () => {
     authorizationRepo,
     refreshTokenRepo,
     tokenService,
+    portalLookup,
   )
 })
 
