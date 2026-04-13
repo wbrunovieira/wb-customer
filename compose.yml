@@ -14,7 +14,7 @@ services:
     environment:
       # Override DATABASE_URL to use the db service hostname inside Docker
       DATABASE_URL: postgresql://postgres:postgres@db:5432/wb_customer
-    command: sh -c "pnpm prisma migrate deploy && pnpm start:dev"
+    command: sh -c "pnpm prisma generate && pnpm prisma migrate deploy && pnpm start:dev"
     depends_on:
       db:
         condition: service_healthy

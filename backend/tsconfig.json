@@ -25,5 +25,6 @@
       "@/test/*": ["test/*"],
       "@/app.module": ["src/app.module"]
     }
-  }
+  },
+  "exclude": ["node_modules", "dist", "vitest.config.*", "test"]
 }

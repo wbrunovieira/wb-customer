@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import * as bcrypt from 'bcryptjs'
 import { Either, left, right } from '@/core/either'
 import { WeakPasswordError } from '../../domain/exceptions/weak-password.error'
 
