@@ -1,13 +1,15 @@
 # WB Customer — Plano de Implementação
 
-> **Última revisão:** 2026-04-14  
+> **Última revisão:** 2026-04-14 (sessão 8)
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
 > **2026-04-14 (sessão 2):** Fase 4 Frontend concluída: lista global `/meetings`, formulário `/meetings/new` com email do cliente auto-populado + chips de participantes, lista por cliente, admin de tipos de reunião. `MeetingPresenter` criado (TDD) — corrige "Invalid Date" causado por entidades de domínio serializadas sem presenter. Cron de RSVP corrigido (janela 1h→30d, campo `endAt`→`startAt`). Coluna de confirmação do cliente (RSVP) na tabela. Página de detalhe `/customers/[id]/meetings/[meetingId]` pendente (link "Ver" existe mas página não implementada — adiada para Fase 5).  
 > **2026-04-14 (sessão 3):** Fase 5 Frontend concluída. Portal do cliente completo: layout separado `/portal/*`, `/portal/meetings` (lista paginada com tabs de status), `/portal/meetings/[id]` (detalhe com RSVP, gravação, sumário, transcrição), `/portal/users` (master gerencia sub-usuários). Admin: `/customers/[id]/portal-users` com criar, revogar, editar inline, seletor de perfil (master/member) e eye toggle na senha. `UpdateCustomerPortalUserUseCase` (TDD, 6 testes). Refresh token corrigido: `middleware.ts` → `proxy.ts` (Next.js 16), `Buffer.from` → `atob()` (Edge Runtime). Total: 287 testes passando.  
 > **2026-04-14 (sessão 4):** Fase 6 — gravação e transcrição de reuniões implementadas. `MeetingFilesFinderService` (pesquisa Drive em "Meet Recordings" por nome do título + fallback por data). `TranscriptorService` (client para API transcritor: submit MP4, poll status, get result). `MeetingRecordingDetectorService` reescrito com 3 passes: Pass 0 Drive-first (detecta reuniões via arquivos novos no Drive independente de horário agendado), Pass 1 time-based (marca reuniões expiradas como ended), Pass 2 retry (retenta reuniões ended sem gravação por até 4h). Estratégia de transcrição: 1º doc Gemini nativo do Meet (summary + transcript), fallback: envia MP4 ao transcritor externo. `MeetingTranscriptionPollerService` reescrito para usar `TranscriptorService`.  
-> **2026-04-14 (sessão 5):** Página de detalhe de reunião implementada (`/customers/[id]/meetings/[meetingId]`): gravação embed Drive, transcrição, attendees RSVP, summary editável. `MeetingPresenter.toHTTP` corrigido para expor `nativeTranscriptUrl` e `transcriptText`. Link "Ver detalhes" adicionado nos cards da lista. Fases 7–11 planejadas: Tarefas (Scrum + ICE + Gantt + comentários ricos), Atividades (log de comunicações + integrações GoTo/Gmail/WhatsApp), Criativos (Drive + performance A/B), Tráfego Pago (Meta BM + campanhas), CRM do Cliente (funil de vendas + leads).
+> **2026-04-14 (sessão 5):** Página de detalhe de reunião implementada (`/customers/[id]/meetings/[meetingId]`): gravação embed Drive, transcrição, attendees RSVP, summary editável. `MeetingPresenter.toHTTP` corrigido para expor `nativeTranscriptUrl` e `transcriptText`. Link "Ver detalhes" adicionado nos cards da lista. Fases 7–11 planejadas: Tarefas (Scrum + ICE + Gantt + comentários ricos), Atividades (log de comunicações + integrações GoTo/Gmail/WhatsApp), Criativos (Drive + performance A/B), Tráfego Pago (Meta BM + campanhas), CRM do Cliente (funil de vendas + leads).  
+> **2026-04-14 (sessão 6–7):** Fase 7 implementada. Backend: migration `task_comments`/`comment_attachments`/`image_annotations`/`comment_reactions`; entidade `TaskComment`; use-cases: AddComment, ListComments, ResolveComment, ReactToComment, DeleteComment, AddSubtask, ProcessRecurringTasks; `RecurringTasksScheduler` (cron diário); `AllTasksController` com enrichment de `customerName`. Frontend: `/tasks` com coluna cliente, groupBy, filtros, botão "Nova tarefa" com busca de cliente; `/customers/[id]/tasks/[taskId]` com SubtasksSection + CommentsSection (respostas, reações emoji, resolver, soft-delete). Campos `startAt`/`endAt`/`estimatedHours` adicionados nos formulários de criação; inputs tipo `datetime-local`.  
+> **2026-04-14 (sessão 8):** Fase 8 implementada. Backend: migration `activities`/`activity_attachments`; entidade `Activity` com complete/cancel/softDelete; use-cases: CreateActivity, UpdateActivity, GetActivity, ListCustomerActivities, DeleteActivity (12 testes); `ActivitiesController` com Swagger; `ActivitiesModule`. Frontend: `/customers/[id]/activities` timeline vertical com ícones por tipo, badges de status, filtros por tipo e status, formulário inline, botão de exclusão com toast. Sidebar + aba no cliente.
 
 ---
 
@@ -1575,15 +1577,19 @@ Fase 7 inclui o sino de notificações no header. Eventos publicados via EventBu
 - [x] Botão "Tarefas" na página do cliente
 - [x] Item "Tarefas" no sidebar
 
-**Pendente — Fase 7 (iteração futura)**
-- [ ] Migration: `task_comments`, `comment_attachments`, `image_annotations`, `comment_reactions`, `task_templates`
-- [ ] Comentários ricos: texto, áudio gravado, anexos, imagem com anotações, reações emoji, respostas em cadeia, marcar como resolvido
+**Concluído na iteração seguinte ✅**
+- [x] Migration: `task_comments`, `comment_attachments`, `image_annotations`, `comment_reactions`
+- [x] Comentários: texto, reações emoji, respostas em cadeia, marcar como resolvido, soft-delete
+- [x] Subtarefas: `AddSubtaskUseCase` + `SubtasksSection` frontend com barra de progresso
+- [x] Recorrência: `ProcessRecurringTasksUseCase` + `RecurringTasksScheduler` (cron diário)
+- [x] `/tasks` global: coluna cliente, groupBy, filtros, botão "Nova tarefa" com busca de cliente
+- [x] Campos `startAt`, `endAt`, `estimatedHours` nos formulários de criação (datetime-local)
+
+**Pendente — Fase 7 (iterações futuras)**
 - [ ] Templates de tarefas: salvar seleção de tarefas → aplicar em cliente
-- [ ] Subtarefas (`parentTaskId` já existe na entidade, falta use-case + UI)
 - [ ] View Calendário (`?view=calendar`) — tarefas nos dias previstos
-- [ ] View Gantt (`?view=gantt`)
-- [ ] Recorrência: cron diário `ProcessRecurringTasksUseCase`
-- [ ] Time-tracking: `StartTimeTrackUseCase` / `StopTimeTrackUseCase`
+- [ ] View Gantt (`?view=gantt`) usando Recharts
+- [ ] Time-tracking: `StartTimeTrackUseCase` / `StopTimeTrackUseCase` + timer no detalhe da tarefa
 - [ ] `ReorderTasksUseCase` — persistir `boardPosition` após drag no kanban
 
 ---
@@ -1713,15 +1719,15 @@ POST   /api/v1/webhooks/whatsapp      # Evolution API
 
 ### Entregáveis Fase 8
 
-- [ ] Migrations (`activities`, `activity_attachments`)
-- [ ] Domínio `activities` com TDD
-- [ ] CRUD manual de atividades no frontend com filtros e timeline por cliente
-- [ ] Clicar no email do contato → abre composer (Gmail API)
-- [ ] Clicar no número do contato → discagem GoTo
+- [x] Migrations (`activities`, `activity_attachments`)
+- [x] Domínio `activities` com TDD (12 testes: Create, Update, Get, List, Delete)
+- [x] CRUD manual de atividades no frontend com filtros e timeline por cliente
+- [x] `tsc --noEmit` sem erros
+- [x] Commit + push GitHub
+- [ ] Clicar no email do contato → abre composer (Gmail API) — requer integração Gmail
+- [ ] Clicar no número do contato → discagem GoTo — requer credenciais GoTo
 - [ ] Automações: GoTo, Gmail, WhatsApp (quando detalhes fornecidos)
 - [ ] EventBus + SSE para notificações de mensagens recebidas
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit + push GitHub
 
 ---
 
@@ -2168,8 +2174,10 @@ CALENDAR_ADAPTER=google-calendar
 | 2 | Clientes + Contatos | ✅ | ✅ | ✅ | ✅ CRUD | ✅ |
 | 3 | Documentos + Drive | ✅ | ✅ | ✅ | ✅ Upload/View | ✅ |
 | 4 | Reuniões + Meet | ✅ | ✅ | ✅ | ✅ Agenda/RSVP | ✅ |
-| 5 | Portal do Cliente | ✅ | ✅ | ✅ | ⬜ Usuários + Reuniões | ⬜ |
-| 7 | Tarefas (core) | ✅ | ✅ | ✅ | ✅ Lista/Kanban DnD/Detalhe/SSE | ✅ |
+| 5 | Portal do Cliente | ✅ | ✅ | ✅ | ✅ Usuários + Reuniões | ✅ |
+| 6 | Gravação + Transcrição | ✅ | ⬜ | ✅ | ✅ Detalhe reunião | ✅ |
+| 7 | Tarefas (core + comentários + subtarefas + recorrência) | ✅ | ✅ | ✅ | ✅ Lista/Kanban/Detalhe/Comentários/Subtarefas | ✅ |
+| 8 | Atividades (CRUD manual) | ✅ | ⬜ | ✅ | ✅ Timeline + filtros | ✅ |
 
 ---
 
