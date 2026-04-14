@@ -6,7 +6,8 @@
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
 > **2026-04-14 (sessão 2):** Fase 4 Frontend concluída: lista global `/meetings`, formulário `/meetings/new` com email do cliente auto-populado + chips de participantes, lista por cliente, admin de tipos de reunião. `MeetingPresenter` criado (TDD) — corrige "Invalid Date" causado por entidades de domínio serializadas sem presenter. Cron de RSVP corrigido (janela 1h→30d, campo `endAt`→`startAt`). Coluna de confirmação do cliente (RSVP) na tabela. Página de detalhe `/customers/[id]/meetings/[meetingId]` pendente (link "Ver" existe mas página não implementada — adiada para Fase 5).  
 > **2026-04-14 (sessão 3):** Fase 5 Frontend concluída. Portal do cliente completo: layout separado `/portal/*`, `/portal/meetings` (lista paginada com tabs de status), `/portal/meetings/[id]` (detalhe com RSVP, gravação, sumário, transcrição), `/portal/users` (master gerencia sub-usuários). Admin: `/customers/[id]/portal-users` com criar, revogar, editar inline, seletor de perfil (master/member) e eye toggle na senha. `UpdateCustomerPortalUserUseCase` (TDD, 6 testes). Refresh token corrigido: `middleware.ts` → `proxy.ts` (Next.js 16), `Buffer.from` → `atob()` (Edge Runtime). Total: 287 testes passando.  
-> **2026-04-14 (sessão 4):** Fase 6 — gravação e transcrição de reuniões implementadas. `MeetingFilesFinderService` (pesquisa Drive em "Meet Recordings" por nome do título + fallback por data). `TranscriptorService` (client para API transcritor: submit MP4, poll status, get result). `MeetingRecordingDetectorService` reescrito com 3 passes: Pass 0 Drive-first (detecta reuniões via arquivos novos no Drive independente de horário agendado), Pass 1 time-based (marca reuniões expiradas como ended), Pass 2 retry (retenta reuniões ended sem gravação por até 4h). Estratégia de transcrição: 1º doc Gemini nativo do Meet (summary + transcript), fallback: envia MP4 ao transcritor externo. `MeetingTranscriptionPollerService` reescrito para usar `TranscriptorService`.
+> **2026-04-14 (sessão 4):** Fase 6 — gravação e transcrição de reuniões implementadas. `MeetingFilesFinderService` (pesquisa Drive em "Meet Recordings" por nome do título + fallback por data). `TranscriptorService` (client para API transcritor: submit MP4, poll status, get result). `MeetingRecordingDetectorService` reescrito com 3 passes: Pass 0 Drive-first (detecta reuniões via arquivos novos no Drive independente de horário agendado), Pass 1 time-based (marca reuniões expiradas como ended), Pass 2 retry (retenta reuniões ended sem gravação por até 4h). Estratégia de transcrição: 1º doc Gemini nativo do Meet (summary + transcript), fallback: envia MP4 ao transcritor externo. `MeetingTranscriptionPollerService` reescrito para usar `TranscriptorService`.  
+> **2026-04-14 (sessão 5):** Página de detalhe de reunião implementada (`/customers/[id]/meetings/[meetingId]`): gravação embed Drive, transcrição, attendees RSVP, summary editável. `MeetingPresenter.toHTTP` corrigido para expor `nativeTranscriptUrl` e `transcriptText`. Link "Ver detalhes" adicionado nos cards da lista. Fases 7–11 planejadas: Tarefas (Scrum + ICE + Gantt + comentários ricos), Atividades (log de comunicações + integrações GoTo/Gmail/WhatsApp), Criativos (Drive + performance A/B), Tráfego Pago (Meta BM + campanhas), CRM do Cliente (funil de vendas + leads).
 
 ---
 
@@ -1191,14 +1192,862 @@ model CustomerUser {
 
 ---
 
+## FASE 7 — Tarefas (Scrum Board por Cliente)
+
+### Visão geral
+
+Domínio `tasks`. Cada cliente tem seu próprio board Scrum. Tarefas avançam de `backlog` → `todo` → `in_progress` → `review` → `done`. Existe uma área separada de **ideias** (não poluem o backlog).
+
+### Conceitos-chave
+
+| Conceito | Detalhe |
+|----------|---------|
+| Sprint | Por cliente. Nome + data início/fim. Tarefas associadas ao sprint |
+| ICE Score | `impact × confidence / effort`. Quanto maior, maior prioridade |
+| Progresso | Calculado automaticamente: % de subtarefas/checklist concluídos |
+| Ideias | Status `idea_could` ("poderíamos") e `idea_should` ("deveríamos") — visíveis em área separada, fora do backlog |
+| Recorrência | `daily | weekly | monthly | custom` — cria automaticamente na data certa |
+| Template | Conjunto de tarefas salvo como template; aplicável a qualquer cliente |
+
+### Modelo Prisma (additions)
+
+```prisma
+enum TaskStatus {
+  idea_could      // "poderíamos fazer" — ideia especulativa
+  idea_should     // "deveríamos fazer" — faz sentido mas ainda não é hora
+  backlog         // pronta para fazer (slot de entrada do Scrum)
+  todo            // comprometida no sprint
+  in_progress
+  review
+  done
+  cancelled
+}
+
+enum RecurrenceType {
+  none
+  daily
+  weekly
+  monthly
+  custom
+}
+
+model Sprint {
+  id         String   @id @default(uuid())
+  customerId String
+  name       String
+  startAt    DateTime
+  endAt      DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  tasks    Task[]
+
+  @@index([customerId])
+  @@map("sprints")
+}
+
+model Task {
+  id               String         @id @default(uuid())
+  customerId       String
+  sprintId         String?
+  parentTaskId     String?        // subtarefa: aponta para task pai
+  title            String
+  description      String?        // texto rico (markdown)
+  status           TaskStatus     @default(backlog)
+  ownerUserId      String         // criador / responsável principal
+  assigneeUserId   String?        // usuário designado para executar
+  startAt          DateTime?
+  endAt            DateTime?
+  estimatedHours   Float?
+  trackedSeconds   Int            @default(0)
+  impact           Int?           // 1–10
+  confidence       Int?           // 1–10
+  effort           Int?           // 1–10 (maior = mais esforço = menor score)
+  // iceScore = impact * confidence / effort  (calculado no presenter/frontend)
+  recurrenceType   RecurrenceType @default(none)
+  recurrenceRule   Json?          // ex: { "daysOfWeek": [1,3,5] }
+  progress         Int            @default(0)  // 0–100, recalculado ao salvar
+  boardPosition    Int            @default(0)  // ordem no kanban por status
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  deletedAt        DateTime?
+
+  customer    Customer        @relation(fields: [customerId], references: [id])
+  sprint      Sprint?         @relation(fields: [sprintId], references: [id])
+  parent      Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id])
+  subtasks    Task[]          @relation("TaskSubtasks")
+  checklist   ChecklistItem[]
+  tags        TaskTagLink[]
+  comments    TaskComment[]
+  activityLog TaskActivityLog[]
+
+  @@index([customerId])
+  @@index([sprintId])
+  @@index([assigneeUserId])
+  @@map("tasks")
+}
+
+model ChecklistItem {
+  id        String   @id @default(uuid())
+  taskId    String
+  text      String
+  isDone    Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+  @@map("checklist_items")
+}
+
+model TaskTag {
+  id         String   @id @default(uuid())
+  customerId String?  // null = tag global; preenchido = tag do cliente
+  name       String
+  color      String   @default("#3B82F6")
+  createdAt  DateTime @default(now())
+
+  links TaskTagLink[]
+
+  @@map("task_tags")
+}
+
+model TaskTagLink {
+  taskId String
+  tagId  String
+
+  task Task    @relation(fields: [taskId], references: [id])
+  tag  TaskTag @relation(fields: [tagId], references: [id])
+
+  @@id([taskId, tagId])
+  @@map("task_tag_links")
+}
+
+model TaskComment {
+  id         String    @id @default(uuid())
+  taskId     String
+  userId     String
+  content    String?   // null se só áudio
+  audioUrl   String?   // URL Drive/S3
+  isResolved Boolean   @default(false)
+  parentId   String?   // resposta a outro comentário
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  task        Task              @relation(fields: [taskId], references: [id])
+  parent      TaskComment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     TaskComment[]     @relation("CommentReplies")
+  attachments CommentAttachment[]
+  reactions   CommentReaction[]
+  annotations ImageAnnotation[]
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model CommentAttachment {
+  id        String   @id @default(uuid())
+  commentId String
+  url       String
+  mimeType  String   // image/*, video/*, application/pdf, etc.
+  fileName  String
+  sizeBytes Int?
+  createdAt DateTime @default(now())
+
+  comment TaskComment @relation(fields: [commentId], references: [id])
+
+  @@map("comment_attachments")
+}
+
+model ImageAnnotation {
+  id          String @id @default(uuid())
+  commentId   String
+  attachmentId String // CommentAttachment.id — a imagem anotada
+  x           Float  // 0–100 (percentual da largura)
+  y           Float  // 0–100 (percentual da altura)
+  number      Int    // marcador visual exibido na imagem
+  text        String // descrição do que deve ser feito nessa área
+  mentionedUserId String? // sinalizar para outro usuário
+
+  comment TaskComment @relation(fields: [commentId], references: [id])
+
+  @@map("image_annotations")
+}
+
+model CommentReaction {
+  commentId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  comment TaskComment @relation(fields: [commentId], references: [id])
+
+  @@id([commentId, userId, emoji])
+  @@map("comment_reactions")
+}
+
+model TaskActivityLog {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  action    String   // "created" | "status_changed" | "assigned" | "comment_added" | ...
+  fromValue String?
+  toValue   String?
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+  @@map("task_activity_logs")
+}
+
+model TaskTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  tasks       Json     // array de definições de tarefas serializadas
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("task_templates")
+}
+```
+
+### Entidades do Domínio
+
+- `Sprint` (aggregate root)
+- `Task` (aggregate root) — auto-referência para subtarefas
+- `ChecklistItem` (entity)
+- `TaskTag` (aggregate root)
+- `TaskComment` (entity)
+- `CommentAttachment` (entity)
+- `ImageAnnotation` (entity)
+- `CommentReaction` (value object)
+- `TaskActivityLog` (entity)
+- `TaskTemplate` (aggregate root)
+
+### VOs
+
+- `TaskStatus` — `idea_could | idea_should | backlog | todo | in_progress | review | done | cancelled`
+- `RecurrenceType` — `none | daily | weekly | monthly | custom`
+
+### Casos de Uso
+
+**Sprints:**
+- `CreateSprintUseCase`
+- `UpdateSprintUseCase`
+- `DeleteSprintUseCase`
+- `ListSprintsUseCase`
+
+**Tasks:**
+- `CreateTaskUseCase` — cria tarefa + log "created"
+- `UpdateTaskUseCase` — atualiza campos + log de mudanças
+- `MoveTaskStatusUseCase` — avança/retrocede status + recalcula progresso + log
+- `DeleteTaskUseCase` (soft)
+- `GetTaskUseCase`
+- `ListCustomerTasksUseCase` — paginado, filtros (status, sprint, assignee, tag, tipo ideia/backlog)
+- `AssignTaskUseCase`
+- `AddSubtaskUseCase`
+- `AddChecklistItemUseCase`
+- `ToggleChecklistItemUseCase` — marca done/undone + recalcula progresso da task pai
+- `ReorderTasksUseCase` — reordena kanban (atualiza `boardPosition`)
+- `StartTimeTrackUseCase` / `StopTimeTrackUseCase`
+
+**Tags:**
+- `CreateTagUseCase`
+- `AttachTagUseCase` / `DetachTagUseCase`
+- `ListTagsUseCase`
+
+**Comentários:**
+- `AddCommentUseCase` — texto, áudio, anexos
+- `ReplyToCommentUseCase`
+- `ReactToCommentUseCase`
+- `ResolveCommentUseCase`
+- `AddImageAnnotationUseCase`
+- `DeleteCommentUseCase` (soft)
+
+**Templates:**
+- `SaveTaskTemplateUseCase` — seleciona tarefas existentes → serializa
+- `ApplyTemplateToCustomerUseCase` — instancia todas as tarefas do template para um cliente
+- `ListTemplatesUseCase`
+- `DeleteTemplateUseCase`
+
+**Recorrência (cron diário):**
+- `ProcessRecurringTasksUseCase` — cria cópia das tarefas recorrentes na data correta
+
+### Views Frontend
+
+| View | Rota |
+|------|------|
+| Lista (padrão) | `/customers/[id]/tasks` |
+| Kanban | `/customers/[id]/tasks?view=kanban` |
+| Calendário | `/customers/[id]/tasks?view=calendar` |
+| Gantt | `/customers/[id]/tasks?view=gantt` |
+| Ideias | `/customers/[id]/tasks/ideas` |
+| Sprints | `/customers/[id]/tasks/sprints` |
+| Templates | `/tasks/templates` (admin) |
+| Detalhe da tarefa | `/customers/[id]/tasks/[taskId]` |
+
+### Endpoints
+
+```
+# Sprints
+POST   /api/v1/customers/:id/sprints
+GET    /api/v1/customers/:id/sprints
+PATCH  /api/v1/customers/:id/sprints/:sprintId
+DELETE /api/v1/customers/:id/sprints/:sprintId
+
+# Tasks
+POST   /api/v1/customers/:id/tasks
+GET    /api/v1/customers/:id/tasks          # ?status=&sprintId=&assignee=&view=list|kanban|calendar|gantt&ideas=true
+GET    /api/v1/customers/:id/tasks/:taskId
+PATCH  /api/v1/customers/:id/tasks/:taskId
+DELETE /api/v1/customers/:id/tasks/:taskId
+PATCH  /api/v1/customers/:id/tasks/:taskId/status
+PATCH  /api/v1/customers/:id/tasks/reorder
+
+# Subtasks
+POST   /api/v1/customers/:id/tasks/:taskId/subtasks
+
+# Checklist
+POST   /api/v1/customers/:id/tasks/:taskId/checklist
+PATCH  /api/v1/customers/:id/tasks/:taskId/checklist/:itemId
+DELETE /api/v1/customers/:id/tasks/:taskId/checklist/:itemId
+
+# Comments
+POST   /api/v1/customers/:id/tasks/:taskId/comments
+GET    /api/v1/customers/:id/tasks/:taskId/comments
+POST   /api/v1/customers/:id/tasks/:taskId/comments/:commentId/replies
+POST   /api/v1/customers/:id/tasks/:taskId/comments/:commentId/reactions
+PATCH  /api/v1/customers/:id/tasks/:taskId/comments/:commentId/resolve
+DELETE /api/v1/customers/:id/tasks/:taskId/comments/:commentId
+
+# Tags
+POST   /api/v1/task-tags
+GET    /api/v1/task-tags               # ?customerId=
+POST   /api/v1/customers/:id/tasks/:taskId/tags/:tagId
+DELETE /api/v1/customers/:id/tasks/:taskId/tags/:tagId
+
+# Templates
+POST   /api/v1/task-templates
+GET    /api/v1/task-templates
+POST   /api/v1/task-templates/:templateId/apply/:customerId
+DELETE /api/v1/task-templates/:templateId
+```
+
+### SSE — Notificações em Tempo Real
+
+Fase 7 inclui o sino de notificações no header. Eventos publicados via EventBus interno e entregues ao frontend via SSE (`GET /api/v1/events`):
+
+- `task.assigned` → notifica o `assigneeUserId`
+- `task.status_changed` → notifica owner e assignee
+- `comment.added` → notifica owner e assignee da task
+- `comment.mention` → notifica usuário mencionado em anotação de imagem
+
+### Entregáveis Fase 7
+
+- [ ] Migrations (`sprints`, `tasks`, `checklist_items`, `task_tags`, `task_tag_links`, `task_comments`, `comment_attachments`, `image_annotations`, `comment_reactions`, `task_activity_logs`, `task_templates`)
+- [ ] Domínio `tasks` completo com TDD
+- [ ] Todos use-cases unit testados (in-memory repos)
+- [ ] E2E: CRUD tasks, sprints, templates, comentários
+- [ ] Frontend: lista, kanban, calendário, gantt, detalhe da tarefa
+- [ ] Frontend: área de ideias separada
+- [ ] Frontend: comentários ricos (áudio, imagem com anotação, anexos, reações)
+- [ ] SSE + sino de notificações no header
+- [ ] Cron de recorrência
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
+## FASE 8 — Atividades (Log de Comunicações)
+
+### Visão geral
+
+Domínio `activities`. Registra todas as comunicações com o cliente: emails, WhatsApp, ligações telefônicas, notas manuais. Fase 8 implementa o CRUD manual; as **automações** (GoTo VoIP, Gmail, Evolution WhatsApp) serão integradas posteriormente com detalhes fornecidos na hora da implementação.
+
+### Tipos de atividade
+
+| Tipo | Manual | Automático |
+|------|--------|-----------|
+| `email` | Escrever/enviar pelo sistema | Gmail API — identifica por email do contato |
+| `whatsapp` | Registrar manualmente | Evolution API — cada mensagem cria uma atividade |
+| `phone_call` | Registrar manualmente | GoTo VoIP — identifica por número, grava áudio, transcreve |
+| `note` | Anotação livre | — |
+| `meeting` | Auto-criado pelo domínio `meetings` | — |
+
+### Ciclo de status
+
+`scheduled → open → done | cancelled | skipped`
+
+### Modelo Prisma (additions)
+
+```prisma
+enum ActivityType {
+  email
+  whatsapp
+  phone_call
+  note
+  meeting
+}
+
+enum ActivityStatus {
+  scheduled
+  open
+  done
+  cancelled
+  skipped
+}
+
+model Activity {
+  id               String         @id @default(uuid())
+  customerId       String
+  contactId        String?
+  type             ActivityType
+  status           ActivityStatus @default(open)
+  subject          String?        // assunto do email, título da nota
+  description      String?        // corpo da mensagem / transcrição
+  scheduledAt      DateTime?
+  occurredAt       DateTime?
+  durationSecs     Int?           // duração da ligação
+  audioUrl         String?        // URL do áudio (GoTo → S3)
+  transcriptText   String?        // transcrição do áudio
+  externalId       String?        // GoTo callId | Gmail messageId | Evolution messageId
+  direction        String?        // "inbound" | "outbound"
+  createdByUserId  String
+  assignedToUserId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  customer    Customer           @relation(fields: [customerId], references: [id])
+  contact     Contact?           @relation(fields: [contactId], references: [id])
+  attachments ActivityAttachment[]
+
+  @@index([customerId])
+  @@index([externalId])
+  @@map("activities")
+}
+
+model ActivityAttachment {
+  id         String   @id @default(uuid())
+  activityId String
+  url        String
+  mimeType   String
+  fileName   String
+  sizeBytes  Int?
+  createdAt  DateTime @default(now())
+
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@map("activity_attachments")
+}
+```
+
+### Casos de Uso
+
+- `CreateActivityUseCase`
+- `UpdateActivityUseCase` (status, descrição)
+- `GetActivityUseCase`
+- `ListCustomerActivitiesUseCase` — paginado, filtros (type, status, dateRange)
+- `DeleteActivityUseCase` (soft)
+- `AddActivityAttachmentUseCase`
+
+**Automações (a implementar na fase — detalhes fornecidos na hora):**
+- `CreateActivityFromGoToCallUseCase` — webhook GoTo → cria activity phone_call + áudio S3 + transcrição
+- `CreateActivityFromGmailUseCase` — Gmail polling → identifica email por contato → cria activity email
+- `CreateActivityFromWhatsAppUseCase` — Evolution webhook → cria activity whatsapp
+- `SendEmailUseCase` — compõe e envia email via Gmail API
+- `SendWhatsAppUseCase` — envia mensagem via Evolution API
+
+### Endpoints
+
+```
+GET    /api/v1/customers/:id/activities        # ?type=&status=&from=&to=
+POST   /api/v1/customers/:id/activities
+GET    /api/v1/customers/:id/activities/:actId
+PATCH  /api/v1/customers/:id/activities/:actId
+DELETE /api/v1/customers/:id/activities/:actId
+
+# Email (via Gmail API)
+POST   /api/v1/customers/:id/activities/:actId/send-email
+
+# Webhooks (integrações externas)
+POST   /api/v1/webhooks/goto          # GoTo VoIP
+POST   /api/v1/webhooks/gmail         # Gmail push notification
+POST   /api/v1/webhooks/whatsapp      # Evolution API
+```
+
+### EventBus / Pub-Sub
+
+- Mensagens WhatsApp e emails do cliente publicam eventos internos
+- SSE entrega notificações ao frontend em tempo real (sino no header)
+- Eventos: `activity.new_message` → notifica usuário responsável pelo cliente
+
+### Entregáveis Fase 8
+
+- [ ] Migrations (`activities`, `activity_attachments`)
+- [ ] Domínio `activities` com TDD
+- [ ] CRUD manual de atividades no frontend com filtros e timeline por cliente
+- [ ] Clicar no email do contato → abre composer (Gmail API)
+- [ ] Clicar no número do contato → discagem GoTo
+- [ ] Automações: GoTo, Gmail, WhatsApp (quando detalhes fornecidos)
+- [ ] EventBus + SSE para notificações de mensagens recebidas
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
+## FASE 9 — Criativos
+
+### Visão geral
+
+Domínio `creatives`. Cada cliente tem sua biblioteca de criativos (imagens, vídeos, carrosséis) armazenados na pasta do cliente no Google Drive. Foco em registrar todas as informações necessárias para uso em tráfego pago e medir performance ao longo do tempo.
+
+### Estratégias de teste
+
+| Estratégia | Descrição |
+|------------|-----------|
+| **A — Exploração** | Testar ~10 criativos com orçamento pequeno por 5 dias. Identificar o(s) campeão(ões) |
+| **B — Lapidação** | Criar variações do campeão da exploração e testar para refinar |
+
+### Modelo Prisma (additions)
+
+```prisma
+enum CreativeType {
+  image
+  video
+  carousel
+}
+
+enum CreativeStatus {
+  draft
+  active
+  paused
+  archived
+}
+
+enum ExplorationPhase {
+  exploration   // A — teste inicial com ~10 criativos
+  refinement    // B — variações do campeão
+}
+
+model Creative {
+  id                String         @id @default(uuid())
+  customerId        String
+  type              CreativeType
+  status            CreativeStatus @default(draft)
+  title             String
+  textInCreative    String?        // texto sobreposto no criativo
+  captionText       String?        // legenda para publicação
+  designDescription String?        // briefing para o designer / descrição do vídeo
+  campaignObjective String?        // ex: "conversão", "reconhecimento de marca"
+  driveFileId       String?        // arquivo no Drive (imagem ou vídeo)
+  driveUrl          String?
+  thumbnailUrl      String?        // miniatura para listagem
+  explorationBatchId String?       // agrupa criativos do mesmo lote de exploração
+  createdByUserId   String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+
+  customer     Customer              @relation(fields: [customerId], references: [id])
+  performance  CreativePerformance[]
+  campaigns    CampaignCreativeLink[]
+
+  @@index([customerId])
+  @@map("creatives")
+}
+
+model CreativePerformance {
+  id          String           @id @default(uuid())
+  creativeId  String
+  date        DateTime         @db.Date
+  phase       ExplorationPhase
+  impressions Int              @default(0)
+  clicks      Int              @default(0)
+  cpc         Float?           // custo por clique
+  cpm         Float?           // custo por mil impressões
+  spent       Float?
+  conversions Int              @default(0)
+  reach       Int?
+
+  creative Creative @relation(fields: [creativeId], references: [id])
+
+  @@unique([creativeId, date])
+  @@index([creativeId])
+  @@map("creative_performances")
+}
+```
+
+### Casos de Uso
+
+- `UploadCreativeUseCase` — upload Drive + salva metadados
+- `UpdateCreativeUseCase`
+- `DeleteCreativeUseCase` (soft + remove Drive)
+- `ListCustomerCreativesUseCase` — filtros (type, status, phase)
+- `GetCreativeUseCase`
+- `RecordCreativePerformanceUseCase` — registra métricas diárias
+- `GetCreativePerformanceSummaryUseCase` — agrega performance por criativo/lote
+
+### Endpoints
+
+```
+POST   /api/v1/customers/:id/creatives
+GET    /api/v1/customers/:id/creatives     # ?type=&status=&batchId=
+GET    /api/v1/customers/:id/creatives/:creativeId
+PATCH  /api/v1/customers/:id/creatives/:creativeId
+DELETE /api/v1/customers/:id/creatives/:creativeId
+
+POST   /api/v1/customers/:id/creatives/:creativeId/performance
+GET    /api/v1/customers/:id/creatives/:creativeId/performance
+```
+
+### Entregáveis Fase 9
+
+- [ ] Migrations (`creatives`, `creative_performances`)
+- [ ] Domínio `creatives` com TDD
+- [ ] Frontend: galeria de criativos por cliente com preview
+- [ ] Upload drag-and-drop (imagem/vídeo) → Drive
+- [ ] Registro de métricas de performance por criativo
+- [ ] Visualização de lotes de exploração com comparativo de performance
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
+## FASE 10 — Tráfego Pago
+
+### Visão geral
+
+Domínio `paid-traffic`. Gestão de campanhas de Meta Ads vinculadas à conta BM do admin. Registra dados diários de performance por campanha e por criativo. Integração com Meta Marketing API fornece dados de cada criativo na fase de exploração.
+
+### Modelo Prisma (additions)
+
+```prisma
+enum CampaignStatus {
+  active
+  paused
+  archived
+}
+
+model PaidTrafficCampaign {
+  id             String         @id @default(uuid())
+  customerId     String
+  name           String
+  status         CampaignStatus @default(active)
+  objective      String?        // "CONVERSIONS" | "BRAND_AWARENESS" | etc.
+  plannedBudget  Float?
+  spentBudget    Float          @default(0)
+  startAt        DateTime?
+  endAt          DateTime?
+  metaCampaignId String?        // ID da campanha no Meta BM
+  metaAdSetId    String?        // conjunto de anúncios
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  customer      Customer               @relation(fields: [customerId], references: [id])
+  dailyMetrics  CampaignDailyMetric[]
+  creativeLinks CampaignCreativeLink[]
+  leads         Lead[]                 // leads vindos desta campanha (Fase 11)
+
+  @@index([customerId])
+  @@map("paid_traffic_campaigns")
+}
+
+model CampaignDailyMetric {
+  id          String   @id @default(uuid())
+  campaignId  String
+  date        DateTime @db.Date
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  spent       Float    @default(0)
+  conversions Int      @default(0)
+  reach       Int?
+  cpc         Float?
+  cpm         Float?
+
+  campaign PaidTrafficCampaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([campaignId, date])
+  @@index([campaignId])
+  @@map("campaign_daily_metrics")
+}
+
+model CampaignCreativeLink {
+  campaignId String
+  creativeId String
+  phase      ExplorationPhase
+
+  campaign PaidTrafficCampaign @relation(fields: [campaignId], references: [id])
+  creative Creative             @relation(fields: [creativeId], references: [id])
+
+  @@id([campaignId, creativeId])
+  @@map("campaign_creative_links")
+}
+```
+
+### Casos de Uso
+
+- `CreateCampaignUseCase`
+- `UpdateCampaignUseCase`
+- `ArchiveCampaignUseCase`
+- `ListCustomerCampaignsUseCase` — filtros (status, dateRange)
+- `RecordCampaignDailyMetricsUseCase` — registra dados do dia
+- `LinkCreativeToCampaignUseCase`
+- `GetCampaignPerformanceSummaryUseCase` — retorna totais + série histórica
+
+**Integração Meta (futura — detalhes na hora):**
+- `SyncMetaCampaignMetricsUseCase` — importa dados via Meta Marketing API
+
+### Endpoints
+
+```
+POST   /api/v1/customers/:id/campaigns
+GET    /api/v1/customers/:id/campaigns       # ?status=active|paused|archived
+GET    /api/v1/customers/:id/campaigns/:campaignId
+PATCH  /api/v1/customers/:id/campaigns/:campaignId
+DELETE /api/v1/customers/:id/campaigns/:campaignId
+
+POST   /api/v1/customers/:id/campaigns/:campaignId/metrics
+GET    /api/v1/customers/:id/campaigns/:campaignId/metrics    # ?from=&to=
+
+POST   /api/v1/customers/:id/campaigns/:campaignId/creatives/:creativeId
+DELETE /api/v1/customers/:id/campaigns/:campaignId/creatives/:creativeId
+```
+
+### Entregáveis Fase 10
+
+- [ ] Migrations (`paid_traffic_campaigns`, `campaign_daily_metrics`, `campaign_creative_links`)
+- [ ] Domínio `paid-traffic` com TDD
+- [ ] Frontend: lista de campanhas por cliente com status ativo/inativo
+- [ ] Dashboard de métricas diárias (gráfico de linha: gasto, cliques, conversões)
+- [ ] Vinculação campanha ↔ criativos (fase exploração/lapidação)
+- [ ] Orçamento previsto vs gasto
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
+## FASE 11 — CRM do Cliente (Funil de Leads)
+
+### Visão geral
+
+Domínio `crm`. O cliente recebe leads vindos do tráfego pago. Este módulo registra cada lead, de qual campanha veio, e documenta o funil de vendas — calculando % de conversão por etapa e tempo médio de atendimento.
+
+### Modelo Prisma (additions)
+
+```prisma
+enum LeadStatus {
+  new          // recém chegou
+  contacted    // primeiro contato feito
+  qualified    // lead validado como potencial cliente
+  proposal     // proposta enviada
+  negotiating  // negociando
+  won          // fechou
+  lost         // perdeu
+}
+
+model Lead {
+  id               String     @id @default(uuid())
+  customerId       String     // cliente que recebeu o lead
+  campaignId       String?    // PaidTrafficCampaign de origem
+  name             String
+  email            String?
+  phone            String?
+  status           LeadStatus @default(new)
+  source           String?    // "meta_ads" | "organic" | "referral" | etc.
+  notes            String?
+  assignedToUserId String?    // vendedor responsável
+  firstContactAt   DateTime?  // quando foi feito o 1º contato
+  closedAt         DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  customer  Customer              @relation(fields: [customerId], references: [id])
+  campaign  PaidTrafficCampaign?  @relation(fields: [campaignId], references: [id])
+  stages    LeadStageTransition[]
+
+  @@index([customerId])
+  @@index([campaignId])
+  @@map("leads")
+}
+
+model LeadStageTransition {
+  id        String     @id @default(uuid())
+  leadId    String
+  fromStage LeadStatus?
+  toStage   LeadStatus
+  userId    String     // quem fez a transição
+  note      String?
+  enteredAt DateTime   @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id])
+
+  @@index([leadId])
+  @@map("lead_stage_transitions")
+}
+```
+
+### Casos de Uso
+
+- `CreateLeadUseCase`
+- `UpdateLeadUseCase`
+- `MoveLeadStageUseCase` — avança/retrocede status + registra `LeadStageTransition`
+- `ListCustomerLeadsUseCase` — filtros (status, campaignId, assignee, dateRange)
+- `GetLeadUseCase`
+- `GetFunnelMetricsUseCase` — retorna:
+  - Total de leads por etapa
+  - % de conversão de cada etapa para a próxima
+  - Tempo médio em cada etapa
+  - Tempo médio de primeiro atendimento (`firstContactAt - createdAt`)
+- `AssignLeadUseCase`
+
+### Endpoints
+
+```
+POST   /api/v1/customers/:id/leads
+GET    /api/v1/customers/:id/leads           # ?status=&campaignId=&assignee=
+GET    /api/v1/customers/:id/leads/:leadId
+PATCH  /api/v1/customers/:id/leads/:leadId
+PATCH  /api/v1/customers/:id/leads/:leadId/stage
+DELETE /api/v1/customers/:id/leads/:leadId
+
+GET    /api/v1/customers/:id/leads/funnel    # métricas do funil
+```
+
+### Frontend
+
+- **Pipeline view (kanban):** colunas por status de lead
+- **Funil de conversão:** gráfico de funil com % de cada etapa
+- **Painel do vendedor:** leads atribuídos, tempo médio de atendimento
+- **Vínculo com campanha:** qual campanha gerou quais leads e quantos converteram
+
+### Entregáveis Fase 11
+
+- [ ] Migrations (`leads`, `lead_stage_transitions`)
+- [ ] Domínio `crm` com TDD
+- [ ] Frontend: pipeline kanban de leads
+- [ ] Gráfico de funil de conversão
+- [ ] Painel de métricas (leads por campanha, tempo de atendimento)
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
 ## Fases Futuras (backlog)
 
 | Feature | Fase |
 |---------|------|
-| Notificações em tempo real (SSE) + Gmail polling | 7 |
-| Delegação de tarefas entre funcionários | 8 |
-| Reset de senha por email | 8 |
-| Sub-roles do portal (`member` com permissões granulares) | 8 |
+| Reset de senha por email | Pós-11 |
+| Sub-roles do portal (`member` com permissões granulares) | Pós-11 |
+| Integração GoTo VoIP (detalhe na Fase 8) | 8 |
+| Integração Gmail automático (detalhe na Fase 8) | 8 |
+| Integração WhatsApp via Evolution (detalhe na Fase 8) | 8 |
+| Integração Meta Marketing API (detalhe na Fase 10) | 10 |
 | LGPD — exclusão de dados pessoais | Última |
 | SaaS / multi-tenant | Pós-produto |
 
