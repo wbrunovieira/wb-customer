@@ -71,6 +71,17 @@ export default async function PortalMeetingDetailPage({
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
+      {/* Back link */}
+      <Link
+        href="/portal/meetings"
+        className="flex items-center gap-1.5 self-start text-sm text-slate-500 transition-colors hover:text-slate-900"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Reuniões
+      </Link>
+
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-slate-500">
         <Link href="/portal/meetings" className="hover:text-slate-900">Reuniões</Link>

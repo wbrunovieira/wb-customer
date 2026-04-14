@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
-import { Document, DocumentStatus, DocumentType, PaginatedResponse } from '@/lib/definitions'
+import { Customer, Document, DocumentStatus, DocumentType, PaginatedResponse } from '@/lib/definitions'
 import UploadZone from './_components/upload-zone'
 import DocumentStatusSelect from './_components/document-status-select'
 import DeleteDocumentButton from './_components/delete-document-button'
@@ -44,34 +44,54 @@ function formatBytes(bytes: number | null) {
 export default async function CustomerDocumentsPage({ params }: Props) {
   const { id } = await params
 
+  let customer: Customer
   let data: PaginatedResponse<Document>
   try {
-    data = await apiServer.get<PaginatedResponse<Document>>(
-      `/api/v1/customers/${id}/documents?limit=50`,
-    )
+    ;[customer, data] = await Promise.all([
+      apiServer.get<Customer>(`/api/v1/customers/${id}`),
+      apiServer.get<PaginatedResponse<Document>>(`/api/v1/customers/${id}/documents?limit=50`),
+    ])
   } catch {
     notFound()
   }
 
+  const subTabs = [
+    { href: `/customers/${id}/documents`, label: 'Documentos' },
+    { href: `/customers/${id}/meetings`, label: 'Reuniões' },
+    { href: `/customers/${id}/portal-users`, label: 'Portal' },
+  ]
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href={`/customers/${id}`}
-          className="flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-900"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Cliente
-        </Link>
-      </div>
-
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Documentos</h1>
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+            <span>/</span>
+            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <span>/</span>
+            <span className="text-slate-900">Documentos</span>
+          </div>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Documentos</h1>
           <p className="mt-1 text-sm text-slate-500">{data.total} documento{data.total !== 1 ? 's' : ''}</p>
         </div>
+      </div>
+
+      {/* Sub-navigation tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {subTabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              tab.label === 'Documentos'
+                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

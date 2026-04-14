@@ -28,6 +28,12 @@ export default async function CustomerPortalUsersPage({
     // show empty
   }
 
+  const subTabs = [
+    { href: `/customers/${id}/documents`, label: 'Documentos' },
+    { href: `/customers/${id}/meetings`, label: 'Reuniões' },
+    { href: `/customers/${id}/portal-users`, label: 'Portal' },
+  ]
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
@@ -46,6 +52,23 @@ export default async function CustomerPortalUsersPage({
             Usuários com acesso ao portal do cliente.
           </p>
         </div>
+      </div>
+
+      {/* Sub-navigation tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {subTabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              tab.label === 'Portal'
+                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
       </div>
 
       <AdminPortalUsersManager customerId={id} initialUsers={users} />

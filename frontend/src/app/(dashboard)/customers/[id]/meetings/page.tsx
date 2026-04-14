@@ -61,6 +61,12 @@ export default async function CustomerMeetingsPage({
 
   const typeMap = new Map(meetingTypes.map((t) => [t.id, t]))
 
+  const subTabs = [
+    { href: `/customers/${id}/documents`, label: 'Documentos' },
+    { href: `/customers/${id}/meetings`, label: 'Reuniões' },
+    { href: `/customers/${id}/portal-users`, label: 'Portal' },
+  ]
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -87,6 +93,23 @@ export default async function CustomerMeetingsPage({
           </svg>
           Agendar Reunião
         </Link>
+      </div>
+
+      {/* Sub-navigation tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {subTabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              tab.label === 'Reuniões'
+                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
       </div>
 
       {meetings.length === 0 ? (
