@@ -18,7 +18,9 @@ export interface MeetingHttpResponse {
   scheduledByUserId: string
   recordingDriveId: string | null
   recordingUrl: string | null
+  nativeTranscriptUrl: string | null
   meetingSummary: string | null
+  transcriptText: string | null
   createdAt: string
   updatedAt: string
 }
@@ -43,7 +45,9 @@ export class MeetingPresenter {
       scheduledByUserId: meeting.scheduledByUserId,
       recordingDriveId: meeting.recordingDriveId,
       recordingUrl: meeting.recordingUrl,
+      nativeTranscriptUrl: meeting.nativeTranscriptUrl,
       meetingSummary: meeting.meetingSummary,
+      transcriptText: meeting.transcriptText,
       createdAt: meeting.createdAt.toISOString(),
       updatedAt: meeting.updatedAt.toISOString(),
     }

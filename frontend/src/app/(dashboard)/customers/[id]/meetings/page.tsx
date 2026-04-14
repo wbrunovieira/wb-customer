@@ -232,6 +232,12 @@ export default async function CustomerMeetingsPage({
                         Entrar no Meet
                       </a>
                     )}
+                    <Link
+                      href={`/customers/${id}/meetings/${m.id}`}
+                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      Ver detalhes
+                    </Link>
                     {m.status === 'scheduled' && (
                       <CancelMeetingButton customerId={id} meetingId={m.id} />
                     )}

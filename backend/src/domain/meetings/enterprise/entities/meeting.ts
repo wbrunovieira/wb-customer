@@ -88,7 +88,7 @@ export class Meeting extends AggregateRoot<MeetingProps> {
   get actualEndAt(): Date | null { return this.props.actualEndAt ?? null }
   get googleEventId(): string | null { return this.props.googleEventId ?? null }
   get meetLink(): string | null { return this.props.meetLink ?? null }
-  get attendees(): MeetAttendee[] { return this.props.attendees }
+  get attendees(): MeetAttendee[] { return this.props.attendees ?? [] }
   get status(): MeetingStatus { return this.props.status }
   get scheduledByUserId(): string { return this.props.scheduledByUserId }
   get recordingDriveId(): string | null { return this.props.recordingDriveId ?? null }

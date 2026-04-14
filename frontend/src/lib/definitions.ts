@@ -161,6 +161,7 @@ export type Meeting = {
   scheduledByUserId: string
   recordingDriveId: string | null
   recordingUrl: string | null
+  nativeTranscriptUrl: string | null
   transcriptText: string | null
   meetingSummary: string | null
   createdAt: string
