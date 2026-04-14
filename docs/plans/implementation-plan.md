@@ -675,6 +675,98 @@ GET    /api/v1/events              # Server-Sent Events stream (autenticado)
 
 ---
 
+## Integração Google (OAuth2 Único)
+
+> **Referência de implementação:** `/Users/brunovieira/projects/WB-crm/src/lib/google/`  
+> Mesmas credenciais, mesmo padrão. Replicar de lá.
+
+### Credenciais (salvas em `backend/.env` — não commitar)
+> Valores reais estão no `backend/.env` local. Consulte também a memória `google_integration.md`.
+```
+GOOGLE_CLIENT_ID=<ver .env>
+GOOGLE_CLIENT_SECRET=<ver .env>
+GOOGLE_REDIRECT_URI=http://localhost:3003/api/v1/google/callback   # dev
+# GOOGLE_REDIRECT_URI=https://seudominio.com/api/v1/google/callback # prod
+TRANSCRIPTOR_BASE_URL=https://transcritor.wbdigitalsolutions.com
+TRANSCRIPTOR_API_KEY=<ver .env>
+CRON_SECRET=<ver .env>
+```
+
+### Modelo Prisma necessário
+```prisma
+model GoogleToken {
+  id             String    @id @default(cuid())
+  accessToken    String
+  refreshToken   String
+  expiresAt      DateTime
+  scope          String
+  email          String
+  gmailHistoryId String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  @@map("google_tokens")
+}
+```
+
+### Scopes OAuth2
+```typescript
+export const SCOPES = [
+  "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/drive.readonly",
+  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/userinfo.email",
+]
+```
+
+### Fluxo OAuth (admin conecta uma vez)
+```
+GET  /api/v1/google/auth        → gera URL consentimento (admin only)
+GET  /api/v1/google/callback    → troca code por tokens, salva no banco (singleton)
+POST /api/v1/google/disconnect  → deleta token (admin only)
+```
+- Token salvo com ID fixo `"google-token-singleton"` via upsert
+- Refresh automático: buffer de 5 min antes de expirar
+- `getAuthenticatedClient()` sempre retorna cliente válido
+
+### Funcionalidade 1 — Drive (docs de cliente)
+- Estrutura de pastas: `WB-Customer/Documentos/{Nome do Cliente}/`
+- `getOrCreateFolder(name, parentId?)` — busca ou cria pasta
+- `uploadFile({ name, mimeType, content: Buffer, folderId })` → `{ id, webViewLink }`
+- `driveFolderId` salvo em `Customer` na criação
+- `driveFileId` e `driveViewUrl` salvos em `Document`
+- URL de preview inline: `https://drive.google.com/file/d/{fileId}/preview`
+- Referência: `/Users/brunovieira/projects/WB-crm/src/lib/google/drive.ts`
+               `/Users/brunovieira/projects/WB-crm/src/lib/google/drive-folders.ts`
+
+### Funcionalidade 2 — Gmail (futuro)
+- Polling a cada 5 min via cron
+- `gmailHistoryId` no `GoogleToken` controla ponto de início
+- Cria `Activity` por e-mail recebido (tipo `email`)
+- Referência: `/Users/brunovieira/projects/WB-crm/src/lib/google/gmail-poller.ts`
+
+### Funcionalidade 3 — Google Meet/Calendar (Fase 4 frontend)
+- `createMeetEvent()` → retorna `{ eventId, meetLink }`
+- Crons: check-rsvp (5 min), check-transcriptions (5 min), check-recordings (15 min)
+- Transcritor externo: `TRANSCRIPTOR_BASE_URL` + `TRANSCRIPTOR_API_KEY`
+- Referência: `/Users/brunovieira/projects/WB-crm/src/lib/google/calendar.ts`
+
+### Ordem de implementação Google
+1. Migration `google_tokens`
+2. `src/infra/google/auth.service.ts` — OAuth2, scopes, refresh
+3. `src/infra/google/token-store.service.ts` — getStoredToken, saveToken
+4. `src/infra/google/drive.service.ts` — uploadFile, getOrCreateFolder
+5. Controller `GET /api/v1/google/auth` + `GET /api/v1/google/callback` + `POST /api/v1/google/disconnect`
+6. Página `/admin/google` no frontend — conectar/desconectar, exibir email conectado
+7. Trocar `LocalStorageAdapter` → `GoogleDriveAdapter`
+8. Gmail poller (com fase de atividades)
+9. Calendar/Meet (Fase 4)
+
+---
+
 ## Variáveis de Ambiente
 
 ```env
@@ -695,22 +787,21 @@ JWT_REFRESH_EXPIRES_IN=7d
 SEED_ADMIN_EMAIL=bruno@wbdigitalsolutions.com
 SEED_ADMIN_PASSWORD=Vidaplena20023@
 
-# Google Drive
-GOOGLE_SERVICE_ACCOUNT_JSON='{...}'
-GOOGLE_DRIVE_ROOT_FOLDER_ID=your-root-folder-id
+# Google OAuth2 (Drive + Gmail + Calendar — um único OAuth2, admin conecta via /admin/google)
+GOOGLE_CLIENT_ID=<ver backend/.env>
+GOOGLE_CLIENT_SECRET=<ver backend/.env>
+GOOGLE_REDIRECT_URI=http://localhost:3003/api/v1/google/callback
 
-# Google Calendar (Fase 4 — TBD)
-# GOOGLE_CALENDAR_SERVICE_ACCOUNT_JSON='{...}'
-# GOOGLE_CALENDAR_ID=calendar-id@group.calendar.google.com
+# Transcritor externo
+TRANSCRIPTOR_BASE_URL=https://transcritor.wbdigitalsolutions.com
+TRANSCRIPTOR_API_KEY=BwzxPsLXLaWpqg9CyxO9UGmMR4ZHWfR7Jc5TFUAwf0I
 
-# Gmail API (Notificações — TBD)
-# GMAIL_CLIENT_ID=
-# GMAIL_CLIENT_SECRET=
-# GMAIL_REFRESH_TOKEN=
+# Cron / Internal
+CRON_SECRET=jT/mimrva/LQ8qNzx7ebFuu+Pes3hfax8jFnELbzot0=
 
-# Adapters (feature flags para dev/test)
-STORAGE_ADAPTER=local        # local | google-drive
-CALENDAR_ADAPTER=mock        # mock | google-calendar
+# Adapters
+STORAGE_ADAPTER=google-drive   # local | google-drive
+CALENDAR_ADAPTER=google-calendar  # mock | google-calendar
 ```
 
 ---
