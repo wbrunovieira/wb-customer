@@ -8,6 +8,7 @@ import { CustomersModule } from '@/infra/modules/customers/customers.module'
 import { DocumentsModule } from '@/infra/modules/documents/documents.module'
 import { MeetingsModule } from '@/infra/modules/meetings/meetings.module'
 import { PortalModule } from '@/infra/modules/portal/portal.module'
+import { TasksModule } from '@/infra/modules/tasks/tasks.module'
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PortalModule } from '@/infra/modules/portal/portal.module'
     DocumentsModule,
     MeetingsModule,
     PortalModule,
+    TasksModule,
   ],
   controllers: [HealthController],
 })

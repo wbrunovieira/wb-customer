@@ -18,6 +18,9 @@ export async function setupE2E() {
   const schemaUrl = `${baseUrl}?schema=${schemaName}`
 
   process.env.DATABASE_URL = schemaUrl
+  // Force local adapters so E2E tests don't require Google credentials
+  process.env.STORAGE_ADAPTER = 'local'
+  process.env.CALENDAR_ADAPTER = 'mock'
 
   prisma = new PrismaClient({
     datasources: { db: { url: schemaUrl } },

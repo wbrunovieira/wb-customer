@@ -37,6 +37,16 @@ import { PrismaMeetingRepository } from './prisma/repositories/meetings/prisma-m
 import { PrismaMeetingTypeRepository } from './prisma/repositories/meetings/prisma-meeting-type.repository'
 import { IGoogleTokenService } from '@/domain/meetings/application/services/i-google-token.service'
 import { GoogleTokenService } from '@/infra/adapters/calendar/google-token.service'
+import { ITaskRepository } from '@/domain/tasks/application/repositories/i-task.repository'
+import { ISprintRepository } from '@/domain/tasks/application/repositories/i-sprint.repository'
+import { IChecklistItemRepository } from '@/domain/tasks/application/repositories/i-checklist-item.repository'
+import { ITaskTagRepository } from '@/domain/tasks/application/repositories/i-task-tag.repository'
+import { ITaskActivityLogRepository } from '@/domain/tasks/application/repositories/i-task-activity-log.repository'
+import { PrismaTaskRepository } from './prisma/repositories/tasks/prisma-task.repository'
+import { PrismaSprintRepository } from './prisma/repositories/tasks/prisma-sprint.repository'
+import { PrismaChecklistItemRepository } from './prisma/repositories/tasks/prisma-checklist-item.repository'
+import { PrismaTaskTagRepository } from './prisma/repositories/tasks/prisma-task-tag.repository'
+import { PrismaTaskActivityLogRepository } from './prisma/repositories/tasks/prisma-task-activity-log.repository'
 import { Env } from '@/env/env'
 
 @Global()
@@ -87,6 +97,12 @@ import { Env } from '@/env/env'
     // Meetings
     { provide: IMeetingRepository, useClass: PrismaMeetingRepository },
     { provide: IMeetingTypeRepository, useClass: PrismaMeetingTypeRepository },
+    // Tasks
+    { provide: ITaskRepository, useClass: PrismaTaskRepository },
+    { provide: ISprintRepository, useClass: PrismaSprintRepository },
+    { provide: IChecklistItemRepository, useClass: PrismaChecklistItemRepository },
+    { provide: ITaskTagRepository, useClass: PrismaTaskTagRepository },
+    { provide: ITaskActivityLogRepository, useClass: PrismaTaskActivityLogRepository },
   ],
   exports: [
     PrismaService,
@@ -107,6 +123,11 @@ import { Env } from '@/env/env'
     ICustomerPortalLookup,
     IMeetingRepository,
     IMeetingTypeRepository,
+    ITaskRepository,
+    ISprintRepository,
+    IChecklistItemRepository,
+    ITaskTagRepository,
+    ITaskActivityLogRepository,
   ],
 })
 export class DatabaseModule {}

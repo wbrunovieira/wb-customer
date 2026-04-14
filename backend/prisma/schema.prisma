@@ -116,6 +116,8 @@ model Customer {
   documents    Document[]
   meetings     Meeting[]
   portalUsers  CustomerUser[]
+  sprints     Sprint[]
+  tasks       Task[]
 
   @@index([categoryId])
   @@map("customers")
@@ -317,4 +319,145 @@ model GoogleToken {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("google_tokens")
+}
+
+// ─────────────────────────────────────────
+// TASKS
+// ─────────────────────────────────────────
+
+enum TaskStatus {
+  idea_could
+  idea_should
+  backlog
+  todo
+  in_progress
+  review
+  done
+  cancelled
+}
+
+enum RecurrenceType {
+  none
+  daily
+  weekly
+  monthly
+  custom
+}
+
+model Sprint {
+  id         String   @id @default(uuid())
+  customerId String   @map("customer_id")
+  name       String
+  startAt    DateTime @map("start_at")
+  endAt      DateTime @map("end_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  tasks    Task[]
+
+  @@index([customerId])
+  @@map("sprints")
+}
+
+model Task {
+  id              String         @id @default(uuid())
+  customerId      String         @map("customer_id")
+  sprintId        String?        @map("sprint_id")
+  parentTaskId    String?        @map("parent_task_id")
+  title           String
+  description     String?
+  status          TaskStatus     @default(backlog)
+  ownerUserId     String         @map("owner_user_id")
+  assigneeUserId  String?        @map("assignee_user_id")
+  startAt         DateTime?      @map("start_at")
+  endAt           DateTime?      @map("end_at")
+  estimatedHours  Float?         @map("estimated_hours")
+  trackedSeconds  Int            @default(0) @map("tracked_seconds")
+  impact          Int?
+  confidence      Int?
+  effort          Int?
+  recurrenceType  RecurrenceType @default(none) @map("recurrence_type")
+  recurrenceRule  Json?          @map("recurrence_rule")
+  progress        Int            @default(0)
+  boardPosition   Int            @default(0) @map("board_position")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  customer  Customer        @relation(fields: [customerId], references: [id])
+  sprint    Sprint?         @relation(fields: [sprintId], references: [id])
+  parent    Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id])
+  subtasks  Task[]          @relation("TaskSubtasks")
+  checklist ChecklistItem[]
+  tags      TaskTagLink[]
+  activityLog TaskActivityLog[]
+
+  @@index([customerId])
+  @@index([sprintId])
+  @@index([assigneeUserId])
+  @@map("tasks")
+}
+
+model ChecklistItem {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  text      String
+  isDone    Boolean  @default(false) @map("is_done")
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+  @@map("checklist_items")
+}
+
+model TaskTag {
+  id         String   @id @default(uuid())
+  customerId String?  @map("customer_id")
+  name       String
+  color      String   @default("#3B82F6")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  links TaskTagLink[]
+
+  @@map("task_tags")
+}
+
+model TaskTagLink {
+  taskId String @map("task_id")
+  tagId  String @map("tag_id")
+
+  task Task    @relation(fields: [taskId], references: [id])
+  tag  TaskTag @relation(fields: [tagId], references: [id])
+
+  @@id([taskId, tagId])
+  @@map("task_tag_links")
+}
+
+model TaskActivityLog {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  action    String
+  fromValue String?  @map("from_value")
+  toValue   String?  @map("to_value")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+  @@map("task_activity_logs")
+}
+
+model TaskTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  tasks       Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("task_templates")
 }
