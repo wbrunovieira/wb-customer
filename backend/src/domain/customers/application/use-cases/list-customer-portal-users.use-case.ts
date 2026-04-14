@@ -11,6 +11,7 @@ export interface PortalUserItem {
   userId: string
   customerRole: string
   name: string
+  phone: string | null
   createdAt: Date
   deletedAt: Date | null
 }
@@ -42,6 +43,7 @@ export class ListCustomerPortalUsersUseCase {
           userId: cu.userId,
           customerRole: cu.customerRole,
           name: profile?.name ?? '—',
+          phone: profile?.phone ?? null,
           createdAt: cu.createdAt,
           deletedAt: cu.deletedAt,
         }

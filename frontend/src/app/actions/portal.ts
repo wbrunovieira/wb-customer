@@ -48,6 +48,7 @@ export async function createPortalUser(
   const password = formData.get('password') as string
   const name = formData.get('name') as string
   const phone = formData.get('phone') as string
+  const customerRole = (formData.get('customerRole') as string) || 'master'
 
   if (!email) return { errors: { email: ['E-mail obrigatório'] } }
   if (!password) return { errors: { password: ['Senha obrigatória'] } }
@@ -59,7 +60,7 @@ export async function createPortalUser(
       password,
       name,
       phone: phone || undefined,
-      customerRole: 'master',
+      customerRole,
     })
   } catch (err) {
     return { message: (err as Error).message }
@@ -71,5 +72,14 @@ export async function createPortalUser(
 
 export async function revokePortalAccess(customerId: string, customerUserId: string) {
   await apiServer.delete(`/api/v1/customers/${customerId}/portal-users/${customerUserId}`)
+  revalidatePath(`/customers/${customerId}/portal-users`)
+}
+
+export async function updatePortalUser(
+  customerId: string,
+  customerUserId: string,
+  data: { name?: string; phone?: string; customerRole?: 'master' | 'member' },
+) {
+  await apiServer.patch(`/api/v1/customers/${customerId}/portal-users/${customerUserId}`, data)
   revalidatePath(`/customers/${customerId}/portal-users`)
 }

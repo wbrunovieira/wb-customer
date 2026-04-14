@@ -44,6 +44,10 @@ export class CustomerUser extends Entity<CustomerUserProps> {
   get isDeleted(): boolean { return !!this.props.deletedAt }
   get isMaster(): boolean { return this.props.customerRole === 'master' }
 
+  updateRole(role: CustomerUserRole): void {
+    this.props.customerRole = role
+  }
+
   softDelete(): void {
     this.props.deletedAt = new Date()
   }

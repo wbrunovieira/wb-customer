@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -29,6 +30,7 @@ import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { CreateCustomerPortalUserUseCase } from '@/domain/customers/application/use-cases/create-customer-portal-user.use-case'
 import { ListCustomerPortalUsersUseCase } from '@/domain/customers/application/use-cases/list-customer-portal-users.use-case'
 import { RevokeCustomerPortalAccessUseCase } from '@/domain/customers/application/use-cases/revoke-customer-portal-access.use-case'
+import { UpdateCustomerPortalUserUseCase } from '@/domain/customers/application/use-cases/update-customer-portal-user.use-case'
 import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/customer-not-found.error'
 import { CustomerUserNotFoundError } from '@/domain/customers/domain/exceptions/customer-user-not-found.error'
 import { UserAlreadyExistsError } from '@/domain/auth/domain/exceptions/user-already-exists.error'
@@ -54,6 +56,17 @@ class CreatePortalUserDto {
   customerRole?: 'master' | 'member'
 }
 
+class UpdatePortalUserDto {
+  @ApiPropertyOptional({ example: 'João Santos' })
+  name?: string
+
+  @ApiPropertyOptional({ example: '+5511888888888' })
+  phone?: string
+
+  @ApiPropertyOptional({ example: 'member', enum: ['master', 'member'] })
+  customerRole?: 'master' | 'member'
+}
+
 @ApiTags('Customer Portal Users')
 @ApiBearerAuth()
 @Controller('customers/:customerId/portal-users')
@@ -64,6 +77,7 @@ export class CustomerPortalUsersController {
     private readonly createPortalUser: CreateCustomerPortalUserUseCase,
     private readonly listPortalUsers: ListCustomerPortalUsersUseCase,
     private readonly revokeAccess: RevokeCustomerPortalAccessUseCase,
+    private readonly updatePortalUser: UpdateCustomerPortalUserUseCase,
   ) {}
 
   @Post()
@@ -108,6 +122,31 @@ export class CustomerPortalUsersController {
       throw new NotFoundException(result.value.message)
     }
     return result.value
+  }
+
+  @Patch(':customerUserId')
+  @ApiOperation({ summary: 'Update a portal user name, phone or role (admin only)' })
+  @ApiParam({ name: 'customerId', type: String })
+  @ApiParam({ name: 'customerUserId', type: String })
+  @ApiBody({ type: UpdatePortalUserDto })
+  @ApiResponse({ status: 200, description: 'Portal user updated' })
+  @ApiResponse({ status: 404, description: 'Portal user not found' })
+  async update(
+    @Param('customerUserId') customerUserId: string,
+    @Body() body: UpdatePortalUserDto,
+  ) {
+    const result = await this.updatePortalUser.execute({
+      customerUserId,
+      name: body.name,
+      phone: body.phone,
+      customerRole: body.customerRole,
+    })
+    if (result.isLeft()) {
+      const err = result.value
+      if (err instanceof CustomerUserNotFoundError) throw new NotFoundException(err.message)
+      throw new BadRequestException((err as Error).message)
+    }
+    return {}
   }
 
   @Delete(':customerUserId')

@@ -6,6 +6,7 @@ import { CustomerPortalUsersController } from '@/infra/controllers/customer-port
 import { CreateCustomerPortalUserUseCase } from '@/domain/customers/application/use-cases/create-customer-portal-user.use-case'
 import { ListCustomerPortalUsersUseCase } from '@/domain/customers/application/use-cases/list-customer-portal-users.use-case'
 import { RevokeCustomerPortalAccessUseCase } from '@/domain/customers/application/use-cases/revoke-customer-portal-access.use-case'
+import { UpdateCustomerPortalUserUseCase } from '@/domain/customers/application/use-cases/update-customer-portal-user.use-case'
 import { CreateCustomerCategoryUseCase } from '@/domain/customers/application/use-cases/create-customer-category.use-case'
 import { ListCustomerCategoriesUseCase } from '@/domain/customers/application/use-cases/list-customer-categories.use-case'
 import { UpdateCustomerCategoryUseCase } from '@/domain/customers/application/use-cases/update-customer-category.use-case'
@@ -52,6 +53,7 @@ import { ListCustomerActivitiesUseCase } from '@/domain/customers/application/us
     CreateCustomerPortalUserUseCase,
     ListCustomerPortalUsersUseCase,
     RevokeCustomerPortalAccessUseCase,
+    UpdateCustomerPortalUserUseCase,
   ],
 })
 export class CustomersModule {}

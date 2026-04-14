@@ -23,6 +23,7 @@ export type PortalUser = {
   userId: string
   customerRole: 'master' | 'member'
   name: string
+  phone: string | null
   createdAt: string
   deletedAt: string | null
 }
