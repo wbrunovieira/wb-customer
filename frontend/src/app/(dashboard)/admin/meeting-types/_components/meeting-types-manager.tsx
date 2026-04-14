@@ -3,6 +3,7 @@
 import { useActionState, useTransition, useState } from 'react'
 import { createMeetingType, deleteMeetingType } from '@/app/actions/meetings'
 import { MeetingType, MeetingTypeFormState } from '@/lib/definitions'
+import { useToast } from '@/components/toast/toast-context'
 
 const PRESET_COLORS = [
   '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B',
@@ -12,6 +13,7 @@ const PRESET_COLORS = [
 type Props = { initialTypes: MeetingType[] }
 
 export default function MeetingTypesManager({ initialTypes }: Props) {
+  const { confirm, success, error } = useToast()
   const [createState, createAction, createPending] = useActionState<MeetingTypeFormState, FormData>(
     createMeetingType,
     undefined,
@@ -21,8 +23,21 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
   const [showForm, setShowForm] = useState(false)
 
   function handleDelete(id: string, name: string) {
-    if (!confirm(`Excluir o tipo "${name}"? Reuniões existentes não serão afetadas.`)) return
-    startDelete(() => deleteMeetingType(id))
+    confirm({
+      message: `Excluir o tipo "${name}"? Reuniões existentes não serão afetadas.`,
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+      onConfirm: () => {
+        startDelete(async () => {
+          try {
+            await deleteMeetingType(id)
+            success(`Tipo "${name}" excluído.`)
+          } catch {
+            error('Não foi possível excluir o tipo.')
+          }
+        })
+      },
+    })
   }
 
   return (

@@ -2,15 +2,30 @@
 
 import { useTransition } from 'react'
 import { cancelMeeting } from '@/app/actions/meetings'
+import { useToast } from '@/components/toast/toast-context'
 
 type Props = { customerId: string; meetingId: string }
 
 export default function CancelMeetingButton({ customerId, meetingId }: Props) {
+  const { confirm, success, error } = useToast()
   const [pending, startTransition] = useTransition()
 
   function handleClick() {
-    if (!confirm('Cancelar esta reunião? O evento será removido do Google Calendar.')) return
-    startTransition(() => cancelMeeting(customerId, meetingId))
+    confirm({
+      message: 'Cancelar esta reunião? O evento será removido do Google Calendar.',
+      confirmLabel: 'Cancelar reunião',
+      cancelLabel: 'Voltar',
+      onConfirm: () => {
+        startTransition(async () => {
+          try {
+            await cancelMeeting(customerId, meetingId)
+            success('Reunião cancelada.')
+          } catch {
+            error('Não foi possível cancelar a reunião.')
+          }
+        })
+      },
+    })
   }
 
   return (

@@ -1,6 +1,8 @@
 'use client'
 
+import { useTransition } from 'react'
 import { deleteDocument } from '@/app/actions/documents'
+import { useToast } from '@/components/toast/toast-context'
 
 type Props = {
   customerId: string
@@ -9,17 +11,34 @@ type Props = {
 }
 
 export default function DeleteDocumentButton({ customerId, documentId, title }: Props) {
-  async function handleDelete() {
-    if (!confirm(`Excluir o documento "${title}"?`)) return
-    await deleteDocument(customerId, documentId)
+  const { confirm, success, error } = useToast()
+  const [pending, startTransition] = useTransition()
+
+  function handleClick() {
+    confirm({
+      message: `Excluir o documento "${title}"? O arquivo também será removido do Google Drive.`,
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+      onConfirm: () => {
+        startTransition(async () => {
+          try {
+            await deleteDocument(customerId, documentId)
+            success(`Documento "${title}" excluído.`)
+          } catch {
+            error('Não foi possível excluir o documento.')
+          }
+        })
+      },
+    })
   }
 
   return (
     <button
-      onClick={handleDelete}
-      className="rounded px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50"
+      onClick={handleClick}
+      disabled={pending}
+      className="rounded px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
     >
-      Excluir
+      {pending ? 'Excluindo...' : 'Excluir'}
     </button>
   )
 }

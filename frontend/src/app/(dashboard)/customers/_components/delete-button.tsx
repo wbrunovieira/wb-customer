@@ -1,6 +1,8 @@
 'use client'
 
+import { useTransition } from 'react'
 import { deleteCustomer } from '@/app/actions/customers'
+import { useToast } from '@/components/toast/toast-context'
 
 type Props = {
   id: string
@@ -8,17 +10,34 @@ type Props = {
 }
 
 export default function DeleteButton({ id, name }: Props) {
-  async function handleDelete() {
-    if (!confirm(`Excluir o cliente "${name}"?`)) return
-    await deleteCustomer(id)
+  const { confirm, success, error } = useToast()
+  const [pending, startTransition] = useTransition()
+
+  function handleClick() {
+    confirm({
+      message: `Excluir o cliente "${name}"? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+      onConfirm: () => {
+        startTransition(async () => {
+          try {
+            await deleteCustomer(id)
+            success(`Cliente "${name}" excluído.`)
+          } catch {
+            error('Não foi possível excluir o cliente.')
+          }
+        })
+      },
+    })
   }
 
   return (
     <button
-      onClick={handleDelete}
-      className="rounded-lg px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50"
+      onClick={handleClick}
+      disabled={pending}
+      className="rounded-lg px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
     >
-      Excluir
+      {pending ? 'Excluindo...' : 'Excluir'}
     </button>
   )
 }
