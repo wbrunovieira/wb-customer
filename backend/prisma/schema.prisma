@@ -392,6 +392,7 @@ model Task {
   checklist ChecklistItem[]
   tags      TaskTagLink[]
   activityLog TaskActivityLog[]
+  comments  TaskComment[]
 
   @@index([customerId])
   @@index([sprintId])
@@ -460,4 +461,68 @@ model TaskTemplate {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("task_templates")
+}
+
+model TaskComment {
+  id           String    @id @default(uuid())
+  taskId       String    @map("task_id")
+  parentId     String?   @map("parent_id")
+  authorUserId String    @map("author_user_id")
+  body         String?
+  audioUrl     String?   @map("audio_url")
+  resolved     Boolean   @default(false)
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  task        Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  parent      TaskComment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     TaskComment[]     @relation("CommentReplies")
+  attachments CommentAttachment[]
+  annotations ImageAnnotation[]
+  reactions   CommentReaction[]
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model CommentAttachment {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  url       String
+  name      String
+  mimeType  String   @map("mime_type")
+  sizeBytes BigInt?  @map("size_bytes")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("comment_attachments")
+}
+
+model ImageAnnotation {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  imageUrl  String   @map("image_url")
+  x         Float
+  y         Float
+  number    Int
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("image_annotations")
+}
+
+model CommentReaction {
+  commentId String   @map("comment_id")
+  userId    String   @map("user_id")
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId, emoji])
+  @@map("comment_reactions")
 }

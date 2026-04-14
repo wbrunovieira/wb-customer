@@ -19,6 +19,8 @@ import { DeleteChecklistItemUseCase } from '@/domain/tasks/application/use-cases
 import { AttachTaskTagUseCase } from '@/domain/tasks/application/use-cases/attach-task-tag.use-case'
 import { DetachTaskTagUseCase } from '@/domain/tasks/application/use-cases/detach-task-tag.use-case'
 import { GetTaskActivityLogUseCase } from '@/domain/tasks/application/use-cases/get-task-activity-log.use-case'
+import { AddSubtaskUseCase } from '@/domain/tasks/application/use-cases/add-subtask.use-case'
+import { ITaskRepository } from '@/domain/tasks/application/repositories/i-task.repository'
 import { IChecklistItemRepository } from '@/domain/tasks/application/repositories/i-checklist-item.repository'
 import { ITaskTagRepository } from '@/domain/tasks/application/repositories/i-task-tag.repository'
 import { TaskPresenter } from '@/infra/presenters/task.presenter'
@@ -80,8 +82,10 @@ export class TasksController {
     private readonly attachTagUseCase: AttachTaskTagUseCase,
     private readonly detachTagUseCase: DetachTaskTagUseCase,
     private readonly getActivityLogUseCase: GetTaskActivityLogUseCase,
+    private readonly addSubtaskUseCase: AddSubtaskUseCase,
     private readonly checklistRepo: IChecklistItemRepository,
     private readonly tagRepo: ITaskTagRepository,
+    private readonly taskRepo: ITaskRepository,
   ) {}
 
   @Post()
@@ -157,12 +161,13 @@ export class TasksController {
     const result = await this.getTaskUseCase.execute({ taskId, customerId })
     if (result.isLeft()) throw new NotFoundException(result.value.message)
     const task = result.value.task
-    const [checklist, tags, logResult] = await Promise.all([
+    const [checklist, tags, logResult, subtasksResult] = await Promise.all([
       this.checklistRepo.findByTaskId(taskId),
       this.tagRepo.findTagsByTaskId(taskId),
       this.getActivityLogUseCase.execute({ taskId }),
+      this.taskRepo.findByCustomerId(customerId, { parentTaskId: task.id.value }),
     ])
-    return { task: TaskPresenter.toHTTP(task, { checklist, tags, activityLog: logResult.value.logs }) }
+    return { task: TaskPresenter.toHTTP(task, { checklist, tags, activityLog: logResult.value.logs, subtasks: subtasksResult.items }) }
   }
 
   @Patch(':taskId')
@@ -226,6 +231,30 @@ export class TasksController {
   async delete(@Param('customerId') customerId: string, @Param('taskId') taskId: string) {
     const result = await this.deleteTaskUseCase.execute({ taskId, customerId })
     if (result.isLeft()) throw new NotFoundException(result.value.message)
+  }
+
+  // Subtasks
+  @Post(':taskId/subtasks')
+  @ApiOperation({ summary: 'Add a subtask' })
+  @ApiParam({ name: 'customerId', type: String })
+  @ApiParam({ name: 'taskId', type: String })
+  @ApiBody({ type: CreateTaskDto })
+  @ApiResponse({ status: 201 })
+  async addSubtask(
+    @Param('customerId') customerId: string,
+    @Param('taskId') taskId: string,
+    @Body() body: CreateTaskDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.addSubtaskUseCase.execute({
+      parentTaskId: taskId,
+      customerId,
+      ownerUserId: user.userId,
+      title: body.title,
+      description: body.description,
+    })
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+    return { taskId: result.value.taskId }
   }
 
   // Checklist

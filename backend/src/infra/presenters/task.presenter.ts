@@ -31,6 +31,7 @@ export interface TaskHttpResponse {
   checklist?: ChecklistItemHttpResponse[]
   tags?: TagHttpResponse[]
   activityLog?: ActivityLogHttpResponse[]
+  subtasks?: TaskHttpResponse[]
 }
 
 export interface ChecklistItemHttpResponse {
@@ -70,7 +71,7 @@ export interface SprintHttpResponse {
 export class TaskPresenter {
   static toHTTP(
     task: Task,
-    opts?: { checklist?: ChecklistItem[]; tags?: TaskTag[]; activityLog?: TaskActivityLog[] },
+    opts?: { checklist?: ChecklistItem[]; tags?: TaskTag[]; activityLog?: TaskActivityLog[]; subtasks?: Task[] },
   ): TaskHttpResponse {
     return {
       id: task.id.value,
@@ -113,6 +114,7 @@ export class TaskPresenter {
         toValue: l.toValue,
         createdAt: l.createdAt.toISOString(),
       })),
+      subtasks: opts?.subtasks?.map(s => TaskPresenter.toHTTP(s)),
     }
   }
 }

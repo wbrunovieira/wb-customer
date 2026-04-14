@@ -3,6 +3,7 @@ import { TasksController } from '@/infra/controllers/tasks.controller'
 import { SprintsController } from '@/infra/controllers/sprints.controller'
 import { TaskTagsController } from '@/infra/controllers/task-tags.controller'
 import { AllTasksController } from '@/infra/controllers/all-tasks.controller'
+import { CommentsController } from '@/infra/controllers/comments.controller'
 import { CreateTaskUseCase } from '@/domain/tasks/application/use-cases/create-task.use-case'
 import { UpdateTaskUseCase } from '@/domain/tasks/application/use-cases/update-task.use-case'
 import { DeleteTaskUseCase } from '@/domain/tasks/application/use-cases/delete-task.use-case'
@@ -22,9 +23,17 @@ import { UpdateSprintUseCase } from '@/domain/tasks/application/use-cases/update
 import { DeleteSprintUseCase } from '@/domain/tasks/application/use-cases/delete-sprint.use-case'
 import { ListSprintsUseCase } from '@/domain/tasks/application/use-cases/list-sprints.use-case'
 import { ListAllTasksUseCase } from '@/domain/tasks/application/use-cases/list-all-tasks.use-case'
+import { AddCommentUseCase } from '@/domain/tasks/application/use-cases/add-comment.use-case'
+import { ListCommentsUseCase } from '@/domain/tasks/application/use-cases/list-comments.use-case'
+import { ResolveCommentUseCase } from '@/domain/tasks/application/use-cases/resolve-comment.use-case'
+import { ReactToCommentUseCase } from '@/domain/tasks/application/use-cases/react-to-comment.use-case'
+import { DeleteCommentUseCase } from '@/domain/tasks/application/use-cases/delete-comment.use-case'
+import { AddSubtaskUseCase } from '@/domain/tasks/application/use-cases/add-subtask.use-case'
+import { ProcessRecurringTasksUseCase } from '@/domain/tasks/application/use-cases/process-recurring-tasks.use-case'
+import { RecurringTasksScheduler } from '@/infra/tasks/recurring-tasks.scheduler'
 
 @Module({
-  controllers: [TasksController, SprintsController, TaskTagsController, AllTasksController],
+  controllers: [TasksController, SprintsController, TaskTagsController, AllTasksController, CommentsController],
   providers: [
     // Task use cases
     CreateTaskUseCase,
@@ -50,6 +59,17 @@ import { ListAllTasksUseCase } from '@/domain/tasks/application/use-cases/list-a
     DeleteSprintUseCase,
     ListSprintsUseCase,
     ListAllTasksUseCase,
+    // Comments
+    AddCommentUseCase,
+    ListCommentsUseCase,
+    ResolveCommentUseCase,
+    ReactToCommentUseCase,
+    DeleteCommentUseCase,
+    // Subtasks
+    AddSubtaskUseCase,
+    // Recurring tasks
+    ProcessRecurringTasksUseCase,
+    RecurringTasksScheduler,
   ],
 })
 export class TasksModule {}

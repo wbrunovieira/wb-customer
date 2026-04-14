@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { envSchema } from '@/env/env'
 import { HealthController } from '@/infra/controllers/health.controller'
 import { DatabaseModule } from '@/infra/database/database.module'
@@ -17,6 +18,7 @@ import { NotificationsModule } from '@/infra/modules/notifications/notifications
       isGlobal: true,
       validate: (config) => envSchema.parse(config),
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
     CustomersModule,

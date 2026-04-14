@@ -216,9 +216,48 @@ export type TaskActivityLog = {
   createdAt: string
 }
 
+export type CommentAttachment = {
+  id: string
+  url: string
+  name: string
+  mimeType: string
+  sizeBytes: number | null
+}
+
+export type ImageAnnotation = {
+  id: string
+  imageUrl: string
+  x: number
+  y: number
+  number: number
+  text: string
+}
+
+export type CommentReaction = {
+  userId: string
+  emoji: string
+}
+
+export type TaskComment = {
+  id: string
+  taskId: string
+  parentId: string | null
+  authorUserId: string
+  body: string | null
+  audioUrl: string | null
+  resolved: boolean
+  createdAt: string
+  updatedAt: string
+  attachments: CommentAttachment[]
+  annotations: ImageAnnotation[]
+  reactions: CommentReaction[]
+  replies: TaskComment[]
+}
+
 export type Task = {
   id: string
   customerId: string
+  customerName?: string
   sprintId: string | null
   parentTaskId: string | null
   title: string
@@ -244,6 +283,7 @@ export type Task = {
   checklist?: ChecklistItem[]
   tags?: TaskTag[]
   activityLog?: TaskActivityLog[]
+  subtasks?: Task[]
 }
 
 export type Sprint = {

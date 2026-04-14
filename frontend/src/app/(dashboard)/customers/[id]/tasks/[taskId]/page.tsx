@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
-import { Customer, Task, Sprint, TaskTag, TaskStatus } from '@/lib/definitions'
+import { Customer, CurrentUser, Task, Sprint, TaskTag, TaskStatus, TaskComment } from '@/lib/definitions'
 import ChecklistSection from './_components/checklist-section'
 import UpdateTaskForm from './_components/update-task-form'
 import TagsSection from './_components/tags-section'
 import StatusChanger from './_components/status-changer'
+import SubtasksSection from './_components/subtasks-section'
+import CommentsSection from './_components/comments-section'
 import DeleteTaskButton from '../_components/delete-task-button'
 
 export const metadata = { title: 'Tarefa — WB Customer' }
@@ -83,6 +85,8 @@ export default async function TaskDetailPage({
   let task: Task
   let sprints: Sprint[] = []
   let allTags: TaskTag[] = []
+  let comments: TaskComment[] = []
+  let currentUser: CurrentUser | null = null
 
   try {
     customer = await apiServer.get<Customer>(`/api/v1/customers/${id}`)
@@ -98,18 +102,23 @@ export default async function TaskDetailPage({
   }
 
   try {
-    const [sprintsRes, tagsRes] = await Promise.all([
+    const [sprintsRes, tagsRes, commentsRes, userRes] = await Promise.all([
       apiServer.get<{ sprints: Sprint[] }>(`/api/v1/customers/${id}/sprints`),
       apiServer.get<{ tags: TaskTag[] }>(`/api/v1/task-tags?customerId=${id}`),
+      apiServer.get<{ comments: TaskComment[] }>(`/api/v1/customers/${id}/tasks/${taskId}/comments`),
+      apiServer.get<CurrentUser>('/api/v1/auth/me'),
     ])
     sprints = sprintsRes.sprints
     allTags = tagsRes.tags
+    comments = commentsRes.comments
+    currentUser = userRes
   } catch {
     // ignore
   }
 
   const t = task!
   const checklist = t.checklist ?? []
+  const subtasks = t.subtasks ?? []
   const attachedTags = t.tags ?? []
   const activityLog = t.activityLog ?? []
 
@@ -181,6 +190,21 @@ export default async function TaskDetailPage({
           {/* Checklist */}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <ChecklistSection customerId={id} taskId={t.id} items={checklist} />
+          </div>
+
+          {/* Subtasks */}
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <SubtasksSection customerId={id} taskId={t.id} subtasks={subtasks} />
+          </div>
+
+          {/* Comments */}
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <CommentsSection
+              customerId={id}
+              taskId={t.id}
+              comments={comments}
+              currentUserId={currentUser?.id ?? ''}
+            />
           </div>
 
           {/* Edit form */}

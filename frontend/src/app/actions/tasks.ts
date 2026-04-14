@@ -164,6 +164,105 @@ export async function deleteSprint(customerId: string, sprintId: string) {
   revalidateTasks(customerId)
 }
 
+// ─── Subtasks ────────────────────────────────────────────────
+
+export async function createSubtask(
+  customerId: string,
+  parentTaskId: string,
+  _state: unknown,
+  formData: FormData,
+) {
+  const title = formData.get('title') as string
+  if (!title?.trim()) return { errors: { title: ['Título obrigatório'] } }
+
+  try {
+    await apiServer.post(`/api/v1/customers/${customerId}/tasks/${parentTaskId}/subtasks`, {
+      title: title.trim(),
+      description: (formData.get('description') as string) || undefined,
+    })
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+
+  revalidatePath(`/customers/${customerId}/tasks/${parentTaskId}`)
+  return { success: true }
+}
+
+// ─── Comments ────────────────────────────────────────────────
+
+export async function addComment(
+  customerId: string,
+  taskId: string,
+  _state: unknown,
+  formData: FormData,
+) {
+  const body = formData.get('body') as string
+  if (!body?.trim()) return { errors: { body: ['Comentário obrigatório'] } }
+
+  try {
+    await apiServer.post(`/api/v1/customers/${customerId}/tasks/${taskId}/comments`, {
+      body: body.trim(),
+    })
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+  return { success: true }
+}
+
+export async function replyToComment(
+  customerId: string,
+  taskId: string,
+  parentId: string,
+  _state: unknown,
+  formData: FormData,
+) {
+  const body = formData.get('body') as string
+  if (!body?.trim()) return { errors: { body: ['Resposta obrigatória'] } }
+
+  try {
+    await apiServer.post(`/api/v1/customers/${customerId}/tasks/${taskId}/comments`, {
+      body: body.trim(),
+      parentId,
+    })
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+  return { success: true }
+}
+
+export async function resolveComment(customerId: string, taskId: string, commentId: string) {
+  await apiServer.patch(
+    `/api/v1/customers/${customerId}/tasks/${taskId}/comments/${commentId}/resolve`,
+    {},
+  )
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+}
+
+export async function reactToComment(
+  customerId: string,
+  taskId: string,
+  commentId: string,
+  emoji: string,
+  toggle: boolean,
+) {
+  await apiServer.post(
+    `/api/v1/customers/${customerId}/tasks/${taskId}/comments/${commentId}/reactions`,
+    { emoji, toggle },
+  )
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+}
+
+export async function deleteComment(customerId: string, taskId: string, commentId: string) {
+  await apiServer.delete(
+    `/api/v1/customers/${customerId}/tasks/${taskId}/comments/${commentId}`,
+  )
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+}
+
 // ─── Tags ────────────────────────────────────────────────────
 
 export async function createTag(customerId: string, name: string, color: string) {

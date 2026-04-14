@@ -17,6 +17,8 @@ export interface PaginatedTasks {
 
 export interface FindAllTasksParams extends FindManyTasksParams {
   customerId?: string
+  recurrenceType?: string
+  invertRecurrence?: boolean
 }
 
 export abstract class ITaskRepository {

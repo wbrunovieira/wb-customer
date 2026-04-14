@@ -52,6 +52,9 @@ export class PrismaTaskRepository implements ITaskRepository {
       ...(params.sprintId !== undefined ? { sprintId: params.sprintId } : {}),
       ...(params.assigneeUserId ? { assigneeUserId: params.assigneeUserId } : {}),
       ...(params.ideasOnly ? { status: { in: ['idea_could', 'idea_should'] as any } } : {}),
+      ...(params.recurrenceType !== undefined
+        ? { recurrenceType: params.invertRecurrence ? { not: params.recurrenceType as any } : (params.recurrenceType as any) }
+        : {}),
     }
 
     const [items, total] = await Promise.all([
