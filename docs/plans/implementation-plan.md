@@ -50,6 +50,8 @@ Sistema de gestão de clientes com controle de histórico, ações, documentos, 
 | CI/CD | Ansible para produção (detalhes quando chegar lá). Por ora: só local |
 | Multi-tenant | **Não agora.** Sistema para uso próprio. Pode virar SaaS no futuro, mas sem over-engineering prévio |
 | LGPD | Última prioridade. Implementar após todas as features |
+| Charts / Dashboard | **Tremor** (componentes de dashboard Tailwind-first: KPI cards, AreaChart, BarChart, DonutChart, Funnel) para gráficos padrão. **Recharts** para casos customizados (ex: Gantt). **Looker Studio descartado**: conflito com auth JWT próprio, exigiria BigQuery/Sheets para expor dados, e não suporta multi-tenant por `customerId` sem um report por cliente. |
+| Portal Cliente Dashboard | `/portal/dashboard` — página de métricas para o cliente acompanhar seus números (leads, funil de conversão, criativos ativos, campanhas, reuniões). Implementada junto com as Fases 9–11 à medida que os dados ficam disponíveis. Usa Tremor + dados filtrados por `customerId` do JWT. |
 
 ---
 
@@ -1159,6 +1161,8 @@ model CustomerUser {
 - [x] `UpdateCustomerPortalUserUseCase` + `PATCH` endpoint
 - [x] Refresh token + proxy.ts (Next.js 16 / Edge Runtime)
 - [x] Commit + push GitHub
+
+> **Extensão planejada (Fases 9–11):** `/portal/dashboard` — painel de métricas para o cliente. Implementado incrementalmente conforme os dados de criativos, tráfego pago e CRM forem disponibilizados. Usa **Tremor** para KPI cards e gráficos (AreaChart, BarChart, Funnel). Autenticação já garantida pelo `customerId` no JWT.
 
 ---
 
