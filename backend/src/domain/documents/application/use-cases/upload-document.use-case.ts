@@ -4,6 +4,7 @@ import { IDocumentRepository } from '../repositories/i-document.repository'
 import { IStorageAdapter } from '../services/i-storage.adapter'
 import { ICustomerRepository } from '@/domain/customers/application/repositories/i-customer.repository'
 import { ICustomerActivityRepository } from '@/domain/customers/application/repositories/i-customer-activity.repository'
+import { ICustomerFolderService } from '@/domain/customers/application/services/i-customer-folder.service'
 import { Document } from '../../enterprise/entities/document'
 import { DocumentType } from '../../enterprise/value-objects/document-type.vo'
 import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/customer-not-found.error'
@@ -37,6 +38,7 @@ export class UploadDocumentUseCase {
     private readonly storageAdapter: IStorageAdapter,
     private readonly customerRepo: ICustomerRepository,
     private readonly activityRepo: ICustomerActivityRepository,
+    private readonly folderService: ICustomerFolderService,
   ) {}
 
   async execute(request: UploadDocumentRequest): Promise<UploadDocumentResult> {
@@ -51,7 +53,19 @@ export class UploadDocumentUseCase {
     }
     const docType = typeResult.value
 
-    const folderId = customer.driveFolderId ?? request.customerId
+    // Resolve folder ID — create/get real folder if missing or from local adapter
+    const storedId = customer.driveFolderId
+    const needsFolder = !storedId || storedId.startsWith('local-folder-')
+    let folderId: string
+
+    if (needsFolder) {
+      folderId = await this.folderService.createFolder(customer.name)
+      customer.setDriveFolderId(folderId)
+      await this.customerRepo.save(customer)
+    } else {
+      folderId = storedId
+    }
+
     const uploaded = await this.storageAdapter.uploadFile({
       folderId,
       fileName: request.title,
