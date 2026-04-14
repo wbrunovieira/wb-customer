@@ -15,7 +15,7 @@ export class MeetingRsvpCheckerService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async checkRsvpStatuses(): Promise<void> {
     const meetings = await this.meetingRepo.findScheduledBefore(
-      new Date(Date.now() + 60 * 60 * 1000), // next 1h
+      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // next 30 days
     )
 
     for (const meeting of meetings) {

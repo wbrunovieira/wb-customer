@@ -53,7 +53,7 @@ export class PrismaMeetingRepository implements IMeetingRepository {
     const rows = await this.prisma.meeting.findMany({
       where: {
         status: 'scheduled',
-        endAt: { lte: before },
+        startAt: { lte: before },
       },
     })
     return rows.map(MeetingMapper.toDomain)

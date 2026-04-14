@@ -37,7 +37,7 @@ export class InMemoryMeetingRepository implements IMeetingRepository {
 
   async findScheduledBefore(before: Date): Promise<Meeting[]> {
     return this.items.filter(
-      (m) => m.status.isScheduled() && m.endAt !== null && m.endAt < before,
+      (m) => m.status.isScheduled() && m.startAt < before,
     )
   }
 
