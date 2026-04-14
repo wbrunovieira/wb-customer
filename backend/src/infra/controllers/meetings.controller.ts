@@ -38,6 +38,7 @@ import { MeetingNotFoundError } from '@/domain/meetings/domain/exceptions/meetin
 import { MeetingAlreadyCancelledError } from '@/domain/meetings/domain/exceptions/meeting-already-cancelled.error'
 import { MeetingTypeNotFoundError } from '@/domain/meetings/domain/exceptions/meeting-type-not-found.error'
 import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/customer-not-found.error'
+import { MeetingPresenter } from '@/infra/presenters/meeting.presenter'
 
 interface AuthenticatedRequest extends ExpressRequest {
   user: { userId: string; role: string }
@@ -172,7 +173,8 @@ export class MeetingsController {
       if (err instanceof CustomerNotFoundError) throw new NotFoundException(err.message)
       throw new BadRequestException((err as Error).message)
     }
-    return result.value
+    const { items, total } = result.value
+    return { items: items.map(MeetingPresenter.toHTTP), total }
   }
 
   @Get(':meetingId')
@@ -189,7 +191,7 @@ export class MeetingsController {
     if (result.isLeft()) {
       throw new NotFoundException(result.value.message)
     }
-    return result.value
+    return { meeting: MeetingPresenter.toHTTP(result.value.meeting) }
   }
 
   @Patch(':meetingId')

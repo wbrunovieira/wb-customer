@@ -8,7 +8,8 @@ export default async function AdminMeetingTypesPage() {
   let meetingTypes: MeetingType[] = []
 
   try {
-    meetingTypes = await apiServer.get<MeetingType[]>('/api/v1/meeting-types?onlyActive=false')
+    const res = await apiServer.get<{ meetingTypes: MeetingType[] }>('/api/v1/meeting-types?onlyActive=false')
+    meetingTypes = res.meetingTypes
   } catch {
     // empty
   }

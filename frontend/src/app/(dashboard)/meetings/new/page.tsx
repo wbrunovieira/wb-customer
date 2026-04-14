@@ -11,10 +11,11 @@ export default async function NewMeetingPage({
 }) {
   const { customerId: preselectedCustomerId } = await searchParams
 
-  const [customersRes, meetingTypes] = await Promise.all([
+  const [customersRes, typesRes] = await Promise.all([
     apiServer.get<PaginatedResponse<CustomerListItem>>('/api/v1/customers?limit=200&status=active'),
-    apiServer.get<MeetingType[]>('/api/v1/meeting-types?onlyActive=true'),
+    apiServer.get<{ meetingTypes: MeetingType[] }>('/api/v1/meeting-types?onlyActive=true'),
   ])
+  const meetingTypes = typesRes.meetingTypes
 
   return (
     <div className="flex flex-col gap-6">

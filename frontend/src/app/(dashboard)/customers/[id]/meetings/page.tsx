@@ -20,7 +20,10 @@ const STATUS_CLASS: Record<MeetingStatus, string> = {
 }
 
 function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString('pt-BR', {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
@@ -46,12 +49,12 @@ export default async function CustomerMeetingsPage({
   try {
     const [meetingsRes, typesRes] = await Promise.all([
       apiServer.get<PaginatedResponse<Meeting>>(`/api/v1/customers/${id}/meetings?limit=100`),
-      apiServer.get<MeetingType[]>('/api/v1/meeting-types'),
+      apiServer.get<{ meetingTypes: MeetingType[] }>('/api/v1/meeting-types'),
     ])
     meetings = meetingsRes.items.sort(
       (a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime(),
     )
-    meetingTypes = typesRes
+    meetingTypes = typesRes.meetingTypes
   } catch {
     // show empty
   }

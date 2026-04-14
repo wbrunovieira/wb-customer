@@ -20,8 +20,27 @@ const STATUS_CLASS: Record<MeetingStatus, string> = {
   cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
 }
 
+type ResponseStatus = 'needsAction' | 'accepted' | 'declined' | 'tentative'
+
+const RESPONSE_LABEL: Record<ResponseStatus, string> = {
+  needsAction: 'Pendente',
+  accepted: 'Confirmado',
+  declined: 'Recusado',
+  tentative: 'Tentativo',
+}
+
+const RESPONSE_CLASS: Record<ResponseStatus, string> = {
+  needsAction: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  accepted: 'bg-green-50 text-green-700 ring-green-600/20',
+  declined: 'bg-red-50 text-red-600 ring-red-500/20',
+  tentative: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+}
+
 function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString('pt-BR', {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
@@ -41,10 +60,10 @@ export default async function MeetingsPage({
   try {
     const [customersRes, typesRes] = await Promise.all([
       apiServer.get<PaginatedResponse<CustomerItem>>('/api/v1/customers?limit=200'),
-      apiServer.get<MeetingType[]>('/api/v1/meeting-types'),
+      apiServer.get<{ meetingTypes: MeetingType[] }>('/api/v1/meeting-types'),
     ])
     customers = customersRes.items
-    meetingTypes = typesRes
+    meetingTypes = typesRes.meetingTypes
 
     const typeMap = new Map(meetingTypes.map((t) => [t.id, t]))
 
@@ -135,12 +154,13 @@ export default async function MeetingsPage({
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Tipo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Início</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Cliente</th>
                 <th className="relative px-6 py-3"><span className="sr-only">Ações</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {meetings.map((m) => (
-                <tr key={m.id} className="hover:bg-slate-50">
+                <tr key={`${m.customer.id}-${m.id}`} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-slate-900">{m.title}</p>
                     {m.description && (
@@ -172,6 +192,18 @@ export default async function MeetingsPage({
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
                       {STATUS_LABEL[m.status]}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {(() => {
+                      const attendee = m.attendees.find((a) => a.email === m.customer.email)
+                      if (!attendee) return <span className="text-sm text-slate-400">—</span>
+                      const rs = attendee.responseStatus as ResponseStatus
+                      return (
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${RESPONSE_CLASS[rs]}`}>
+                          {RESPONSE_LABEL[rs]}
+                        </span>
+                      )
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-3">
