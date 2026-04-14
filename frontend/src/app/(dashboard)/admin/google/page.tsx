@@ -98,13 +98,13 @@ export default async function AdminGooglePage({
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Permissões concedidas</p>
             <div className="flex flex-wrap gap-2">
               {[
-                { label: 'Google Drive', icon: '📁' },
-                { label: 'Google Calendar', icon: '📅' },
-                { label: 'Google Meet', icon: '🎥' },
+                { label: 'Google Drive', desc: 'Armazenamento de documentos' },
+                { label: 'Google Calendar', desc: 'Agendamento e reuniões Meet' },
+                { label: 'Gmail', desc: 'Envio de e-mails automáticos' },
               ].map((item) => (
-                <span key={item.label} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600">
-                  <span>{item.icon}</span>
-                  {item.label}
+                <span key={item.label} className="flex flex-col rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-xs text-slate-400">{item.desc}</span>
                 </span>
               ))}
             </div>

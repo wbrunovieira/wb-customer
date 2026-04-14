@@ -1,0 +1,207 @@
+import Link from 'next/link'
+import { apiServer } from '@/lib/api-server'
+import { Meeting, MeetingStatus, MeetingType, PaginatedResponse } from '@/lib/definitions'
+import CancelMeetingButton from './_components/cancel-meeting-button'
+
+export const metadata = { title: 'Reuniões — WB Customer' }
+
+type CustomerItem = { id: string; name: string; email: string }
+type MeetingWithCustomer = Meeting & { customer: CustomerItem; meetingType?: MeetingType }
+
+const STATUS_LABEL: Record<MeetingStatus, string> = {
+  scheduled: 'Agendada',
+  ended: 'Concluída',
+  cancelled: 'Cancelada',
+}
+
+const STATUS_CLASS: Record<MeetingStatus, string> = {
+  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
+  ended: 'bg-green-50 text-green-700 ring-green-600/20',
+  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+export default async function MeetingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
+  const { status: filterStatus } = await searchParams
+
+  let customers: CustomerItem[] = []
+  let meetingTypes: MeetingType[] = []
+  let meetings: MeetingWithCustomer[] = []
+
+  try {
+    const [customersRes, typesRes] = await Promise.all([
+      apiServer.get<PaginatedResponse<CustomerItem>>('/api/v1/customers?limit=200'),
+      apiServer.get<MeetingType[]>('/api/v1/meeting-types'),
+    ])
+    customers = customersRes.items
+    meetingTypes = typesRes
+
+    const typeMap = new Map(meetingTypes.map((t) => [t.id, t]))
+
+    const results = await Promise.allSettled(
+      customers.map(async (c) => {
+        const params = new URLSearchParams({ limit: '100' })
+        if (filterStatus) params.set('status', filterStatus)
+        const res = await apiServer.get<PaginatedResponse<Meeting>>(
+          `/api/v1/customers/${c.id}/meetings?${params}`,
+        )
+        return res.items.map((m) => ({
+          ...m,
+          customer: c,
+          meetingType: m.meetingTypeId ? typeMap.get(m.meetingTypeId) : undefined,
+        }))
+      }),
+    )
+
+    meetings = results
+      .flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
+      .sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
+  } catch {
+    // handled below
+  }
+
+  const tabs: { label: string; value: string | undefined }[] = [
+    { label: 'Todas', value: undefined },
+    { label: 'Agendadas', value: 'scheduled' },
+    { label: 'Concluídas', value: 'ended' },
+    { label: 'Canceladas', value: 'cancelled' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Reuniões</h1>
+          <p className="mt-1 text-sm text-slate-500">{meetings.length} reunião(ões) encontrada(s)</p>
+        </div>
+        <Link
+          href="/meetings/new"
+          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Nova Reunião
+        </Link>
+      </div>
+
+      {/* Status tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {tabs.map((tab) => {
+          const isActive = filterStatus === tab.value
+          const href = tab.value ? `/meetings?status=${tab.value}` : '/meetings'
+          return (
+            <Link
+              key={tab.label}
+              href={href}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          )
+        })}
+      </div>
+
+      {meetings.length === 0 ? (
+        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white gap-2">
+          <p className="text-sm text-slate-400">Nenhuma reunião encontrada.</p>
+          {customers.length === 0 && (
+            <Link href="/customers" className="text-xs text-indigo-600 hover:underline">
+              Cadastre um cliente primeiro
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Reunião</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Cliente</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Tipo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Início</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Status</th>
+                <th className="relative px-6 py-3"><span className="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {meetings.map((m) => (
+                <tr key={m.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-medium text-slate-900">{m.title}</p>
+                    {m.description && (
+                      <p className="mt-0.5 max-w-xs truncate text-xs text-slate-400">{m.description}</p>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Link
+                      href={`/customers/${m.customer.id}/meetings`}
+                      className="text-sm text-indigo-600 hover:underline"
+                    >
+                      {m.customer.name}
+                    </Link>
+                  </td>
+                  <td className="px-6 py-4">
+                    {m.meetingType ? (
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                        style={{ backgroundColor: m.meetingType.color }}
+                      >
+                        {m.meetingType.name}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600">{formatDateTime(m.startAt)}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
+                      {STATUS_LABEL[m.status]}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      {m.meetLink && m.status === 'scheduled' && (
+                        <a
+                          href={m.meetLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-indigo-600 hover:underline"
+                        >
+                          Entrar
+                        </a>
+                      )}
+                      <Link
+                        href={`/customers/${m.customer.id}/meetings/${m.id}`}
+                        className="text-sm text-slate-600 hover:underline"
+                      >
+                        Ver
+                      </Link>
+                      {m.status === 'scheduled' && (
+                        <CancelMeetingButton customerId={m.customer.id} meetingId={m.id} />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}

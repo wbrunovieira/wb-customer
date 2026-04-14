@@ -108,3 +108,57 @@ export type CustomerFormState =
       message?: string
     }
   | undefined
+
+// ─── Meetings ───────────────────────────────────────────────
+
+export type MeetingStatus = 'scheduled' | 'ended' | 'cancelled'
+
+export type MeetingAttendee = {
+  email: string
+  responseStatus: 'needsAction' | 'accepted' | 'declined' | 'tentative'
+  organizer?: boolean
+  self?: boolean
+}
+
+export type MeetingType = {
+  id: string
+  name: string
+  description: string | null
+  durationMinutes: number
+  color: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type Meeting = {
+  id: string
+  customerId: string
+  contactId: string | null
+  meetingTypeId: string | null
+  title: string
+  description: string | null
+  startAt: string
+  endAt: string | null
+  actualStartAt: string | null
+  actualEndAt: string | null
+  googleEventId: string | null
+  meetLink: string | null
+  attendees: MeetingAttendee[]
+  status: MeetingStatus
+  scheduledByUserId: string
+  recordingDriveId: string | null
+  recordingUrl: string | null
+  transcriptText: string | null
+  meetingSummary: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type MeetingFormState =
+  | { errors?: { title?: string[]; startAt?: string[]; endAt?: string[]; attendeeEmails?: string[] }; message?: string }
+  | undefined
+
+export type MeetingTypeFormState =
+  | { errors?: { name?: string[]; durationMinutes?: string[] }; message?: string }
+  | undefined
