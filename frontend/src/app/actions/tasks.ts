@@ -24,6 +24,7 @@ export async function createTask(
   const impact = formData.get('impact') as string
   const confidence = formData.get('confidence') as string
   const effort = formData.get('effort') as string
+  const estimatedHours = formData.get('estimatedHours') as string
 
   if (!title?.trim()) return { errors: { title: ['Título obrigatório'] } }
 
@@ -39,6 +40,7 @@ export async function createTask(
       impact: impact ? Number(impact) : undefined,
       confidence: confidence ? Number(confidence) : undefined,
       effort: effort ? Number(effort) : undefined,
+      estimatedHours: estimatedHours ? Number(estimatedHours) : undefined,
     })
   } catch (err) {
     return { message: (err as Error).message }

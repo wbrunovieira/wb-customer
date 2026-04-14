@@ -82,6 +82,36 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
 
       <div className="grid grid-cols-3 gap-2">
         <div>
+          <label className="text-xs text-slate-500">Início (opcional)</label>
+          <input
+            name="startAt"
+            type="date"
+            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-slate-500">Prazo (opcional)</label>
+          <input
+            name="endAt"
+            type="date"
+            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-slate-500">Horas estimadas</label>
+          <input
+            name="estimatedHours"
+            type="number"
+            min="0"
+            step="0.5"
+            placeholder="—"
+            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div>
           <label className="text-xs text-slate-500">Impacto (1-10)</label>
           <input
             name="impact"
