@@ -70,6 +70,31 @@ export type PaginatedResponse<T> = {
   total: number
 }
 
+export type DocumentType = 'proposal' | 'contract' | 'addendum' | 'other'
+export type DocumentStatus = 'pending_signature' | 'signed' | 'expired' | 'cancelled'
+
+export type Document = {
+  id: string
+  customerId: string
+  type: DocumentType
+  title: string
+  driveFileId: string
+  driveViewUrl: string
+  driveDownloadUrl: string
+  mimeType: string
+  sizeBytes: number | null
+  status: DocumentStatus
+  notes: string | null
+  signedAt: string | null
+  uploadedByUserId: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type DocumentFormState =
+  | { errors?: { title?: string[]; type?: string[] }; message?: string }
+  | undefined
+
 export type CustomerFormState =
   | {
       errors?: {

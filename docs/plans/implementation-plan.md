@@ -1,8 +1,9 @@
 # WB Customer — Plano de Implementação
 
-> **Última revisão:** 2026-04-13  
+> **Última revisão:** 2026-04-14  
 > Decisões arquiteturais registradas após sessão de refinamento.  
-> **2026-04-13 (portal):** decisões do portal do cliente registradas.
+> **2026-04-13 (portal):** decisões do portal do cliente registradas.  
+> **2026-04-14:** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido (apenas `active` | `inactive`). Próxima: Fase 3 Frontend (documentos).
 
 ---
 
@@ -166,8 +167,7 @@ model RefreshToken {
 // ─────────────────────────────────────────
 
 enum CustomerStatus {
-  lead
-  active
+  active    // padrão na criação
   inactive
 }
 
@@ -202,7 +202,7 @@ model Customer {
   document        String?           @unique            // CNPJ
   website         String?
   notes           String?
-  status          CustomerStatus    @default(lead)
+  status          CustomerStatus    @default(active)
   categoryId      String?
   driveFolderId   String?                              // pasta criada no Drive no cadastro
   createdByUserId String
@@ -772,15 +772,15 @@ CALENDAR_ADAPTER=mock        # mock | google-calendar
 - `PATCH /api/v1/users/me` — 200
 - `GET /api/v1/users` — 200 (admin), 403 (employee)
 
-### Entregáveis Fase 1
-- [ ] `docker compose up` sobe sem erros
-- [ ] Migrations aplicadas
-- [ ] Seed cria admin se não existir
-- [ ] Todos os testes unit passando
-- [ ] Todos os testes e2e passando
-- [ ] `tsc --noEmit` sem erros
-- [ ] Login funcionando no frontend (página simples)
-- [ ] Commit + push GitHub
+### Entregáveis Fase 1 ✅ CONCLUÍDA
+- [x] `docker compose up` sobe sem erros
+- [x] Migrations aplicadas
+- [x] Seed cria admin se não existir
+- [x] Todos os testes unit passando
+- [x] Todos os testes e2e passando
+- [x] `tsc --noEmit` sem erros
+- [x] Login funcionando no frontend (página simples com eye toggle, validação)
+- [x] Commit + push GitHub
 
 ---
 
@@ -836,12 +836,14 @@ CALENDAR_ADAPTER=mock        # mock | google-calendar
 - Assign/remove employee
 - Listagem de atividades
 
-### Entregáveis Fase 2
-- [ ] Testes unit passando
-- [ ] Testes e2e passando
-- [ ] `tsc --noEmit` sem erros
-- [ ] CRUD no frontend com tabela paginada + filtros + detalhe do cliente
-- [ ] Commit + push GitHub
+### Entregáveis Fase 2 ✅ CONCLUÍDA
+- [x] Testes unit passando (263)
+- [x] Testes e2e passando (97)
+- [x] `tsc --noEmit` sem erros
+- [x] CRUD no frontend com tabela paginada + filtros + detalhe do cliente
+- [x] CustomerStatus `lead` removido via TDD; padrão agora é `active`
+- [x] Sidebar com link ativo por rota
+- [x] Commit + push GitHub
 
 ---
 
@@ -893,10 +895,10 @@ interface IStorageAdapter {
 - Delete (admin)
 
 ### Entregáveis Fase 3
-- [ ] Testes unit passando
-- [ ] Testes e2e passando (local adapter)
-- [ ] `tsc --noEmit` sem erros
-- [ ] Upload drag-and-drop no frontend
+- [x] Testes unit passando
+- [x] Testes e2e passando (local adapter)
+- [x] `tsc --noEmit` sem erros
+- [ ] Upload drag-and-drop no frontend ← **PRÓXIMA**
 - [ ] Visualização e download funcionando
 - [ ] Commit + push GitHub
 
@@ -950,9 +952,9 @@ interface ICalendarAdapter {
 - E2E: CRUD de reuniões (mock calendar), tipos de reunião
 
 ### Entregáveis Fase 4
-- [ ] Perguntas TBD respondidas
-- [ ] Testes unit passando
-- [ ] Testes e2e passando
+- [x] Perguntas TBD respondidas (mock calendar no lugar de Google Calendar)
+- [x] Testes unit passando
+- [x] Testes e2e passando
 - [ ] Fluxo completo no frontend
 - [ ] Commit + push GitHub
 
@@ -1045,11 +1047,11 @@ model CustomerUser {
 - Member não acessa rotas de gestão de usuários (403)
 - Customer não vê dados de outro cliente (404/403)
 
-### Entregáveis Fase 5
-- [ ] Migration com `customer_users` e enum `CustomerUserRole`
-- [ ] Testes unit passando
-- [ ] Testes e2e passando
-- [ ] `tsc --noEmit` sem erros
+### Entregáveis Fase 5 ✅ BACKEND CONCLUÍDO
+- [x] Migration com `customer_users` e enum `CustomerUserRole`
+- [x] Testes unit passando
+- [x] Testes e2e passando (97)
+- [x] `tsc --noEmit` sem erros
 - [ ] Frontend: página de gestão de usuários (master) + página de reuniões
 - [ ] Commit + push GitHub
 
