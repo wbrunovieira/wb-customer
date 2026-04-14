@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { ITaskRepository, FindManyTasksParams, PaginatedTasks } from '@/domain/tasks/application/repositories/i-task.repository'
+import { ITaskRepository, FindManyTasksParams, FindAllTasksParams, PaginatedTasks } from '@/domain/tasks/application/repositories/i-task.repository'
 import { Task } from '@/domain/tasks/enterprise/entities/task'
 import { PrismaService } from '../../prisma.service'
 import { TaskMapper } from '../../mappers/tasks/task.mapper'
@@ -34,6 +34,32 @@ export class PrismaTaskRepository implements ITaskRepository {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: [{ boardPosition: 'asc' }, { createdAt: 'desc' }],
+      }),
+      this.prisma.task.count({ where }),
+    ])
+
+    return { items: items.map(TaskMapper.toDomain), total }
+  }
+
+  async findAll(params: FindAllTasksParams): Promise<PaginatedTasks> {
+    const page = params.page ?? 1
+    const limit = params.limit ?? 50
+
+    const where: Prisma.TaskWhereInput = {
+      deletedAt: null,
+      ...(params.customerId ? { customerId: params.customerId } : {}),
+      ...(params.status ? { status: params.status as any } : {}),
+      ...(params.sprintId !== undefined ? { sprintId: params.sprintId } : {}),
+      ...(params.assigneeUserId ? { assigneeUserId: params.assigneeUserId } : {}),
+      ...(params.ideasOnly ? { status: { in: ['idea_could', 'idea_should'] as any } } : {}),
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.task.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: [{ createdAt: 'desc' }],
       }),
       this.prisma.task.count({ where }),
     ])

@@ -1,4 +1,4 @@
-import { ITaskRepository, FindManyTasksParams, PaginatedTasks } from '@/domain/tasks/application/repositories/i-task.repository'
+import { ITaskRepository, FindManyTasksParams, FindAllTasksParams, PaginatedTasks } from '@/domain/tasks/application/repositories/i-task.repository'
 import { Task } from '@/domain/tasks/enterprise/entities/task'
 
 export class InMemoryTaskRepository implements ITaskRepository {
@@ -22,6 +22,16 @@ export class InMemoryTaskRepository implements ITaskRepository {
     const limit = params.limit ?? 50
     const paged = items.slice((page - 1) * limit, page * limit)
     return { items: paged, total }
+  }
+
+  async findAll(params: FindAllTasksParams): Promise<PaginatedTasks> {
+    let items = this.items.filter(t => !t.deletedAt)
+    if (params.customerId) items = items.filter(t => t.customerId === params.customerId)
+    if (params.status) items = items.filter(t => t.status.value === params.status)
+    const total = items.length
+    const page = params.page ?? 1
+    const limit = params.limit ?? 50
+    return { items: items.slice((page - 1) * limit, page * limit), total }
   }
 
   async save(task: Task): Promise<void> {

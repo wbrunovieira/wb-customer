@@ -15,9 +15,14 @@ export interface PaginatedTasks {
   total: number
 }
 
+export interface FindAllTasksParams extends FindManyTasksParams {
+  customerId?: string
+}
+
 export abstract class ITaskRepository {
   abstract findById(id: string): Promise<Task | null>
   abstract findByCustomerId(customerId: string, params: FindManyTasksParams): Promise<PaginatedTasks>
+  abstract findAll(params: FindAllTasksParams): Promise<PaginatedTasks>
   abstract save(task: Task): Promise<void>
   abstract delete(id: string): Promise<void>
 }
