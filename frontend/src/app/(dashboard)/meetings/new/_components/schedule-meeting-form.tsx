@@ -11,23 +11,37 @@ type Props = {
 }
 
 export default function ScheduleMeetingForm({ customers, meetingTypes, preselectedCustomerId }: Props) {
+  const preselectedCustomer = customers.find((c) => c.id === preselectedCustomerId)
+
   const [customerId, setCustomerId] = useState(preselectedCustomerId ?? '')
+  const [customerEmail, setCustomerEmail] = useState(preselectedCustomer?.email ?? '')
   const [emailInput, setEmailInput] = useState('')
-  const [emails, setEmails] = useState<string[]>([])
+  const [extraEmails, setExtraEmails] = useState<string[]>([])
+
+  // All attendees = customer email (if set) + extra emails, deduplicated
+  const allEmails = customerEmail
+    ? [customerEmail, ...extraEmails.filter((e) => e !== customerEmail)]
+    : extraEmails
 
   const action = scheduleMeeting.bind(null, customerId)
   const [state, formAction, pending] = useActionState<MeetingFormState, FormData>(action, undefined)
 
+  function handleCustomerChange(id: string) {
+    setCustomerId(id)
+    const customer = customers.find((c) => c.id === id)
+    setCustomerEmail(customer?.email ?? '')
+  }
+
   function addEmail() {
     const trimmed = emailInput.trim()
-    if (trimmed && !emails.includes(trimmed)) {
-      setEmails((prev) => [...prev, trimmed])
+    if (trimmed && !extraEmails.includes(trimmed) && trimmed !== customerEmail) {
+      setExtraEmails((prev) => [...prev, trimmed])
       setEmailInput('')
     }
   }
 
-  function removeEmail(email: string) {
-    setEmails((prev) => prev.filter((e) => e !== email))
+  function removeExtraEmail(email: string) {
+    setExtraEmails((prev) => prev.filter((e) => e !== email))
   }
 
   function handleEmailKeyDown(e: React.KeyboardEvent) {
@@ -54,7 +68,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
       )}
 
       {/* hidden field for emails as comma-separated */}
-      <input type="hidden" name="attendeeEmails" value={emails.join(',')} />
+      <input type="hidden" name="attendeeEmails" value={allEmails.join(',')} />
 
       {/* Customer */}
       <div className="flex flex-col gap-1.5">
@@ -65,7 +79,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           name="customerId"
           required
           value={customerId}
-          onChange={(e) => setCustomerId(e.target.value)}
+          onChange={(e) => handleCustomerChange(e.target.value)}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="">Selecione um cliente...</option>
@@ -140,16 +154,42 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
 
       {/* Attendee emails */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700">
-          Participantes (e-mails)
-        </label>
+        <label className="text-sm font-medium text-slate-700">Participantes</label>
+
+        {/* Chips — customer email (locked) + extras */}
+        {allEmails.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 min-h-[38px]">
+            {customerEmail && (
+              <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                {customerEmail}
+              </span>
+            )}
+            {extraEmails.map((email) => (
+              <span key={email} className="flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                {email}
+                <button
+                  type="button"
+                  onClick={() => removeExtraEmail(email)}
+                  className="ml-0.5 text-slate-400 hover:text-slate-700"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Input for extra emails */}
         <div className="flex gap-2">
           <input
             type="email"
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
             onKeyDown={handleEmailKeyDown}
-            placeholder="email@exemplo.com"
+            placeholder="Adicionar outro participante..."
             className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
           <button
@@ -160,17 +200,9 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             Adicionar
           </button>
         </div>
-        {emails.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {emails.map((email) => (
-              <span key={email} className="flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-                {email}
-                <button type="button" onClick={() => removeEmail(email)} className="ml-0.5 text-indigo-400 hover:text-indigo-700">×</button>
-              </span>
-            ))}
-          </div>
-        )}
-        <p className="text-xs text-slate-400">Pressione Enter ou vírgula para adicionar. Cada participante recebe convite no Calendar.</p>
+        <p className="text-xs text-slate-400">
+          O e-mail do cliente é adicionado automaticamente. Pressione Enter ou vírgula para incluir outros.
+        </p>
       </div>
 
       {/* Description */}
