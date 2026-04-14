@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useRef, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { uploadDocument } from '@/app/actions/documents'
 import { DocumentFormState } from '@/lib/definitions'
 
@@ -22,6 +22,19 @@ export default function UploadZone({ customerId }: Props) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Prevent browser from opening dropped files outside the zone
+  useEffect(() => {
+    function prevent(e: DragEvent) {
+      e.preventDefault()
+    }
+    window.addEventListener('dragover', prevent)
+    window.addEventListener('drop', prevent)
+    return () => {
+      window.removeEventListener('dragover', prevent)
+      window.removeEventListener('drop', prevent)
+    }
+  }, [])
 
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault()
