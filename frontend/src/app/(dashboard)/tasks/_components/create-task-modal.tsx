@@ -264,7 +264,7 @@ function TaskForm({
             <label className="text-xs text-slate-500">Início (opcional)</label>
             <input
               name="startAt"
-              type="date"
+              type="datetime-local"
               className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
             />
           </div>
@@ -272,7 +272,7 @@ function TaskForm({
             <label className="text-xs text-slate-500">Prazo (opcional)</label>
             <input
               name="endAt"
-              type="date"
+              type="datetime-local"
               className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
             />
           </div>

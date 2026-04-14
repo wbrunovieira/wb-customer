@@ -18,7 +18,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
 
   function toDateInputValue(iso: string | null): string {
     if (!iso) return ''
-    return iso.slice(0, 10)
+    return iso.slice(0, 16) // YYYY-MM-DDTHH:MM
   }
 
   return (
@@ -67,7 +67,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
           <label className="text-xs text-slate-500">Início</label>
           <input
             name="startAt"
-            type="date"
+            type="datetime-local"
             defaultValue={toDateInputValue(task.startAt)}
             className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
           />
@@ -76,7 +76,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
           <label className="text-xs text-slate-500">Prazo</label>
           <input
             name="endAt"
-            type="date"
+            type="datetime-local"
             defaultValue={toDateInputValue(task.endAt)}
             className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
           />
