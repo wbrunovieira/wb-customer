@@ -2,6 +2,7 @@ import { apiServer } from '@/lib/api-server'
 import { CurrentUser } from '@/lib/definitions'
 import Sidebar from '@/components/layout/sidebar'
 import Header from '@/components/layout/header'
+import PreventFileDrop from '@/components/prevent-file-drop'
 
 async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
@@ -16,6 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <PreventFileDrop />
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header user={user} />
