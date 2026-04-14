@@ -9,6 +9,7 @@ import { DocumentsModule } from '@/infra/modules/documents/documents.module'
 import { MeetingsModule } from '@/infra/modules/meetings/meetings.module'
 import { PortalModule } from '@/infra/modules/portal/portal.module'
 import { TasksModule } from '@/infra/modules/tasks/tasks.module'
+import { NotificationsModule } from '@/infra/modules/notifications/notifications.module'
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TasksModule } from '@/infra/modules/tasks/tasks.module'
     MeetingsModule,
     PortalModule,
     TasksModule,
+    NotificationsModule,
   ],
   controllers: [HealthController],
 })
