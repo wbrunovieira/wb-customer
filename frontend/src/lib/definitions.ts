@@ -14,6 +14,17 @@ export type LoginResponse = {
   refreshToken: string
   userId: string
   role: string
+  customerId?: string
+  customerRole?: 'master' | 'member'
+}
+
+export type PortalUser = {
+  customerUserId: string
+  userId: string
+  customerRole: 'master' | 'member'
+  name: string
+  createdAt: string
+  deletedAt: string | null
 }
 
 export type CurrentUser = {

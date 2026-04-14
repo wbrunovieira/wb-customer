@@ -43,7 +43,7 @@ export async function login(
   }
 
   await setSession(data.accessToken, data.refreshToken)
-  redirect('/dashboard')
+  redirect(data.role === 'customer' ? '/portal/meetings' : '/dashboard')
 }
 
 export async function logout() {

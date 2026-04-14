@@ -3,7 +3,8 @@
 > **Última revisão:** 2026-04-14  
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
-> **2026-04-14:** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido (apenas `active` | `inactive`). Fase 3 Frontend (documentos) concluída. Google Drive integration concluída. Integração Google OAuth2 ativa.
+> **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
+> **2026-04-14 (sessão 2):** Fase 4 Frontend concluída: lista global `/meetings`, formulário `/meetings/new` com email do cliente auto-populado + chips de participantes, lista por cliente, admin de tipos de reunião. `MeetingPresenter` criado (TDD) — corrige "Invalid Date" causado por entidades de domínio serializadas sem presenter. Cron de RSVP corrigido (janela 1h→30d, campo `endAt`→`startAt`). Coluna de confirmação do cliente (RSVP) na tabela. Página de detalhe `/customers/[id]/meetings/[meetingId]` pendente (link "Ver" existe mas página não implementada — adiada para Fase 5).
 
 ---
 
@@ -1045,12 +1046,16 @@ interface ICalendarAdapter {
 - Unit: todos os use-cases com mocks
 - E2E: CRUD de reuniões (mock calendar), tipos de reunião
 
-### Entregáveis Fase 4
+### Entregáveis Fase 4 ✅ CONCLUÍDA
 - [x] Perguntas TBD respondidas (mock calendar no lugar de Google Calendar)
 - [x] Testes unit passando
 - [x] Testes e2e passando
-- [ ] Fluxo completo no frontend
-- [ ] Commit + push GitHub
+- [x] Fluxo completo no frontend (lista global, agendamento, por cliente, tipos admin)
+- [x] MeetingPresenter (TDD) — serialização correta de datas e status
+- [x] Cron RSVP corrigido — janela 30 dias, campo startAt
+- [x] Coluna de confirmação RSVP na lista de reuniões
+- [x] Commit + push GitHub
+- [ ] Página de detalhe da reunião — adiada, implementar junto com Fase 5
 
 ---
 
@@ -1212,11 +1217,11 @@ CALENDAR_ADAPTER=google-calendar
 
 | Fase | Domínio | Unit | E2E | TypeCheck | Frontend | GitHub |
 |------|---------|------|-----|-----------|----------|--------|
-| 1 | Auth + Usuários | ✅ | ✅ | ✅ | Login | ✅ |
-| 2 | Clientes + Contatos | ✅ | ✅ | ✅ | CRUD | ✅ |
-| 3 | Documentos + Drive | — | — | — | Upload/View | — |
-| 4 | Reuniões + Meet | — | — | — | Agenda | — |
-| 5 | Portal do Cliente | — | — | — | Usuários + Reuniões | — |
+| 1 | Auth + Usuários | ✅ | ✅ | ✅ | ✅ Login | ✅ |
+| 2 | Clientes + Contatos | ✅ | ✅ | ✅ | ✅ CRUD | ✅ |
+| 3 | Documentos + Drive | ✅ | ✅ | ✅ | ✅ Upload/View | ✅ |
+| 4 | Reuniões + Meet | ✅ | ✅ | ✅ | ✅ Agenda/RSVP | ✅ |
+| 5 | Portal do Cliente | ✅ | ✅ | ✅ | ⬜ Usuários + Reuniões | ⬜ |
 
 ---
 

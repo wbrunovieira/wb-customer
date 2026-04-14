@@ -1,0 +1,164 @@
+import Link from 'next/link'
+import { apiServer } from '@/lib/api-server'
+import { Meeting, MeetingStatus, PaginatedResponse } from '@/lib/definitions'
+
+export const metadata = { title: 'Reuniões — Portal do Cliente' }
+
+const STATUS_LABEL: Record<MeetingStatus, string> = {
+  scheduled: 'Agendada',
+  ended: 'Concluída',
+  cancelled: 'Cancelada',
+}
+
+const STATUS_CLASS: Record<MeetingStatus, string> = {
+  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
+  ended: 'bg-green-50 text-green-700 ring-green-600/20',
+  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+}
+
+function formatDateTime(iso: string) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+export default async function PortalMeetingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>
+}) {
+  const { status: filterStatus } = await searchParams
+
+  let meetings: Meeting[] = []
+  let total = 0
+
+  try {
+    const params = new URLSearchParams({ limit: '100' })
+    if (filterStatus) params.set('status', filterStatus)
+    const res = await apiServer.get<PaginatedResponse<Meeting>>(`/api/v1/portal/meetings?${params}`)
+    meetings = res.items.sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
+    total = res.total
+  } catch {
+    // show empty
+  }
+
+  const tabs: { label: string; value: string | undefined }[] = [
+    { label: 'Todas', value: undefined },
+    { label: 'Agendadas', value: 'scheduled' },
+    { label: 'Concluídas', value: 'ended' },
+    { label: 'Canceladas', value: 'cancelled' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Reuniões</h1>
+        <p className="mt-1 text-sm text-slate-500">{total} reunião(ões)</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {tabs.map((tab) => {
+          const isActive = filterStatus === tab.value
+          const href = tab.value ? `/portal/meetings?status=${tab.value}` : '/portal/meetings'
+          return (
+            <Link
+              key={tab.label}
+              href={href}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          )
+        })}
+      </div>
+
+      {meetings.length === 0 ? (
+        <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
+          <p className="text-sm text-slate-400">Nenhuma reunião encontrada.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {meetings.map((m) => (
+            <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-semibold text-slate-900">{m.title}</h3>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
+                      {STATUS_LABEL[m.status]}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      {formatDateTime(m.startAt)}
+                      {m.endAt && ` → ${formatDateTime(m.endAt)}`}
+                    </span>
+                    {m.attendees.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                        </svg>
+                        {m.attendees.length} participante(s)
+                      </span>
+                    )}
+                  </div>
+
+                  {m.description && (
+                    <p className="mt-2 text-sm text-slate-600">{m.description}</p>
+                  )}
+
+                  {m.meetingSummary && (
+                    <div className="mt-3 rounded-lg bg-slate-50 p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-1">Resumo</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{m.meetingSummary}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  {m.meetLink && m.status === 'scheduled' && (
+                    <a
+                      href={m.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="23 7 16 12 23 17 23 7" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                      </svg>
+                      Entrar no Meet
+                    </a>
+                  )}
+                  <Link
+                    href={`/portal/meetings/${m.id}`}
+                    className="text-xs text-indigo-600 hover:underline"
+                  >
+                    Ver detalhes
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

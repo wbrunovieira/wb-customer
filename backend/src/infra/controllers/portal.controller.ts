@@ -31,6 +31,7 @@ import { GetPortalMeetingUseCase } from '@/domain/customers/application/use-case
 import { CreateCustomerSubUserUseCase } from '@/domain/customers/application/use-cases/create-customer-sub-user.use-case'
 import { ListCustomerPortalUsersUseCase } from '@/domain/customers/application/use-cases/list-customer-portal-users.use-case'
 import { MeetingNotFoundError } from '@/domain/meetings/domain/exceptions/meeting-not-found.error'
+import { MeetingPresenter } from '@/infra/presenters/meeting.presenter'
 import { ForbiddenPortalActionError } from '@/domain/customers/domain/exceptions/forbidden-portal-action.error'
 import { UserAlreadyExistsError } from '@/domain/auth/domain/exceptions/user-already-exists.error'
 
@@ -89,7 +90,8 @@ export class PortalController {
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
     })
-    return result.value
+    const { items, total } = result.value as { items: any[]; total: number }
+    return { items: items.map(MeetingPresenter.toHTTP), total }
   }
 
   @Get('meetings/:meetingId')
@@ -110,7 +112,7 @@ export class PortalController {
       if (err instanceof MeetingNotFoundError) throw new NotFoundException(err.message)
       throw new BadRequestException((err as Error).message)
     }
-    return result.value
+    return { meeting: MeetingPresenter.toHTTP((result.value as any).meeting) }
   }
 
   // ─── Users (master only) ──────────────────────────────────────────────────
