@@ -76,6 +76,7 @@ enum CustomerActivityType {
   meeting_scheduled
   meeting_completed
   note_added
+  email_received
 }
 
 model CustomerCategory {
@@ -305,14 +306,15 @@ model Meeting {
 // ─────────────────────────────────────────
 
 model GoogleToken {
-  id           String   @id
-  accessToken  String   @map("access_token")
-  refreshToken String   @map("refresh_token")
-  expiresAt    DateTime @map("expires_at")
-  scope        String
-  email        String
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String   @id
+  accessToken    String   @map("access_token")
+  refreshToken   String   @map("refresh_token")
+  expiresAt      DateTime @map("expires_at")
+  scope          String
+  email          String
+  gmailHistoryId String?  @map("gmail_history_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("google_tokens")
 }

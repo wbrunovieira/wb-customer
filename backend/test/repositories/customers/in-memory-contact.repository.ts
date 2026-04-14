@@ -12,6 +12,10 @@ export class InMemoryContactRepository implements IContactRepository {
     return this.items.filter((c) => c.customerId === customerId)
   }
 
+  async findByEmail(email: string): Promise<Contact | null> {
+    return this.items.find((c) => c.email === email) ?? null
+  }
+
   async save(contact: Contact): Promise<void> {
     const index = this.items.findIndex((c) => c.id.equals(contact.id))
     if (index >= 0) {

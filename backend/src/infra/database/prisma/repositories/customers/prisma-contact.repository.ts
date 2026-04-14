@@ -21,6 +21,11 @@ export class PrismaContactRepository implements IContactRepository {
     return raws.map(ContactMapper.toDomain)
   }
 
+  async findByEmail(email: string): Promise<Contact | null> {
+    const raw = await this.prisma.contact.findFirst({ where: { email } })
+    return raw ? ContactMapper.toDomain(raw) : null
+  }
+
   async save(contact: Contact): Promise<void> {
     const data = ContactMapper.toPrisma(contact)
     await this.prisma.contact.upsert({

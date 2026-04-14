@@ -1,5 +1,6 @@
 import {
   ICalendarAdapter,
+  CalendarEventData,
   CreateEventParams,
   CreateEventResult,
 } from '@/domain/meetings/application/services/i-calendar.adapter'
@@ -39,10 +40,10 @@ export class MockCalendarAdapter implements ICalendarAdapter {
     this.cancelledEventIds.push(googleEventId)
   }
 
-  async getEvent(googleEventId: string) {
+  async getEvent(googleEventId: string): Promise<CalendarEventData> {
     return {
       googleEventId,
-      attendees: [],
+      attendees: [] as MeetAttendee[],
     }
   }
 }

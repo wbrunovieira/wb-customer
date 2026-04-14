@@ -10,6 +10,7 @@ export type CustomerActivityType =
   | 'meeting_scheduled'
   | 'meeting_completed'
   | 'note_added'
+  | 'email_received'
 
 export interface CustomerActivityProps {
   customerId: string

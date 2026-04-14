@@ -25,7 +25,7 @@ function makeMeeting(overrides: {
       actualStartAt: null,
       actualEndAt: null,
       googleEventId: overrides.googleEventId ?? 'google-event-123',
-      meetLink: null,
+
       attendees: [{ email: 'client@test.com', responseStatus: 'needsAction' }],
       status: MeetingStatus.createUnsafe(overrides.status ?? 'scheduled'),
       scheduledByUserId: 'user-1',
@@ -61,7 +61,7 @@ describe('MeetingRsvpCheckerService', () => {
 
     vi.spyOn(calendarAdapter, 'getEvent').mockResolvedValueOnce({
       googleEventId: 'event-abc',
-      meetLink: null,
+
       attendees: [{ email: 'client@test.com', responseStatus: 'accepted' }],
     })
 
@@ -81,7 +81,7 @@ describe('MeetingRsvpCheckerService', () => {
 
     vi.spyOn(calendarAdapter, 'getEvent').mockResolvedValueOnce({
       googleEventId: 'event-far',
-      meetLink: null,
+
       attendees: [{ email: 'client@test.com', responseStatus: 'accepted' }],
     })
 
@@ -139,7 +139,7 @@ describe('MeetingRsvpCheckerService', () => {
       .mockRejectedValueOnce(new Error('Google API error'))
       .mockResolvedValueOnce({
         googleEventId: 'event-2',
-        meetLink: null,
+  
         attendees: [{ email: 'client@test.com', responseStatus: 'accepted' }],
       })
 
@@ -155,7 +155,7 @@ describe('MeetingRsvpCheckerService', () => {
 
     vi.spyOn(calendarAdapter, 'getEvent').mockResolvedValueOnce({
       googleEventId: 'event-empty',
-      meetLink: null,
+
       attendees: [],
     })
 

@@ -17,6 +17,8 @@ import { DeleteMeetingTypeUseCase } from '@/domain/meetings/application/use-case
 import { MeetingRsvpCheckerService } from '@/infra/services/meetings/meeting-rsvp-checker.service'
 import { MeetingRecordingDetectorService } from '@/infra/services/meetings/meeting-recording-detector.service'
 import { MeetingTranscriptionPollerService } from '@/infra/services/meetings/meeting-transcription-poller.service'
+import { MeetingFilesFinderService } from '@/infra/services/meetings/meeting-files-finder.service'
+import { TranscriptorService } from '@/infra/services/meetings/transcriptor.service'
 import { ICalendarAdapter } from '@/domain/meetings/application/services/i-calendar.adapter'
 import { IGoogleTokenService } from '@/domain/meetings/application/services/i-google-token.service'
 import { IMeetingRepository } from '@/domain/meetings/application/repositories/i-meeting.repository'
@@ -63,6 +65,8 @@ import { Env } from '@/env/env'
     DeleteMeetingTypeUseCase,
     // Cron services
     MeetingRsvpCheckerService,
+    MeetingFilesFinderService,
+    TranscriptorService,
     MeetingRecordingDetectorService,
     MeetingTranscriptionPollerService,
   ],

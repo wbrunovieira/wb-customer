@@ -4,7 +4,9 @@
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
-> **2026-04-14 (sessão 2):** Fase 4 Frontend concluída: lista global `/meetings`, formulário `/meetings/new` com email do cliente auto-populado + chips de participantes, lista por cliente, admin de tipos de reunião. `MeetingPresenter` criado (TDD) — corrige "Invalid Date" causado por entidades de domínio serializadas sem presenter. Cron de RSVP corrigido (janela 1h→30d, campo `endAt`→`startAt`). Coluna de confirmação do cliente (RSVP) na tabela. Página de detalhe `/customers/[id]/meetings/[meetingId]` pendente (link "Ver" existe mas página não implementada — adiada para Fase 5).
+> **2026-04-14 (sessão 2):** Fase 4 Frontend concluída: lista global `/meetings`, formulário `/meetings/new` com email do cliente auto-populado + chips de participantes, lista por cliente, admin de tipos de reunião. `MeetingPresenter` criado (TDD) — corrige "Invalid Date" causado por entidades de domínio serializadas sem presenter. Cron de RSVP corrigido (janela 1h→30d, campo `endAt`→`startAt`). Coluna de confirmação do cliente (RSVP) na tabela. Página de detalhe `/customers/[id]/meetings/[meetingId]` pendente (link "Ver" existe mas página não implementada — adiada para Fase 5).  
+> **2026-04-14 (sessão 3):** Fase 5 Frontend concluída. Portal do cliente completo: layout separado `/portal/*`, `/portal/meetings` (lista paginada com tabs de status), `/portal/meetings/[id]` (detalhe com RSVP, gravação, sumário, transcrição), `/portal/users` (master gerencia sub-usuários). Admin: `/customers/[id]/portal-users` com criar, revogar, editar inline, seletor de perfil (master/member) e eye toggle na senha. `UpdateCustomerPortalUserUseCase` (TDD, 6 testes). Refresh token corrigido: `middleware.ts` → `proxy.ts` (Next.js 16), `Buffer.from` → `atob()` (Edge Runtime). Total: 287 testes passando.  
+> **2026-04-14 (sessão 4):** Fase 6 — gravação e transcrição de reuniões implementadas. `MeetingFilesFinderService` (pesquisa Drive em "Meet Recordings" por nome do título + fallback por data). `TranscriptorService` (client para API transcritor: submit MP4, poll status, get result). `MeetingRecordingDetectorService` reescrito com 3 passes: Pass 0 Drive-first (detecta reuniões via arquivos novos no Drive independente de horário agendado), Pass 1 time-based (marca reuniões expiradas como ended), Pass 2 retry (retenta reuniões ended sem gravação por até 4h). Estratégia de transcrição: 1º doc Gemini nativo do Meet (summary + transcript), fallback: envia MP4 ao transcritor externo. `MeetingTranscriptionPollerService` reescrito para usar `TranscriptorService`.
 
 ---
 
@@ -1146,13 +1148,46 @@ model CustomerUser {
 - Member não acessa rotas de gestão de usuários (403)
 - Customer não vê dados de outro cliente (404/403)
 
-### Entregáveis Fase 5 ✅ BACKEND CONCLUÍDO
+### Entregáveis Fase 5 ✅ CONCLUÍDA
 - [x] Migration com `customer_users` e enum `CustomerUserRole`
-- [x] Testes unit passando
+- [x] Testes unit passando (287)
 - [x] Testes e2e passando (97)
 - [x] `tsc --noEmit` sem erros
-- [ ] Frontend: página de gestão de usuários (master) + página de reuniões
-- [ ] Commit + push GitHub
+- [x] Frontend: layout portal, `/portal/meetings`, `/portal/meetings/[id]`, `/portal/users`
+- [x] Admin: `/customers/[id]/portal-users` com edição inline, role selector, eye toggle
+- [x] `UpdateCustomerPortalUserUseCase` + `PATCH` endpoint
+- [x] Refresh token + proxy.ts (Next.js 16 / Edge Runtime)
+- [x] Commit + push GitHub
+
+---
+
+## Fase 6 — Gravação e Transcrição de Reuniões ✅ CONCLUÍDA
+
+### Estratégia de detecção (cron 15 min — 3 passes)
+
+**Pass 0 — Drive-first:** Varre `Meet Recordings` nos últimos 6h. Extrai título do nome do arquivo → encontra reuniões agendadas com título correspondente → marca como ended + busca gravação. Detecta reuniões que aconteceram fora do horário agendado.
+
+**Pass 1 — Time-based:** Encontra reuniões com `startAt` há mais de 30 min → marca como ended → busca gravação.
+
+**Pass 2 — Retry:** Reuniões ended sem `recordingDriveId` nas últimas 4h → retenta busca (Google pode demorar >15 min para processar).
+
+### Estratégia de transcrição (prioridade)
+
+1. **Doc Gemini nativo do Meet** — exportado como texto plano. Seção `📝 Observações` = summary. Seção `📖 Transcrição` = transcript raw (só aparece se o usuário habilitou transcrição no Meet).  
+2. **Fallback: transcritor externo** — se não veio transcrição nativa, envia MP4 via `POST /transcriptions/video`. `MeetingTranscriptionPollerService` faz polling a cada 5 min até `status=done`.
+
+### Serviços criados/reescritos
+- `MeetingFilesFinderService` — pesquisa Drive (listagem recente + busca por título), exporta Google Doc como texto, baixa MP4
+- `TranscriptorService` — client do `transcritor.wbdigitalsolutions.com` (submit video, poll status, get result)
+- `MeetingRecordingDetectorService` — reescrito com 3-pass strategy
+- `MeetingTranscriptionPollerService` — reescrito para usar `TranscriptorService`
+
+### Entregáveis Fase 6 ✅
+- [x] `MeetingFilesFinderService` + `TranscriptorService`
+- [x] `MeetingRecordingDetectorService` — 3-pass strategy
+- [x] `MeetingTranscriptionPollerService` — polling correto
+- [x] tsc sem erros, 287 testes passando
+- [x] Commit + push GitHub
 
 ---
 
@@ -1160,9 +1195,8 @@ model CustomerUser {
 
 | Feature | Fase |
 |---------|------|
-| Notificações Gmail API | 6 |
-| SSE (Server-Sent Events) notificações in-app | 6 |
-| Delegação de tarefas (todos) entre funcionários | 7 |
+| Notificações em tempo real (SSE) + Gmail polling | 7 |
+| Delegação de tarefas entre funcionários | 8 |
 | Reset de senha por email | 8 |
 | Sub-roles do portal (`member` com permissões granulares) | 8 |
 | LGPD — exclusão de dados pessoais | Última |
