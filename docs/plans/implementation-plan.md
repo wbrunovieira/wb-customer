@@ -3,7 +3,7 @@
 > **Última revisão:** 2026-04-14  
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
-> **2026-04-14:** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido (apenas `active` | `inactive`). Próxima: Fase 3 Frontend (documentos).
+> **2026-04-14:** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido (apenas `active` | `inactive`). Fase 3 Frontend (documentos) concluída. Google Drive integration concluída. Integração Google OAuth2 ativa.
 
 ---
 
@@ -790,6 +790,9 @@ SEED_ADMIN_PASSWORD=Vidaplena20023@
 # Google OAuth2 (Drive + Gmail + Calendar — um único OAuth2, admin conecta via /admin/google)
 GOOGLE_CLIENT_ID=<ver backend/.env>
 GOOGLE_CLIENT_SECRET=<ver backend/.env>
+# Dev:        http://localhost:3003/api/v1/google/callback
+# Produção:   https://customer.wbdigitalsolutions.com/api/v1/google/callback
+# Ambos os URIs já estão registrados no Google Cloud Console (OAuth client)
 GOOGLE_REDIRECT_URI=http://localhost:3003/api/v1/google/callback
 
 # Transcritor externo
@@ -1159,6 +1162,49 @@ model CustomerUser {
 | Sub-roles do portal (`member` com permissões granulares) | 8 |
 | LGPD — exclusão de dados pessoais | Última |
 | SaaS / multi-tenant | Pós-produto |
+
+---
+
+## Deploy Produção
+
+**Subdomínio:** `customer.wbdigitalsolutions.com`  
+**Infraestrutura:** Ansible (detalhes a definir quando chegar na fase de deploy)
+
+### Variáveis de ambiente produção (`backend/.env`)
+
+```env
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgresql://...
+
+# Google OAuth2
+GOOGLE_CLIENT_ID=<ver backend/.env>
+GOOGLE_CLIENT_SECRET=<ver backend/.env>
+GOOGLE_REDIRECT_URI=https://customer.wbdigitalsolutions.com/api/v1/google/callback
+
+STORAGE_ADAPTER=google-drive
+CALENDAR_ADAPTER=google-calendar
+```
+
+### Google Cloud Console — URIs de redirecionamento registrados
+
+| Ambiente | URI |
+|----------|-----|
+| Desenvolvimento | `http://localhost:3003/api/v1/google/callback` |
+| Produção | `https://customer.wbdigitalsolutions.com/api/v1/google/callback` |
+
+> Ambos registrados no OAuth client `154238465749-34m0g...` → "URIs de redirecionamento autorizados".  
+> **Atenção:** o path é `/api/v1/google/callback` (com prefixo `/v1/`). Se o reverse proxy remover o prefixo, ajustar o path registrado.
+
+### Checklist deploy
+
+- [ ] Configurar reverse proxy (nginx/caddy) para `customer.wbdigitalsolutions.com` → backend porta 3000
+- [ ] Configurar variáveis de ambiente de produção
+- [ ] Rodar `prisma migrate deploy` (não `dev`)
+- [ ] Rodar seed em produção: `npx ts-node src/infra/database/prisma/seed.ts`
+- [ ] Acessar `/admin/google` e reconectar Google (token é por banco — não migra automaticamente)
+- [ ] Testar upload de documento e verificar pasta no Drive
+- [ ] Testar agendamento de reunião e verificar evento no Calendar
 
 ---
 
