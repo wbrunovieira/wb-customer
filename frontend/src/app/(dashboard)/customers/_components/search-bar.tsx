@@ -59,7 +59,6 @@ export default function SearchBar({ defaultValue, defaultStatus }: Props) {
         className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
       >
         <option value="">Todos os status</option>
-        <option value="lead">Lead</option>
         <option value="active">Ativo</option>
         <option value="inactive">Inativo</option>
       </select>

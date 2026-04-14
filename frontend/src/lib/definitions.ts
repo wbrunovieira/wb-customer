@@ -23,7 +23,7 @@ export type CurrentUser = {
   role: string
 }
 
-export type CustomerStatus = 'lead' | 'active' | 'inactive'
+export type CustomerStatus = 'active' | 'inactive'
 
 export type Customer = {
   id: string

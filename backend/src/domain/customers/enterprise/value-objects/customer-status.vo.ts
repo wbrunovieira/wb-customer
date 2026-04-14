@@ -1,9 +1,9 @@
 import { Either, left, right } from '@/core/either'
 import { InvalidCustomerStatusError } from '../../domain/exceptions/invalid-customer-status.error'
 
-export type CustomerStatusType = 'lead' | 'active' | 'inactive'
+export type CustomerStatusType = 'active' | 'inactive'
 
-const VALID_STATUSES: CustomerStatusType[] = ['lead', 'active', 'inactive']
+const VALID_STATUSES: CustomerStatusType[] = ['active', 'inactive']
 
 export class CustomerStatus {
   private readonly _value: CustomerStatusType
@@ -25,10 +25,6 @@ export class CustomerStatus {
 
   get value(): CustomerStatusType {
     return this._value
-  }
-
-  isLead(): boolean {
-    return this._value === 'lead'
   }
 
   isActive(): boolean {

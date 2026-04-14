@@ -6,7 +6,7 @@ import { CustomerUpdatedEvent } from '../events/customer-updated.event'
 import { UniqueEntityID } from '@/core/unique-entity-id'
 
 describe('Customer', () => {
-  it('should create a customer with default lead status', () => {
+  it('should create a customer with default active status', () => {
     const customer = Customer.create({
       name: 'Acme Corp',
       email: 'contact@acme.com',
@@ -15,7 +15,7 @@ describe('Customer', () => {
 
     expect(customer.name).toBe('Acme Corp')
     expect(customer.email).toBe('contact@acme.com')
-    expect(customer.status.value).toBe('lead')
+    expect(customer.status.value).toBe('active')
     expect(customer.isDeleted).toBe(false)
   })
 

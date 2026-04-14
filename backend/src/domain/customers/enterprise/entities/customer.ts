@@ -36,7 +36,7 @@ export class Customer extends AggregateRoot<CustomerProps> {
     const customer = new Customer(
       {
         ...props,
-        status: props.status ?? CustomerStatus.createUnsafe('lead'),
+        status: props.status ?? CustomerStatus.createUnsafe('active'),
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,

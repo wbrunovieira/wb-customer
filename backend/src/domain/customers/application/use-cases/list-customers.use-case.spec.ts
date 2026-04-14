@@ -41,8 +41,9 @@ describe('ListCustomersUseCase', () => {
       createdByUserId: 'user-1',
     })
     const lead = Customer.create({
-      name: 'Lead Co',
-      email: 'lead@example.com',
+      name: 'Inactive Co',
+      email: 'inactive@example.com',
+      status: CustomerStatus.createUnsafe('inactive'),
       createdByUserId: 'user-1',
     })
     await customerRepo.save(active)

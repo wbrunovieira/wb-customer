@@ -68,7 +68,7 @@ export async function updateCustomer(
   }
 
   const validated = CustomerSchema.extend({
-    status: z.enum(['lead', 'active', 'inactive']).optional(),
+    status: z.enum(['active', 'inactive']).optional(),
   }).safeParse(raw)
 
   if (!validated.success) {

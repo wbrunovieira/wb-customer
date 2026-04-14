@@ -179,12 +179,12 @@ describe('GET /api/v1/customers', () => {
 
   it('should filter by status', async () => {
     const res = await request(app.getHttpServer())
-      .get('/api/v1/customers?status=lead')
+      .get('/api/v1/customers?status=active')
       .set('Authorization', `Bearer ${adminToken}`)
 
     expect(res.status).toBe(200)
     if ((res.body.items as { status: string }[]).length > 0) {
-      expect(res.body.items[0].status).toBe('lead')
+      expect(res.body.items[0].status).toBe('active')
     }
   })
 

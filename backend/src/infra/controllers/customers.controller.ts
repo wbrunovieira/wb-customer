@@ -89,7 +89,7 @@ class UpdateCustomerDto {
   @ApiPropertyOptional({ example: 'Notes here', nullable: true })
   notes?: string | null
 
-  @ApiPropertyOptional({ example: 'active', enum: ['active', 'inactive', 'prospect', 'churned'] })
+  @ApiPropertyOptional({ example: 'active', enum: ['active', 'inactive'] })
   status?: string
 
   @ApiPropertyOptional({ example: 'uuid', nullable: true, description: 'Category ID' })
@@ -147,7 +147,7 @@ export class CustomersController {
   @Get()
   @Roles('admin', 'manager', 'employee')
   @ApiOperation({ summary: 'List customers with optional filters' })
-  @ApiQuery({ name: 'status', required: false, example: 'active', enum: ['active', 'inactive', 'prospect', 'churned'] })
+  @ApiQuery({ name: 'status', required: false, example: 'active', enum: ['active', 'inactive'] })
   @ApiQuery({ name: 'search', required: false, description: 'Search by name or email' })
   @ApiQuery({ name: 'employeeId', required: false, description: 'Filter by assigned employee' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category' })

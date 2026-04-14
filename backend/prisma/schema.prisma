@@ -63,7 +63,6 @@ model RefreshToken {
 // ─────────────────────────────────────────
 
 enum CustomerStatus {
-  lead
   active
   inactive
 }
@@ -101,7 +100,7 @@ model Customer {
   document        String?        @unique
   website         String?
   notes           String?
-  status          CustomerStatus @default(lead)
+  status          CustomerStatus @default(active)
   categoryId      String?        @map("category_id")
   driveFolderId   String?        @map("drive_folder_id")
   createdByUserId String         @map("created_by_user_id")

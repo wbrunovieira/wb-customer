@@ -7,13 +7,11 @@ import DeleteButton from '../_components/delete-button'
 export const metadata = { title: 'Cliente — WB Customer' }
 
 const STATUS_LABEL: Record<string, string> = {
-  lead: 'Lead',
   active: 'Ativo',
   inactive: 'Inativo',
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  lead: 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
   active: 'bg-green-50 text-green-700 ring-green-600/20',
   inactive: 'bg-slate-50 text-slate-600 ring-slate-500/20',
 }
