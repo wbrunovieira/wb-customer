@@ -1932,107 +1932,146 @@ DELETE /api/v1/customers/:id/campaigns/:campaignId/creatives/:creativeId
 
 ---
 
-## FASE 11 — CRM do Cliente (Funil de Leads)
+## FASE 11 — CRM do Cliente (Dashboard de Leads via Sincronização)
 
 ### Visão geral
 
-Domínio `crm`. O cliente recebe leads vindos do tráfego pago. Este módulo registra cada lead, de qual campanha veio, e documenta o funil de vendas — calculando % de conversão por etapa e tempo médio de atendimento.
+**Este módulo NÃO é um CRM.** É um **painel de estatísticas sincronizado com um CRM externo** (rotas a serem fornecidas na implementação). Os vendedores continuam trabalhando no CRM deles — este sistema consome a API do CRM, armazena um snapshot local dos leads e exibe as métricas atualizadas em tempo real (ou via polling/webhook).
+
+O objetivo é responder: quantos leads chegaram, de qual campanha vieram, qual é a conversão por etapa do funil, e qual o tempo de atendimento dos vendedores.
+
+### Fluxo
+
+```
+CRM externo (vendedores atualizando leads)
+    ↓  webhook ou polling periódico
+SyncLeadsUseCase — atualiza snapshot local
+    ↓
+Dashboard por cliente — métricas calculadas
+```
 
 ### Modelo Prisma (additions)
 
-```prisma
-enum LeadStatus {
-  new          // recém chegou
-  contacted    // primeiro contato feito
-  qualified    // lead validado como potencial cliente
-  proposal     // proposta enviada
-  negotiating  // negociando
-  won          // fechou
-  lost         // perdeu
-}
+> O modelo local é um **snapshot somente leitura** dos dados do CRM externo. Não serve para edição — apenas para cálculo de métricas.
 
-model Lead {
-  id               String     @id @default(uuid())
-  customerId       String     // cliente que recebeu o lead
-  campaignId       String?    // PaidTrafficCampaign de origem
-  name             String
+```prisma
+// Snapshot de um lead vindo do CRM externo
+model CrmLeadSnapshot {
+  id               String    @id @default(uuid())
+  customerId       String    // cliente WB ao qual esse lead pertence
+  externalId       String    // ID do lead no CRM externo
+  campaignId       String?   // PaidTrafficCampaign de origem (Fase 10)
+  name             String?
   email            String?
   phone            String?
-  status           LeadStatus @default(new)
-  source           String?    // "meta_ads" | "organic" | "referral" | etc.
-  notes            String?
-  assignedToUserId String?    // vendedor responsável
-  firstContactAt   DateTime?  // quando foi feito o 1º contato
-  closedAt         DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  currentStage     String    // nome da etapa atual no CRM externo (ex: "qualificado")
+  stageOrder       Int       // posição ordinal da etapa (0, 1, 2...) para cálculo de funil
+  source           String?   // origem do lead no CRM externo
+  assignedTo       String?   // nome do vendedor no CRM externo
+  firstContactAt   DateTime? // quando o 1º contato foi feito
+  closedAt         DateTime? // quando foi ganho ou perdido
+  isWon            Boolean   @default(false)
+  isLost           Boolean   @default(false)
+  lastSyncAt       DateTime  @default(now())
+  createdAtCrm     DateTime? // data de criação no CRM externo
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   customer  Customer              @relation(fields: [customerId], references: [id])
   campaign  PaidTrafficCampaign?  @relation(fields: [campaignId], references: [id])
-  stages    LeadStageTransition[]
+  stageHistory CrmLeadStageHistory[]
 
+  @@unique([customerId, externalId])
   @@index([customerId])
   @@index([campaignId])
-  @@map("leads")
+  @@map("crm_lead_snapshots")
 }
 
-model LeadStageTransition {
-  id        String     @id @default(uuid())
-  leadId    String
-  fromStage LeadStatus?
-  toStage   LeadStatus
-  userId    String     // quem fez a transição
-  note      String?
-  enteredAt DateTime   @default(now())
+// Histórico de mudanças de etapa capturadas a cada sync
+model CrmLeadStageHistory {
+  id         String   @id @default(uuid())
+  leadId     String
+  fromStage  String?
+  toStage    String
+  detectedAt DateTime @default(now())
 
-  lead Lead @relation(fields: [leadId], references: [id])
+  lead CrmLeadSnapshot @relation(fields: [leadId], references: [id])
 
   @@index([leadId])
-  @@map("lead_stage_transitions")
+  @@map("crm_lead_stage_history")
+}
+
+// Configuração do CRM externo por cliente
+model CrmIntegration {
+  id           String   @id @default(uuid())
+  customerId   String   @unique
+  crmType      String   // ex: "kommo" | "hubspot" | "pipedrive" | "custom"
+  apiBaseUrl   String
+  apiKey       String   // armazenado criptografado ou via secret manager
+  webhookToken String?  // token para validar webhooks recebidos
+  lastSyncAt   DateTime?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("crm_integrations")
 }
 ```
 
 ### Casos de Uso
 
-- `CreateLeadUseCase`
-- `UpdateLeadUseCase`
-- `MoveLeadStageUseCase` — avança/retrocede status + registra `LeadStageTransition`
-- `ListCustomerLeadsUseCase` — filtros (status, campaignId, assignee, dateRange)
-- `GetLeadUseCase`
-- `GetFunnelMetricsUseCase` — retorna:
+- `ConfigureCrmIntegrationUseCase` — salva configuração da API do CRM externo para um cliente
+- `SyncLeadsUseCase` — consome API do CRM externo → upsert em `CrmLeadSnapshot` + detecta mudanças de etapa
+- `GetCrmFunnelMetricsUseCase` — calcula a partir do snapshot:
   - Total de leads por etapa
   - % de conversão de cada etapa para a próxima
-  - Tempo médio em cada etapa
-  - Tempo médio de primeiro atendimento (`firstContactAt - createdAt`)
-- `AssignLeadUseCase`
+  - Tempo médio em cada etapa (via `CrmLeadStageHistory`)
+  - Tempo médio de primeiro atendimento (`firstContactAt - createdAtCrm`)
+  - Leads por campanha de tráfego pago (join com Fase 10)
+- `GetCrmLeadListUseCase` — lista leads sincronizados com filtros
+
+**Cron / Webhook:**
+- `CrmSyncSchedulerService` — polling periódico (ex: a cada 10 min) ou receptor de webhook
+- Rota recebe `POST /api/v1/webhooks/crm/:customerId` para sync imediato via push
 
 ### Endpoints
 
 ```
-POST   /api/v1/customers/:id/leads
-GET    /api/v1/customers/:id/leads           # ?status=&campaignId=&assignee=
-GET    /api/v1/customers/:id/leads/:leadId
-PATCH  /api/v1/customers/:id/leads/:leadId
-PATCH  /api/v1/customers/:id/leads/:leadId/stage
-DELETE /api/v1/customers/:id/leads/:leadId
+# Configuração
+POST   /api/v1/customers/:id/crm-integration
+GET    /api/v1/customers/:id/crm-integration
+PATCH  /api/v1/customers/:id/crm-integration
+POST   /api/v1/customers/:id/crm-integration/sync   # força sync manual
 
-GET    /api/v1/customers/:id/leads/funnel    # métricas do funil
+# Dados (somente leitura — vêm do snapshot)
+GET    /api/v1/customers/:id/crm/leads              # ?stage=&assignedTo=&campaignId=
+GET    /api/v1/customers/:id/crm/funnel             # métricas do funil
+GET    /api/v1/customers/:id/crm/metrics            # totais, tempo médio, leads por campanha
+
+# Webhook receptor
+POST   /api/v1/webhooks/crm/:customerId
 ```
 
 ### Frontend
 
-- **Pipeline view (kanban):** colunas por status de lead
-- **Funil de conversão:** gráfico de funil com % de cada etapa
-- **Painel do vendedor:** leads atribuídos, tempo médio de atendimento
-- **Vínculo com campanha:** qual campanha gerou quais leads e quantos converteram
+- **Dashboard de funil:** gráfico de funil com % por etapa + leads totais
+- **Métricas de atendimento:** tempo médio de 1º contato por vendedor
+- **Leads por campanha:** join com Fase 10 mostrando custo por lead, conversão
+- **Lista de leads:** tabela somente leitura dos leads sincronizados
+- **Status de sync:** última sincronização, botão "Sincronizar agora"
+
+> Os campos disponíveis no funil (nomes de etapas, ordem) são lidos dinamicamente da API do CRM externo na primeira sincronização e salvos em `CrmIntegration.stagesConfig (Json)`.
 
 ### Entregáveis Fase 11
 
-- [ ] Migrations (`leads`, `lead_stage_transitions`)
-- [ ] Domínio `crm` com TDD
-- [ ] Frontend: pipeline kanban de leads
-- [ ] Gráfico de funil de conversão
-- [ ] Painel de métricas (leads por campanha, tempo de atendimento)
+- [ ] Migrations (`crm_lead_snapshots`, `crm_lead_stage_history`, `crm_integrations`)
+- [ ] Domínio `crm` com TDD (sync, metrics calculation)
+- [ ] `CrmSyncSchedulerService` (cron + webhook receptor)
+- [ ] Frontend: dashboard de funil de conversão
+- [ ] Frontend: métricas por vendedor e por campanha
+- [ ] Frontend: configuração da integração (URL + API key)
 - [ ] `tsc --noEmit` sem erros
 - [ ] Commit + push GitHub
 
