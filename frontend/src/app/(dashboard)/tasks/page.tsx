@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { apiServer } from '@/lib/api-server'
-import { Task, TaskStatus, PaginatedResponse } from '@/lib/definitions'
+import { Task, TaskStatus, CustomerListItem, PaginatedResponse } from '@/lib/definitions'
+import CreateTaskModal from './_components/create-task-modal'
 
 export const metadata = { title: 'Tarefas — WB Customer' }
 
@@ -52,11 +53,16 @@ export default async function AllTasksPage({
 
   let tasks: Task[] = []
   let total = 0
+  let customers: CustomerListItem[] = []
 
   try {
-    const res = await apiServer.get<PaginatedResponse<Task>>(`/api/v1/tasks?${query}`)
-    tasks = res.items
-    total = res.total
+    const [tasksRes, customersRes] = await Promise.all([
+      apiServer.get<PaginatedResponse<Task>>(`/api/v1/tasks?${query}`),
+      apiServer.get<PaginatedResponse<CustomerListItem>>('/api/v1/customers?limit=200&status=active'),
+    ])
+    tasks = tasksRes.items
+    total = tasksRes.total
+    customers = customersRes.items
   } catch {
     // show empty
   }
@@ -96,8 +102,11 @@ export default async function AllTasksPage({
           <p className="mt-1 text-sm text-slate-500">{total} tarefa(s) no total</p>
         </div>
 
-        {/* Group toggle */}
-        <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          <CreateTaskModal customers={customers} />
+
+          {/* Group toggle */}
+          <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0">
           <Link
             href={buildHref({ groupBy: undefined, page: 1 })}
             className={`px-3 py-1.5 text-xs font-medium transition-colors ${!isGrouped ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
@@ -110,6 +119,7 @@ export default async function AllTasksPage({
           >
             Por cliente
           </Link>
+          </div>
         </div>
       </div>
 
