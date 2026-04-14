@@ -43,12 +43,14 @@ import { IChecklistItemRepository } from '@/domain/tasks/application/repositorie
 import { ITaskTagRepository } from '@/domain/tasks/application/repositories/i-task-tag.repository'
 import { ITaskActivityLogRepository } from '@/domain/tasks/application/repositories/i-task-activity-log.repository'
 import { ITaskCommentRepository } from '@/domain/tasks/application/repositories/i-task-comment.repository'
+import { IActivityRepository } from '@/domain/activities/application/repositories/i-activity.repository'
 import { PrismaTaskRepository } from './prisma/repositories/tasks/prisma-task.repository'
 import { PrismaSprintRepository } from './prisma/repositories/tasks/prisma-sprint.repository'
 import { PrismaChecklistItemRepository } from './prisma/repositories/tasks/prisma-checklist-item.repository'
 import { PrismaTaskTagRepository } from './prisma/repositories/tasks/prisma-task-tag.repository'
 import { PrismaTaskActivityLogRepository } from './prisma/repositories/tasks/prisma-task-activity-log.repository'
 import { PrismaTaskCommentRepository } from './prisma/repositories/tasks/prisma-task-comment.repository'
+import { PrismaActivityRepository } from './prisma/repositories/activities/prisma-activity.repository'
 import { Env } from '@/env/env'
 
 @Global()
@@ -106,6 +108,8 @@ import { Env } from '@/env/env'
     { provide: ITaskTagRepository, useClass: PrismaTaskTagRepository },
     { provide: ITaskActivityLogRepository, useClass: PrismaTaskActivityLogRepository },
     { provide: ITaskCommentRepository, useClass: PrismaTaskCommentRepository },
+    // Activities
+    { provide: IActivityRepository, useClass: PrismaActivityRepository },
   ],
   exports: [
     PrismaService,
@@ -132,6 +136,7 @@ import { Env } from '@/env/env'
     ITaskTagRepository,
     ITaskActivityLogRepository,
     ITaskCommentRepository,
+    IActivityRepository,
   ],
 })
 export class DatabaseModule {}

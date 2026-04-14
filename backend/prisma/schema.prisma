@@ -118,6 +118,7 @@ model Customer {
   portalUsers  CustomerUser[]
   sprints     Sprint[]
   tasks       Task[]
+  activityLogs Activity[]
 
   @@index([categoryId])
   @@map("customers")
@@ -158,8 +159,9 @@ model Contact {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  customer Customer  @relation(fields: [customerId], references: [id])
-  meetings Meeting[]
+  customer     Customer   @relation(fields: [customerId], references: [id])
+  meetings     Meeting[]
+  activityLogs Activity[]
 
   @@index([customerId])
   @@map("contacts")
@@ -525,4 +527,52 @@ model CommentReaction {
 
   @@id([commentId, userId, emoji])
   @@map("comment_reactions")
+}
+
+// ─────────────────────────────────────────
+// ACTIVITIES (Communication Log)
+// ─────────────────────────────────────────
+
+model Activity {
+  id                String    @id @default(uuid())
+  customerId        String    @map("customer_id")
+  contactId         String?   @map("contact_id")
+  type              String
+  status            String    @default("open")
+  subject           String?
+  description       String?
+  scheduledAt       DateTime? @map("scheduled_at")
+  occurredAt        DateTime? @map("occurred_at")
+  durationSecs      Int?      @map("duration_secs")
+  audioUrl          String?   @map("audio_url")
+  transcriptText    String?   @map("transcript_text")
+  externalId        String?   @map("external_id")
+  direction         String?
+  createdByUserId   String    @map("created_by_user_id")
+  assignedToUserId  String?   @map("assigned_to_user_id")
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  customer    Customer             @relation(fields: [customerId], references: [id])
+  contact     Contact?             @relation(fields: [contactId], references: [id])
+  attachments ActivityAttachment[]
+
+  @@index([customerId])
+  @@index([externalId])
+  @@map("activities")
+}
+
+model ActivityAttachment {
+  id         String   @id @default(uuid())
+  activityId String   @map("activity_id")
+  url        String
+  mimeType   String   @map("mime_type")
+  fileName   String   @map("file_name")
+  sizeBytes  BigInt?  @map("size_bytes")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@map("activity_attachments")
 }

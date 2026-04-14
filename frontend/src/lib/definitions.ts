@@ -295,3 +295,28 @@ export type Sprint = {
   createdAt: string
   updatedAt: string
 }
+
+// ─── Activities ──────────────────────────────────────────────
+
+export type ActivityType = 'email' | 'whatsapp' | 'phone_call' | 'note' | 'meeting'
+export type ActivityStatus = 'scheduled' | 'open' | 'done' | 'cancelled' | 'skipped'
+
+export type Activity = {
+  id: string
+  customerId: string
+  contactId: string | null
+  type: ActivityType
+  status: ActivityStatus
+  subject: string | null
+  description: string | null
+  scheduledAt: string | null
+  occurredAt: string | null
+  durationSecs: number | null
+  audioUrl: string | null
+  transcriptText: string | null
+  direction: string | null
+  createdByUserId: string
+  assignedToUserId: string | null
+  createdAt: string
+  updatedAt: string
+}
