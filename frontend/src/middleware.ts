@@ -3,13 +3,19 @@ import { NextRequest, NextResponse } from 'next/server'
 const PUBLIC_PATHS = ['/login']
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3003'
 
-function getTokenExpiry(token: string): number | null {
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString())
-    return payload.exp ?? null
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const json = atob(base64)
+    return JSON.parse(json)
   } catch {
     return null
   }
+}
+
+function getTokenExpiry(token: string): number | null {
+  const payload = decodeJwtPayload(token)
+  return (payload?.exp as number) ?? null
 }
 
 function isExpiredOrExpiringSoon(token: string): boolean {
@@ -78,8 +84,8 @@ export async function middleware(request: NextRequest) {
   const token = response.cookies.get('access_token')?.value ?? accessToken
   if (token) {
     try {
-      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString())
-      const role = payload.role as string
+      const payload = decodeJwtPayload(token)
+      const role = payload?.role as string
 
       // Customer users can only access /portal/*
       if (role === 'customer' && !pathname.startsWith('/portal')) {
