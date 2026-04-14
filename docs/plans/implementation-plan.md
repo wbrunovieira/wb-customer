@@ -1553,17 +1553,38 @@ Fase 7 inclui o sino de notificações no header. Eventos publicados via EventBu
 
 ### Entregáveis Fase 7
 
-- [ ] Migrations (`sprints`, `tasks`, `checklist_items`, `task_tags`, `task_tag_links`, `task_comments`, `comment_attachments`, `image_annotations`, `comment_reactions`, `task_activity_logs`, `task_templates`)
-- [ ] Domínio `tasks` completo com TDD
-- [ ] Todos use-cases unit testados (in-memory repos)
-- [ ] E2E: CRUD tasks, sprints, templates, comentários
-- [ ] Frontend: lista, kanban, calendário, gantt, detalhe da tarefa
-- [ ] Frontend: área de ideias separada
-- [ ] Frontend: comentários ricos (áudio, imagem com anotação, anexos, reações)
-- [ ] SSE + sino de notificações no header
-- [ ] Cron de recorrência
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit + push GitHub
+**Backend — concluído ✅**
+- [x] Migration: `sprints`, `tasks`, `checklist_items`, `task_tags`, `task_tag_links`, `task_activity_logs`
+- [x] Entidades: `Task`, `Sprint`, `ChecklistItem`, `TaskTag`, `TaskActivityLog` com TDD (unit tests)
+- [x] Use-cases: CreateTask, UpdateTask, DeleteTask, GetTask, ListCustomerTasks, ListAllTasks, MoveTaskStatus
+- [x] Use-cases: AddChecklistItem, ToggleChecklistItem, DeleteChecklistItem
+- [x] Use-cases: CreateSprint, UpdateSprint, DeleteSprint, ListSprints
+- [x] Use-cases: CreateTaskTag, ListTaskTags, AttachTaskTag, DetachTaskTag
+- [x] Use-cases: GetTaskActivityLog
+- [x] E2E: CRUD tasks, sprints, checklist, tags (21 testes passando)
+- [x] `GET /api/v1/tasks` — listagem global com filtros
+- [x] SSE `GET /api/v1/events` + NotificationsService + TaskNotificationsSubscriber
+- [x] `tsc --noEmit` sem erros
+
+**Frontend — concluído ✅**
+- [x] `/tasks` — página global com tabela, filtro por status, paginação
+- [x] `/customers/[id]/tasks` — lista + kanban (drag & drop com @dnd-kit) + área de ideias
+- [x] `/customers/[id]/tasks/[taskId]` — detalhe: checklist, tags, ICE score, log de atividade, edição, status changer
+- [x] Server actions: create/update/delete task, checklist, sprint, tag attach/detach, moveStatus
+- [x] Sino de notificações no header com SSE via `/api/events` proxy
+- [x] Botão "Tarefas" na página do cliente
+- [x] Item "Tarefas" no sidebar
+
+**Pendente — Fase 7 (iteração futura)**
+- [ ] Migration: `task_comments`, `comment_attachments`, `image_annotations`, `comment_reactions`, `task_templates`
+- [ ] Comentários ricos: texto, áudio gravado, anexos, imagem com anotações, reações emoji, respostas em cadeia, marcar como resolvido
+- [ ] Templates de tarefas: salvar seleção de tarefas → aplicar em cliente
+- [ ] Subtarefas (`parentTaskId` já existe na entidade, falta use-case + UI)
+- [ ] View Calendário (`?view=calendar`) — tarefas nos dias previstos
+- [ ] View Gantt (`?view=gantt`)
+- [ ] Recorrência: cron diário `ProcessRecurringTasksUseCase`
+- [ ] Time-tracking: `StartTimeTrackUseCase` / `StopTimeTrackUseCase`
+- [ ] `ReorderTasksUseCase` — persistir `boardPosition` após drag no kanban
 
 ---
 
@@ -2148,6 +2169,7 @@ CALENDAR_ADAPTER=google-calendar
 | 3 | Documentos + Drive | ✅ | ✅ | ✅ | ✅ Upload/View | ✅ |
 | 4 | Reuniões + Meet | ✅ | ✅ | ✅ | ✅ Agenda/RSVP | ✅ |
 | 5 | Portal do Cliente | ✅ | ✅ | ✅ | ⬜ Usuários + Reuniões | ⬜ |
+| 7 | Tarefas (core) | ✅ | ✅ | ✅ | ✅ Lista/Kanban DnD/Detalhe/SSE | ✅ |
 
 ---
 
