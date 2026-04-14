@@ -175,3 +175,83 @@ export type MeetingFormState =
 export type MeetingTypeFormState =
   | { errors?: { name?: string[]; durationMinutes?: string[] }; message?: string }
   | undefined
+
+// ─── Tasks ───────────────────────────────────────────────────
+
+export type TaskStatus =
+  | 'idea_could'
+  | 'idea_should'
+  | 'backlog'
+  | 'todo'
+  | 'in_progress'
+  | 'review'
+  | 'done'
+  | 'cancelled'
+
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'
+
+export type TaskTag = {
+  id: string
+  name: string
+  color: string
+  customerId: string | null
+}
+
+export type ChecklistItem = {
+  id: string
+  taskId: string
+  text: string
+  isDone: boolean
+  position: number
+  createdAt: string
+}
+
+export type TaskActivityLog = {
+  id: string
+  taskId: string
+  userId: string
+  action: string
+  fromValue: string | null
+  toValue: string | null
+  createdAt: string
+}
+
+export type Task = {
+  id: string
+  customerId: string
+  sprintId: string | null
+  parentTaskId: string | null
+  title: string
+  description: string | null
+  status: TaskStatus
+  ownerUserId: string
+  assigneeUserId: string | null
+  startAt: string | null
+  endAt: string | null
+  estimatedHours: number | null
+  trackedSeconds: number
+  impact: number | null
+  confidence: number | null
+  effort: number | null
+  iceScore: number | null
+  recurrenceType: RecurrenceType
+  progress: number
+  boardPosition: number
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  // included when fetching detail
+  checklist?: ChecklistItem[]
+  tags?: TaskTag[]
+  activityLog?: TaskActivityLog[]
+}
+
+export type Sprint = {
+  id: string
+  customerId: string
+  name: string
+  startAt: string
+  endAt: string
+  createdAt: string
+  updatedAt: string
+}

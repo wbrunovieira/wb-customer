@@ -50,6 +50,9 @@ a tarefa pode ser recorrente e ao criar e editar podemos definir se ela e diaria
 dizer que automaticamente ela sera sempre adcionada na data. mas mesmo assim precisamos ver na lista os recorrentes para
 facilemente conseguir ver as tarefas corriqueiras do projeto.
 
+precisamos ter Event Bus / Pub-Sub (Publisher-Subscriber) para mensagens de whatsapp e emails do cliente e uma conexao
+direto com o frontend Server-Sent Events (SSE) e um sino no header que apareca a notificacao
+
 ## Criativos
 
 iremos precisar gerir os criativos de cada cliente. precisaremos salvar na em uma pasta exclusiva para o cliente no
