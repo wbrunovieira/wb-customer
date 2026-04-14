@@ -23,7 +23,6 @@ import { IMeetingRepository } from '@/domain/meetings/application/repositories/i
 import { IMeetingTypeRepository } from '@/domain/meetings/application/repositories/i-meeting-type.repository'
 import { GoogleCalendarAdapter } from '@/infra/adapters/calendar/google-calendar.adapter'
 import { MockCalendarAdapter } from '@/infra/adapters/calendar/mock-calendar.adapter'
-import { GoogleTokenService } from '@/infra/adapters/calendar/google-token.service'
 import { Env } from '@/env/env'
 
 @Module({
@@ -37,9 +36,8 @@ import { Env } from '@/env/env'
     GoogleOAuthController,
   ],
   providers: [
-    // Token service
-    { provide: IGoogleTokenService, useClass: GoogleTokenService },
     // Calendar adapter — swap based on CALENDAR_ADAPTER env var
+    // Note: IGoogleTokenService is provided globally by DatabaseModule
     {
       provide: ICalendarAdapter,
       useFactory: (config: ConfigService<Env, true>, tokenService: IGoogleTokenService) => {

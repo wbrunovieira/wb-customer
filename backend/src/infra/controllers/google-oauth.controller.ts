@@ -8,6 +8,7 @@ import {
   HttpStatus,
   UnauthorizedException,
   UseGuards,
+  Logger,
 } from '@nestjs/common'
 import type { Response } from 'express'
 import { google } from 'googleapis'
@@ -28,15 +29,16 @@ import { Roles } from '@/infra/auth/decorators/roles.decorator'
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/userinfo.email',
 ]
 
 @ApiTags('Google OAuth')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
 @Controller('google')
 export class GoogleOAuthController {
+  private readonly logger = new Logger(GoogleOAuthController.name)
+
   constructor(
     private readonly tokenService: IGoogleTokenService,
     private readonly config: ConfigService<Env, true>,
@@ -50,7 +52,38 @@ export class GoogleOAuthController {
     )
   }
 
+  @Get('status')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get Google connection status' })
+  @ApiResponse({ status: 200, description: 'Returns connection status and email if connected' })
+  async status() {
+    const token = await this.tokenService.getToken()
+    if (!token) return { connected: false }
+    return { connected: true, email: token.email }
+  }
+
+  @Get('auth-url')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Return the Google OAuth consent URL (for frontend redirect)' })
+  @ApiResponse({ status: 200, description: 'Returns { url }' })
+  getAuthUrl() {
+    const client = this.createOAuthClient()
+    const url = client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      prompt: 'consent',
+    })
+    return { url }
+  }
+
   @Get('auth')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @ApiOperation({ summary: 'Redirect to Google OAuth consent screen' })
   @ApiResponse({ status: 302, description: 'Redirects to Google consent page' })
   async authorize(@Res() res: Response) {
@@ -63,10 +96,11 @@ export class GoogleOAuthController {
     return res.redirect(url)
   }
 
+  // No auth guard — Google redirects here after OAuth consent
   @Get('callback')
   @ApiOperation({ summary: 'Google OAuth callback — exchanges code for token' })
   @ApiQuery({ name: 'code', required: true, description: 'Authorization code from Google' })
-  @ApiResponse({ status: 200, description: 'Token stored successfully' })
+  @ApiResponse({ status: 302, description: 'Redirects to admin page on success' })
   @ApiResponse({ status: 401, description: 'Missing authorization code' })
   async callback(@Query('code') code: string, @Res() res: Response) {
     if (!code) throw new UnauthorizedException('Missing authorization code')
@@ -86,10 +120,14 @@ export class GoogleOAuthController {
       email: data.email!,
     })
 
-    return res.json({ message: 'Google account connected', email: data.email })
+    this.logger.log(`Google account connected: ${data.email}`)
+    return res.redirect('http://localhost:3000/admin/google?connected=1')
   }
 
   @Delete('disconnect')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disconnect Google account' })
   @ApiResponse({ status: 204, description: 'Google account disconnected' })

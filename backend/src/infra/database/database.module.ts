@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { PrismaService } from './prisma/prisma.service'
 import { IUserIdentityRepository } from '@/domain/auth/application/repositories/i-user-identity.repository'
 import { IUserProfileRepository } from '@/domain/auth/application/repositories/i-user-profile.repository'
@@ -20,10 +21,12 @@ import { PrismaCustomerCategoryRepository } from './prisma/repositories/customer
 import { PrismaContactRepository } from './prisma/repositories/customers/prisma-contact.repository'
 import { PrismaCustomerActivityRepository } from './prisma/repositories/customers/prisma-customer-activity.repository'
 import { LocalCustomerFolderService } from '@/infra/adapters/storage/local-customer-folder.service'
+import { GoogleCustomerFolderService } from '@/infra/adapters/storage/google-customer-folder.service'
 import { IDocumentRepository } from '@/domain/documents/application/repositories/i-document.repository'
 import { IStorageAdapter } from '@/domain/documents/application/services/i-storage.adapter'
 import { PrismaDocumentRepository } from './prisma/repositories/documents/prisma-document.repository'
 import { LocalStorageAdapter } from '@/infra/adapters/storage/local-storage.adapter'
+import { GoogleDriveAdapter } from '@/infra/adapters/storage/google-drive.adapter'
 import { ICustomerUserRepository } from '@/domain/customers/application/repositories/i-customer-user.repository'
 import { PrismaCustomerUserRepository } from './prisma/repositories/customers/prisma-customer-user.repository'
 import { ICustomerPortalLookup } from '@/domain/auth/application/services/i-customer-portal-lookup'
@@ -32,9 +35,13 @@ import { IMeetingRepository } from '@/domain/meetings/application/repositories/i
 import { IMeetingTypeRepository } from '@/domain/meetings/application/repositories/i-meeting-type.repository'
 import { PrismaMeetingRepository } from './prisma/repositories/meetings/prisma-meeting.repository'
 import { PrismaMeetingTypeRepository } from './prisma/repositories/meetings/prisma-meeting-type.repository'
+import { IGoogleTokenService } from '@/domain/meetings/application/services/i-google-token.service'
+import { GoogleTokenService } from '@/infra/adapters/calendar/google-token.service'
+import { Env } from '@/env/env'
 
 @Global()
 @Module({
+  imports: [ConfigModule],
   providers: [
     PrismaService,
     // Auth
@@ -43,15 +50,37 @@ import { PrismaMeetingTypeRepository } from './prisma/repositories/meetings/pris
     { provide: IUserAuthorizationRepository, useClass: PrismaUserAuthorizationRepository },
     { provide: IRefreshTokenRepository, useClass: PrismaRefreshTokenRepository },
     { provide: IAuthUnitOfWork, useClass: PrismaAuthUnitOfWork },
-    // Customers
+    // Google token service (shared by Calendar + Drive)
+    { provide: IGoogleTokenService, useClass: GoogleTokenService },
+    // Customers — folder service swaps based on STORAGE_ADAPTER
+    {
+      provide: ICustomerFolderService,
+      useFactory: (config: ConfigService<Env, true>, tokenService: IGoogleTokenService) => {
+        if (config.get('STORAGE_ADAPTER', { infer: true }) === 'google-drive') {
+          return new GoogleCustomerFolderService(tokenService, config)
+        }
+        return new LocalCustomerFolderService()
+      },
+      inject: [ConfigService, IGoogleTokenService],
+    },
+    // Documents
+    { provide: IDocumentRepository, useClass: PrismaDocumentRepository },
+    // Storage adapter swaps based on STORAGE_ADAPTER
+    {
+      provide: IStorageAdapter,
+      useFactory: (config: ConfigService<Env, true>, tokenService: IGoogleTokenService) => {
+        if (config.get('STORAGE_ADAPTER', { infer: true }) === 'google-drive') {
+          return new GoogleDriveAdapter(tokenService, config)
+        }
+        return new LocalStorageAdapter()
+      },
+      inject: [ConfigService, IGoogleTokenService],
+    },
+    // Customer repository
     { provide: ICustomerRepository, useClass: PrismaCustomerRepository },
     { provide: ICustomerCategoryRepository, useClass: PrismaCustomerCategoryRepository },
     { provide: IContactRepository, useClass: PrismaContactRepository },
     { provide: ICustomerActivityRepository, useClass: PrismaCustomerActivityRepository },
-    { provide: ICustomerFolderService, useClass: LocalCustomerFolderService },
-    // Documents
-    { provide: IDocumentRepository, useClass: PrismaDocumentRepository },
-    { provide: IStorageAdapter, useClass: LocalStorageAdapter },
     // Customer Portal
     { provide: ICustomerUserRepository, useClass: PrismaCustomerUserRepository },
     { provide: ICustomerPortalLookup, useClass: CustomerPortalLookup },
@@ -66,6 +95,7 @@ import { PrismaMeetingTypeRepository } from './prisma/repositories/meetings/pris
     IUserAuthorizationRepository,
     IRefreshTokenRepository,
     IAuthUnitOfWork,
+    IGoogleTokenService,
     ICustomerRepository,
     ICustomerCategoryRepository,
     IContactRepository,
