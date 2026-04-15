@@ -177,7 +177,7 @@ function AddCommentForm({
         ref={textareaRef}
         rows={2}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1// resize-none"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25 resize-none"
       />
       {error && <p className="text-xs text-red-400">{error}</p>}
 
@@ -420,7 +420,7 @@ function CommentItem({
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-md hover:border-indigo-300 hover:text-indigo-600"
+                    className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-md hover:border-indigo-300 hover:text-accent"
                   >
                     📎 {att.name}
                   </a>
@@ -444,7 +444,7 @@ function CommentItem({
         {!isDeleted && depth === 0 && (
           <button
             onClick={() => setShowReply((v) => !v)}
-            className="mt-1.5 text-xs text-lo hover:text-indigo-600"
+            className="mt-1.5 text-xs text-lo hover:text-accent"
           >
             Responder
           </button>

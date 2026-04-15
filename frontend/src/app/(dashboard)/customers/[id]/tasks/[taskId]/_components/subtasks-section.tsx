@@ -10,7 +10,7 @@ const STATUS_LABEL: Record<string, string> = {
   review: 'Revisão', done: 'Concluído', cancelled: 'Cancelado',
 }
 const STATUS_CLASS: Record<string, string> = {
-  backlog: 'bg-canvas text-md ring-slate-400/20',
+  backlog: 'bg-canvas text-md ring-border',
   todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
@@ -31,7 +31,7 @@ function AddSubtaskForm({ customerId, taskId }: { customerId: string; taskId: st
         <input
           name="title"
           placeholder="Título da subtarefa"
-          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
         {errors?.title && <p className="mt-0.5 text-xs text-red-400">{errors.title[0]}</p>}
       </div>
@@ -75,7 +75,7 @@ export default function SubtasksSection({ customerId, taskId, subtasks }: Props)
             <li key={s.id} className="flex items-center justify-between py-2 gap-3">
               <Link
                 href={`/customers/${customerId}/tasks/${s.id}`}
-                className="flex-1 text-sm text-hi hover:text-indigo-600 line-clamp-1"
+                className="flex-1 text-sm text-hi hover:text-accent line-clamp-1"
               >
                 {s.title}
               </Link>

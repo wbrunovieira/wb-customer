@@ -26,7 +26,7 @@ export default function SummaryForm({ customerId, meetingId, currentSummary }: P
         rows={4}
         defaultValue={currentSummary ?? ''}
         placeholder="Escreva o resumo da reunião, próximos passos, decisões tomadas..."
-        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
       />
       <button
         type="submit"

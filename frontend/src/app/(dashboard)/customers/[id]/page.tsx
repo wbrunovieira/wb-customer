@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_CLASS: Record<string, string> = {
   active: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  inactive: 'bg-canvas text-md ring-slate-500/20',
+  inactive: 'bg-canvas text-md ring-border',
 }
 
 type Props = {
@@ -47,7 +47,7 @@ export default async function CustomerDetailPage({ params }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/customers/${id}/activities`}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -56,7 +56,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/tasks`}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 11 12 14 22 4" />
@@ -66,7 +66,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/documents`}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -76,7 +76,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/meetings`}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -88,7 +88,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/portal-users`}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -98,7 +98,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/edit`}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -113,7 +113,7 @@ export default async function CustomerDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main info */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-xl font-bold text-hi">{customer.name}</h1>
@@ -141,7 +141,7 @@ export default async function CustomerDetailPage({ params }: Props) {
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-lo">Website</dt>
                   <dd className="mt-1 text-sm text-hi">
-                    <a href={customer.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                    <a href={customer.website} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                       {customer.website}
                     </a>
                   </dd>
@@ -165,7 +165,7 @@ export default async function CustomerDetailPage({ params }: Props) {
 
           {/* Contacts */}
           {customer.contacts.length > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
               <h2 className="text-sm font-semibold text-hi">Contatos</h2>
               <ul className="mt-4 flex flex-col divide-y divide-slate-100">
                 {customer.contacts.map((contact) => (
@@ -193,13 +193,13 @@ export default async function CustomerDetailPage({ params }: Props) {
         {/* Sidebar info */}
         <div className="flex flex-col gap-6">
           {customer.driveFolderId && (
-            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <div className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
               <h2 className="text-sm font-semibold text-hi">Google Drive</h2>
               <a
                 href={customer.driveFolderId}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex items-center gap-2 text-sm text-indigo-600 hover:underline"
+                className="mt-3 flex items-center gap-2 text-sm text-accent hover:underline"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -211,7 +211,7 @@ export default async function CustomerDetailPage({ params }: Props) {
             </div>
           )}
 
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
             <h2 className="text-sm font-semibold text-hi">Responsáveis</h2>
             {customer.employees.length === 0 ? (
               <p className="mt-3 text-sm text-md">Nenhum responsável atribuído.</p>

@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 const STATUS_CLASS: Record<TaskStatus, string> = {
   idea_could: 'bg-purple-500/10 text-purple-400 ring-purple-600/20',
   idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
-  backlog: 'bg-canvas text-md ring-slate-400/20',
+  backlog: 'bg-canvas text-md ring-border',
   todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
@@ -49,7 +49,7 @@ function TaskCard({ task, customerId, compact = false }: { task: Task; customerI
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/customers/${customerId}/tasks/${task.id}`}
-          className="flex-1 text-sm font-medium text-hi hover:text-indigo-600 line-clamp-2"
+          className="flex-1 text-sm font-medium text-hi hover:text-accent line-clamp-2"
         >
           {task.title}
         </Link>
@@ -84,7 +84,7 @@ function TaskCard({ task, customerId, compact = false }: { task: Task; customerI
         <div className="flex items-center gap-2">
           <Link
             href={`/customers/${customerId}/tasks/${task.id}`}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-accent hover:underline"
           >
             Detalhes
           </Link>
@@ -161,7 +161,7 @@ export default async function CustomerTasksPage({
             <span>/</span>
             <span className="text-hi">Tarefas</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
             Tarefas — {customer!.name}
           </h1>
           <p className="mt-1 text-sm text-md">{tasks.length} tarefa(s)</p>
@@ -184,7 +184,7 @@ export default async function CustomerTasksPage({
                 <Link
                   key={label}
                   href={href}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'btn-brand text-white' : 'text-md hover:bg-canvas'}`}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'btn-brand text-white' : 'text-md hover:bg-elevated'}`}
                 >
                   {label}
                 </Link>
@@ -212,7 +212,7 @@ export default async function CustomerTasksPage({
             href={tab.href}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.active
-                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                ? 'border-b-2 border-brand text-white'
                 : 'text-md hover:text-hi'
             }`}
           >
@@ -252,7 +252,7 @@ export default async function CustomerTasksPage({
         </div>
         {sprints.length > 0 && (
           <select
-            className="rounded-lg border border-border px-3 py-1.5 text-xs text-hi focus:border-brand/60 focus:outline-none"
+            className="rounded-lg border border-border-strong bg-elevated px-3 py-1.5 text-xs text-hi focus:border-brand/60 focus:outline-none"
             defaultValue={sprintId || ''}
             onChange={(e) => {
               const url = new URL(window.location.href)
@@ -289,7 +289,7 @@ export default async function CustomerTasksPage({
           <p className="text-sm text-lo">Nenhuma tarefa encontrada.</p>
           <Link
             href={`/customers/${id}/tasks?newTask=1`}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-accent hover:underline"
           >
             Criar primeira tarefa
           </Link>
@@ -315,7 +315,7 @@ export default async function CustomerTasksPage({
 
       {/* Sprints section */}
       {sprints.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+        <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-hi">Sprints</h3>
           <div className="flex flex-col gap-2">
             {sprints.map((s) => (
@@ -328,7 +328,7 @@ export default async function CustomerTasksPage({
                 </div>
                 <Link
                   href={`/customers/${id}/tasks?sprintId=${s.id}`}
-                  className="text-xs text-indigo-600 hover:underline"
+                  className="text-xs text-accent hover:underline"
                 >
                   Ver tarefas
                 </Link>

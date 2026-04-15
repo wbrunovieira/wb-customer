@@ -96,7 +96,7 @@ export default function NotificationBell() {
             {notifications.length > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-xs text-accent hover:underline"
               >
                 Marcar todas como lidas
               </button>

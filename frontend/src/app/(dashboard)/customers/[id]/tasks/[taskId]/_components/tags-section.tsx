@@ -121,7 +121,7 @@ export default function TagsSection({ customerId, taskId, attachedTags, allTags 
       ) : (
         <button
           onClick={() => setShowCreate(true)}
-          className="text-xs text-indigo-600 hover:underline"
+          className="text-xs text-accent hover:underline"
         >
           + Nova tag
         </button>

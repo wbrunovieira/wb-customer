@@ -20,7 +20,7 @@ export default function NewCustomerPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-hi">Novo cliente</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Novo cliente</h1>
         <p className="mt-1 text-sm text-md">Preencha os dados para cadastrar um novo cliente</p>
       </div>
 

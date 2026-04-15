@@ -78,7 +78,7 @@ export default function CalendarView({ tasks, customerId }: Props) {
   while (cells.length % 7 !== 0) cells.push(null)
 
   return (
-    <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <button

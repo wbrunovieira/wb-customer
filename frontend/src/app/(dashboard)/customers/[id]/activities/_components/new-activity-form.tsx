@@ -32,7 +32,7 @@ export default function NewActivityForm({ customerId, onSuccess }: Props) {
           <select
             name="type"
             required
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           >
             <option value="">Selecionar tipo</option>
             <option value="note">Nota</option>
@@ -49,7 +49,7 @@ export default function NewActivityForm({ customerId, onSuccess }: Props) {
           <select
             name="status"
             defaultValue="open"
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           >
             <option value="open">Aberto</option>
             <option value="scheduled">Agendado</option>
@@ -63,7 +63,7 @@ export default function NewActivityForm({ customerId, onSuccess }: Props) {
         <input
           name="subject"
           placeholder="Assunto da atividade"
-          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 
@@ -73,7 +73,7 @@ export default function NewActivityForm({ customerId, onSuccess }: Props) {
           name="description"
           rows={3}
           placeholder="Descreva a atividade..."
-          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 
@@ -83,7 +83,7 @@ export default function NewActivityForm({ customerId, onSuccess }: Props) {
           <input
             type="datetime-local"
             name="scheduledAt"
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
         </div>
         <div>
@@ -91,7 +91,7 @@ export default function NewActivityForm({ customerId, onSuccess }: Props) {
           <input
             type="datetime-local"
             name="occurredAt"
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
         </div>
       </div>

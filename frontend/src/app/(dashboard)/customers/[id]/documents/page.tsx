@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<DocumentStatus, string> = {
 const STATUS_CLASS: Record<DocumentStatus, string> = {
   pending_signature: 'bg-yellow-500/10 text-yellow-400 ring-yellow-600/20',
   signed: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  expired: 'bg-canvas text-md ring-slate-400/20',
+  expired: 'bg-canvas text-md ring-border',
   cancelled: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
@@ -72,7 +72,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
             <span>/</span>
             <span className="text-hi">Documentos</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">Documentos</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">Documentos</h1>
           <p className="mt-1 text-sm text-md">{data.total} documento{data.total !== 1 ? 's' : ''}</p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
             href={tab.href}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.label === 'Documentos'
-                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                ? 'border-b-2 border-brand text-white'
                 : 'text-md hover:text-hi'
             }`}
           >
@@ -97,7 +97,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Upload */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold text-hi">Enviar documento</h2>
             <Suspense>
               <UploadZone customerId={id} />
@@ -114,11 +114,11 @@ export default async function CustomerDocumentsPage({ params }: Props) {
           ) : (
             <div className="flex flex-col gap-3">
               {data.items.map((doc) => (
-                <div key={doc.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+                <div key={doc.id} className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-start gap-3">
                       <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14,2 14,8 20,8" />
                         </svg>
@@ -152,7 +152,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
                         href={doc.driveViewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded px-2 py-1 text-xs text-indigo-600 transition-colors hover:bg-indigo-500/10"
+                        className="rounded px-2 py-1 text-xs text-accent transition-colors hover:bg-brand/10"
                       >
                         Visualizar
                       </a>

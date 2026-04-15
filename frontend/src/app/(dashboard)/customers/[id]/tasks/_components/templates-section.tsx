@@ -59,7 +59,7 @@ export default function TemplatesSection({ customerId, templates, tasks }: Props
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+    <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
       <button
         className="flex w-full items-center justify-between text-left"
         onClick={() => setExpanded((v) => !v)}
@@ -124,7 +124,7 @@ export default function TemplatesSection({ customerId, templates, tasks }: Props
             {!creating ? (
               <button
                 onClick={() => { setCreating(true); setCreateResult(null) }}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-xs text-accent hover:underline"
               >
                 + Criar template a partir das tarefas atuais
               </button>
@@ -136,13 +136,13 @@ export default function TemplatesSection({ customerId, templates, tasks }: Props
                   {boardTasks.map((t) => (
                     <label
                       key={t.id}
-                      className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-canvas cursor-pointer"
+                      className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-elevated cursor-pointer"
                     >
                       <input
                         type="checkbox"
                         checked={selectedTaskIds.has(t.id)}
                         onChange={() => toggleTask(t.id)}
-                        className="rounded border-border text-indigo-600"
+                        className="rounded border-border text-accent"
                       />
                       <span className="text-xs text-hi truncate">{t.title}</span>
                     </label>
@@ -154,7 +154,7 @@ export default function TemplatesSection({ customerId, templates, tasks }: Props
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   placeholder="Nome do template"
-                  className="w-full rounded-lg border border-border px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                  className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                 />
 
                 {createResult?.message && (
@@ -171,7 +171,7 @@ export default function TemplatesSection({ customerId, templates, tasks }: Props
                   </button>
                   <button
                     onClick={() => { setCreating(false); setSelectedTaskIds(new Set()) }}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-canvas"
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-elevated"
                   >
                     Cancelar
                   </button>

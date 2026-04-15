@@ -76,7 +76,7 @@ export default function UploadZone({ customerId }: Props) {
             ? 'border-indigo-400 bg-indigo-500/10'
             : selectedFile
               ? 'border-green-300 bg-green-500/10'
-              : 'border-border bg-canvas hover:border-indigo-300 hover:bg-indigo-500/10/50'
+              : 'border-border bg-canvas hover:border-indigo-300 hover:bg-brand/10/50'
         }`}
       >
         <input
@@ -115,7 +115,7 @@ export default function UploadZone({ customerId }: Props) {
             </svg>
             <div className="text-center">
               <p className="text-sm font-medium text-hi">
-                Arraste o arquivo ou <span className="text-indigo-600">clique para selecionar</span>
+                Arraste o arquivo ou <span className="text-accent">clique para selecionar</span>
               </p>
               <p className="mt-1 text-xs text-lo">PDF, Word, Excel, PNG, JPG</p>
             </div>
@@ -135,7 +135,7 @@ export default function UploadZone({ customerId }: Props) {
             type="text"
             required
             placeholder="Ex: Contrato de Prestação de Serviços"
-            className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
           {state?.errors?.title && (
             <p className="text-xs text-red-400">{state.errors.title[0]}</p>
@@ -150,7 +150,7 @@ export default function UploadZone({ customerId }: Props) {
             id="doc-type"
             name="type"
             required
-            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           >
             <option value="">Selecione...</option>
             {DOC_TYPES.map((t) => (
@@ -172,7 +172,7 @@ export default function UploadZone({ customerId }: Props) {
           name="notes"
           rows={2}
           placeholder="Notas opcionais sobre este documento..."
-          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 

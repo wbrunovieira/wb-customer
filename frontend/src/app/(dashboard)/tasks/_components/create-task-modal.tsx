@@ -99,7 +99,7 @@ export default function CreateTaskModal({ customers }: Props) {
                       }}
                       onFocus={() => setShowDropdown(true)}
                       placeholder="Buscar cliente..."
-                      className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                     />
 
                     {showDropdown && filtered.length > 0 && (
@@ -116,7 +116,7 @@ export default function CreateTaskModal({ customers }: Props) {
                               setShowDropdown(false)
                               setSearch('')
                             }}
-                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-canvas"
+                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-elevated"
                           >
                             <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-400">
                               {c.name.slice(0, 2).toUpperCase()}
@@ -145,7 +145,7 @@ export default function CreateTaskModal({ customers }: Props) {
                           key={c.id}
                           type="button"
                           onClick={() => setSelectedCustomer(c)}
-                          className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-canvas"
+                          className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-elevated"
                         >
                           <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-400">
                             {c.name.slice(0, 2).toUpperCase()}
@@ -202,7 +202,7 @@ function TaskForm({
         <button
           type="button"
           onClick={onBack}
-          className="text-xs text-indigo-500 hover:text-indigo-400 underline"
+          className="text-xs text-indigo-500 hover:text-accent underline"
         >
           Trocar
         </button>
@@ -217,7 +217,7 @@ function TaskForm({
             placeholder="Título da tarefa"
             required
             autoFocus
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
           {errors?.title && <p className="mt-0.5 text-xs text-red-400">{errors.title[0]}</p>}
         </div>
@@ -226,7 +226,7 @@ function TaskForm({
           name="description"
           rows={2}
           placeholder="Descrição (opcional)"
-          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1// resize-none"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25 resize-none"
         />
 
         <div className="grid grid-cols-2 gap-2">
@@ -235,7 +235,7 @@ function TaskForm({
             <select
               name="status"
               defaultValue="backlog"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             >
               <option value="idea_could">Ideia (could)</option>
               <option value="idea_should">Ideia (should)</option>
@@ -254,7 +254,7 @@ function TaskForm({
               min="0"
               step="0.5"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
         </div>
@@ -265,7 +265,7 @@ function TaskForm({
             <input
               name="startAt"
               type="datetime-local"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
           <div>
@@ -273,7 +273,7 @@ function TaskForm({
             <input
               name="endAt"
               type="datetime-local"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
         </div>
@@ -287,7 +287,7 @@ function TaskForm({
               min="1"
               max="10"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
           <div>
@@ -298,7 +298,7 @@ function TaskForm({
               min="1"
               max="10"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
           <div>
@@ -309,7 +309,7 @@ function TaskForm({
               min="1"
               max="10"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
         </div>

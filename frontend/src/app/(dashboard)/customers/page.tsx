@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_CLASS: Record<string, string> = {
   active: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  inactive: 'bg-canvas text-md ring-slate-500/20',
+  inactive: 'bg-canvas text-md ring-border',
 }
 
 const LIMIT = 20
@@ -45,7 +45,7 @@ async function CustomersList({ search, status, page }: { search: string; status:
 
   if (data.items.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-12 text-center">
+      <div className="rounded-xl border border-border-strong bg-surface p-12 text-center">
         <p className="text-sm text-md">Nenhum cliente encontrado.</p>
       </div>
     )
@@ -55,11 +55,11 @@ async function CustomersList({ search, status, page }: { search: string; status:
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-canvas">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Nome</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-lo">Nome</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">E-mail</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Telefone</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Status</th>
@@ -69,9 +69,9 @@ async function CustomersList({ search, status, page }: { search: string; status:
           </thead>
           <tbody className="divide-y divide-border">
             {data.items.map((customer) => (
-              <tr key={customer.id} className="hover:bg-canvas">
+              <tr key={customer.id} className="transition-colors hover:bg-elevated">
                 <td className="px-6 py-4">
-                  <Link href={`/customers/${customer.id}`} className="font-medium text-hi hover:text-indigo-600">
+                  <Link href={`/customers/${customer.id}`} className="font-medium text-hi hover:text-accent">
                     {customer.name}
                   </Link>
                 </td>
@@ -95,7 +95,7 @@ async function CustomersList({ search, status, page }: { search: string; status:
                     </Link>
                     <Link
                       href={`/customers/${customer.id}/edit`}
-                      className="rounded-lg px-3 py-1.5 text-sm text-indigo-600 transition-colors hover:bg-indigo-500/10"
+                      className="rounded-lg px-3 py-1.5 text-sm text-accent transition-colors hover:bg-brand/10"
                     >
                       Editar
                     </Link>
@@ -133,7 +133,7 @@ function Pagination({ current, total, search, status }: { current: number; total
       <Link
         href={buildHref(current - 1)}
         aria-disabled={current <= 1}
-        className={`rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-canvas ${current <= 1 ? 'pointer-events-none opacity-40' : 'text-hi'}`}
+        className={`rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-elevated ${current <= 1 ? 'pointer-events-none opacity-40' : 'text-hi'}`}
       >
         Anterior
       </Link>
@@ -143,7 +143,7 @@ function Pagination({ current, total, search, status }: { current: number; total
       <Link
         href={buildHref(current + 1)}
         aria-disabled={current >= total}
-        className={`rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-canvas ${current >= total ? 'pointer-events-none opacity-40' : 'text-hi'}`}
+        className={`rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-elevated ${current >= total ? 'pointer-events-none opacity-40' : 'text-hi'}`}
       >
         Próxima
       </Link>
@@ -159,7 +159,7 @@ export default async function CustomersPage({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-hi">Clientes</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Clientes</h1>
           <p className="mt-1 text-sm text-md">Gerencie os clientes da sua empresa</p>
         </div>
         <Link

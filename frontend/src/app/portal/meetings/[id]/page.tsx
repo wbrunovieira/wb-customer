@@ -14,7 +14,7 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 const STATUS_CLASS: Record<MeetingStatus, string> = {
   scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-canvas text-md ring-border',
 }
 
 type ResponseStatus = 'needsAction' | 'accepted' | 'declined' | 'tentative'
@@ -28,7 +28,7 @@ const RSVP_CLASS: Record<ResponseStatus, string> = {
   needsAction: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   accepted: 'bg-green-500/10 text-green-400 ring-green-600/20',
   declined: 'bg-red-500/10 text-red-400 ring-red-500/20',
-  tentative: 'bg-canvas text-md ring-slate-400/20',
+  tentative: 'bg-canvas text-md ring-border',
 }
 
 function formatDateTime(iso: string) {
@@ -92,7 +92,7 @@ export default async function PortalMeetingDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-hi">{meeting.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{meeting.title}</h1>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[meeting.status]}`}>
               {STATUS_LABEL[meeting.status]}
@@ -165,7 +165,7 @@ export default async function PortalMeetingDetailPage({
               href={meeting.recordingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />

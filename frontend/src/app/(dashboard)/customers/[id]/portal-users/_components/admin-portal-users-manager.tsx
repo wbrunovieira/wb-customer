@@ -87,11 +87,11 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
   return (
     <div className="flex flex-col gap-4">
       {activeUsers.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-canvas">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Nome</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-lo">Nome</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Perfil</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Criado em</th>
                 <th className="relative px-6 py-3"><span className="sr-only">Ações</span></th>
@@ -105,14 +105,14 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                       <input
                         value={editState.name}
                         onChange={(e) => setEditState({ ...editState, name: e.target.value })}
-                        className="w-full rounded-lg border border-border px-2 py-1.5 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+                        className="w-full rounded-lg border border-border px-2 py-1.5 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                       />
                     </td>
                     <td className="px-6 py-3">
                       <select
                         value={editState.customerRole}
                         onChange={(e) => setEditState({ ...editState, customerRole: e.target.value as 'master' | 'member' })}
-                        className="rounded-lg border border-border px-2 py-1.5 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+                        className="rounded-lg border border-border px-2 py-1.5 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                       >
                         <option value="master">Administrador</option>
                         <option value="member">Membro</option>
@@ -123,7 +123,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                         value={editState.phone}
                         onChange={(e) => setEditState({ ...editState, phone: e.target.value })}
                         placeholder="+5511999999999"
-                        className="w-full rounded-lg border border-border px-2 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                        className="w-full rounded-lg border border-border px-2 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                       />
                     </td>
                     <td className="px-6 py-3 text-right">
@@ -131,7 +131,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                         <button
                           onClick={handleEditSave}
                           disabled={editPending}
-                          className="text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50"
+                          className="text-sm font-medium text-accent hover:underline disabled:opacity-50"
                         >
                           {editPending ? 'Salvando...' : 'Salvar'}
                         </button>
@@ -145,13 +145,13 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                     </td>
                   </tr>
                 ) : (
-                  <tr key={u.customerUserId} className="hover:bg-canvas">
+                  <tr key={u.customerUserId} className="transition-colors hover:bg-elevated">
                     <td className="px-6 py-4 text-sm font-medium text-hi">{u.name}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
                         u.customerRole === 'master'
                           ? 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20'
-                          : 'bg-canvas text-md ring-slate-400/20'
+                          : 'bg-canvas text-md ring-border'
                       }`}>
                         {u.customerRole === 'master' ? 'Administrador' : 'Membro'}
                       </span>
@@ -163,7 +163,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                       <div className="flex items-center justify-end gap-4">
                         <button
                           onClick={() => handleEditOpen(u)}
-                          className="text-sm text-indigo-600 hover:underline"
+                          className="text-sm text-accent hover:underline"
                         >
                           Editar
                         </button>
@@ -191,7 +191,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 self-start rounded-lg border border-border px-4 py-2 text-sm font-medium text-hi hover:bg-canvas"
+          className="flex items-center gap-2 self-start rounded-lg border border-border px-4 py-2 text-sm font-medium text-hi hover:bg-elevated"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -199,7 +199,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
           Criar acesso ao portal
         </button>
       ) : (
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+        <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
           <h3 className="mb-1 text-sm font-semibold text-hi">Novo usuário do portal</h3>
           <p className="mb-4 text-xs text-md">
             O usuário administrador pode criar sub-usuários e gerenciar o portal da empresa.
@@ -219,7 +219,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                   type="text"
                   required
                   placeholder="Nome completo"
-                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                 />
                 {state?.errors?.name && <p className="text-xs text-red-400">{state.errors.name[0]}</p>}
               </div>
@@ -230,7 +230,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                   name="phone"
                   type="tel"
                   placeholder="+5511999999999"
-                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                 />
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                   type="email"
                   required
                   placeholder="usuario@empresa.com"
-                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                 />
                 {state?.errors?.email && <p className="text-xs text-red-400">{state.errors.email[0]}</p>}
               </div>
@@ -260,7 +260,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
                     type={showPassword ? 'text' : 'password'}
                     required
                     placeholder="Mínimo 8 caracteres"
-                    className="w-full rounded-lg border border-border px-3 py-2 pr-10 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                    className="w-full rounded-lg border border-border px-3 py-2 pr-10 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                   />
                   <button
                     type="button"
@@ -279,7 +279,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
               <select
                 name="customerRole"
                 defaultValue="master"
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+                className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
               >
                 <option value="master">Administrador — pode gerenciar usuários e visualizar tudo</option>
                 <option value="member">Membro — acesso somente leitura ao portal</option>
@@ -297,7 +297,7 @@ export default function AdminPortalUsersManager({ customerId, initialUsers }: Pr
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-canvas"
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-elevated"
               >
                 Cancelar
               </button>

@@ -36,7 +36,7 @@ export default async function EditCustomerPage({ params }: Props) {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-hi">Editar cliente</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Editar cliente</h1>
         <p className="mt-1 text-sm text-md">Atualize os dados do cliente</p>
       </div>
 

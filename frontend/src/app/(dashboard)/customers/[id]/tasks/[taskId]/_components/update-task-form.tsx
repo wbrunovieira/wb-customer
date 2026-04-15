@@ -32,7 +32,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
           name="title"
           defaultValue={task.title}
           required
-          className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 
@@ -42,7 +42,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
           name="description"
           rows={3}
           defaultValue={task.description ?? ''}
-          className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 
@@ -52,7 +52,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
           <select
             name="sprintId"
             defaultValue={task.sprintId ?? ''}
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           >
             <option value="">Sem sprint</option>
             {sprints.map((s) => (
@@ -69,7 +69,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
             name="startAt"
             type="datetime-local"
             defaultValue={toDateInputValue(task.startAt)}
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -78,7 +78,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
             name="endAt"
             type="datetime-local"
             defaultValue={toDateInputValue(task.endAt)}
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
       </div>
@@ -93,7 +93,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
             max="10"
             defaultValue={task.impact ?? ''}
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -105,7 +105,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
             max="10"
             defaultValue={task.confidence ?? ''}
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -117,7 +117,7 @@ export default function UpdateTaskForm({ customerId, task, sprints }: Props) {
             max="10"
             defaultValue={task.effort ?? ''}
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
       </div>

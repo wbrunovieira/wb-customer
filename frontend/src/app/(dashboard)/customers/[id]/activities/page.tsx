@@ -70,7 +70,7 @@ const STATUS_CLASS: Record<ActivityStatus, string> = {
   scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   open: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   done: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-canvas text-md ring-border',
   skipped: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
@@ -156,7 +156,7 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
             <span>/</span>
             <span className="text-hi">Atividades</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
             Atividades — {customer!.name}
           </h1>
           <p className="mt-1 text-sm text-md">{total} atividade(s)</p>
@@ -181,7 +181,7 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
             href={tab.href}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.active
-                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                ? 'border-b-2 border-brand text-white'
                 : 'text-md hover:text-hi'
             }`}
           >
@@ -247,7 +247,7 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
           <p className="text-sm text-lo">Nenhuma atividade encontrada.</p>
           <Link
             href={`/customers/${id}/activities?newActivity=1`}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-accent hover:underline"
           >
             Registrar primeira atividade
           </Link>
@@ -269,13 +269,13 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
                   </div>
 
                   {/* Card */}
-                  <div className="flex-1 rounded-xl border border-border bg-surface p-4 shadow-sm">
+                  <div className="flex-1 rounded-xl border border-border-strong bg-surface p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLOR[actType]}`}>
                           {TYPE_LABEL[actType] ?? activity.type}
                         </span>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[actStatus] ?? 'bg-canvas text-md ring-slate-400/20'}`}>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[actStatus] ?? 'bg-canvas text-md ring-border'}`}>
                           {STATUS_LABEL[actStatus] ?? activity.status}
                         </span>
                       </div>

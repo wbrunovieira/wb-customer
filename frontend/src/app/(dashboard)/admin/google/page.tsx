@@ -22,7 +22,7 @@ export default async function AdminGooglePage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-hi">Integração Google</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Integração Google</h1>
         <p className="mt-1 text-sm text-md">
           Conecte sua conta Google para habilitar Drive, Agenda e reuniões via Meet.
         </p>
@@ -34,10 +34,10 @@ export default async function AdminGooglePage({
         </div>
       )}
 
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+      <div className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
         <div className="flex items-start gap-4">
           {/* Google icon */}
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-surface">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border-strong bg-surface">
             <svg viewBox="0 0 48 48" width="28" height="28">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
               <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -62,7 +62,7 @@ export default async function AdminGooglePage({
               </div>
             ) : (
               <div className="mt-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-elevated px-2.5 py-1 text-xs font-medium text-md ring-1 ring-inset ring-slate-400/20">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-elevated px-2.5 py-1 text-xs font-medium text-md ring-1 ring-inset ring-border">
                   <span className="h-1.5 w-1.5 rounded-full bg-lo" />
                   Não conectado
                 </span>

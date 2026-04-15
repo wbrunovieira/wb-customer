@@ -99,7 +99,7 @@ export default function GanttView({ tasks, customerId }: Props) {
   const todayOffset = Math.round((today.getTime() - minDate.getTime()) / 86400_000)
 
   return (
-    <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)] overflow-hidden">
       <div className="overflow-x-auto">
         <div style={{ display: 'flex', minWidth: LABEL_WIDTH + totalWidth }}>
           {/* Label column */}
@@ -116,7 +116,7 @@ export default function GanttView({ tasks, customerId }: Props) {
                 />
                 <Link
                   href={`/customers/${customerId}/tasks/${t.id}`}
-                  className="truncate text-xs text-hi hover:text-indigo-600"
+                  className="truncate text-xs text-hi hover:text-accent"
                   title={t.title}
                 >
                   {t.title}
@@ -263,7 +263,7 @@ export default function GanttView({ tasks, customerId }: Props) {
             </div>
           )}
           {tooltip.task.progress > 0 && (
-            <div className="text-indigo-600 mt-0.5">{tooltip.task.progress}% concluído</div>
+            <div className="text-accent mt-0.5">{tooltip.task.progress}% concluído</div>
           )}
         </div>
       )}

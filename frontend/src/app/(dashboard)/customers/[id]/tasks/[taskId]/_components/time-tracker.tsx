@@ -58,7 +58,7 @@ export default function TimeTracker({
   const totalSecs = trackedSeconds + (running ? elapsed : 0)
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+    <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Tempo Rastreado</h2>
 
       <div className="flex items-center justify-between">

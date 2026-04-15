@@ -110,7 +110,7 @@ function TaskCardContent({
         <div className="flex items-start justify-between gap-2">
           <Link
             href={`/customers/${customerId}/tasks/${task.id}`}
-            className="flex-1 text-sm font-medium text-hi hover:text-indigo-600 line-clamp-2"
+            className="flex-1 text-sm font-medium text-hi hover:text-accent line-clamp-2"
           >
             {task.title}
           </Link>
@@ -146,7 +146,7 @@ function TaskCardContent({
           <div className="mt-2 flex items-center justify-between">
             <MoveStatusButton customerId={customerId} taskId={task.id} currentStatus={task.status} />
             <div className="flex items-center gap-2">
-              <Link href={`/customers/${customerId}/tasks/${task.id}`} className="text-xs text-indigo-600 hover:underline">
+              <Link href={`/customers/${customerId}/tasks/${task.id}`} className="text-xs text-accent hover:underline">
                 Detalhes
               </Link>
               <DeleteTaskButton customerId={customerId} taskId={task.id} />

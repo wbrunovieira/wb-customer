@@ -19,7 +19,7 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 const STATUS_CLASS: Record<TaskStatus, string> = {
   idea_could: 'bg-purple-500/10 text-purple-400 ring-purple-600/20',
   idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
-  backlog: 'bg-canvas text-md ring-slate-400/20',
+  backlog: 'bg-canvas text-md ring-border',
   todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
@@ -98,7 +98,7 @@ export default async function AllTasksPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-hi">Tarefas</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Tarefas</h1>
           <p className="mt-1 text-sm text-md">{total} tarefa(s) no total</p>
         </div>
 
@@ -109,13 +109,13 @@ export default async function AllTasksPage({
           <div className="flex rounded-lg border border-border bg-surface overflow-hidden shrink-0">
           <Link
             href={buildHref({ groupBy: undefined, page: 1 })}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${!isGrouped ? 'btn-brand text-white' : 'text-md hover:bg-canvas'}`}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${!isGrouped ? 'btn-brand text-white' : 'text-md hover:bg-elevated'}`}
           >
             Lista
           </Link>
           <Link
             href={buildHref({ groupBy: 'customer', page: 1 })}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${isGrouped ? 'btn-brand text-white' : 'text-md hover:bg-canvas'}`}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${isGrouped ? 'btn-brand text-white' : 'text-md hover:bg-elevated'}`}
           >
             Por cliente
           </Link>
@@ -168,11 +168,11 @@ export default async function AllTasksPage({
         /* Grouped by customer */
         <div className="flex flex-col gap-6">
           {[...grouped.entries()].map(([cid, group]) => (
-            <div key={cid} className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+            <div key={cid} className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
               <div className="flex items-center justify-between border-b border-border bg-canvas px-4 py-3">
                 <Link
                   href={`/customers/${cid}/tasks`}
-                  className="text-sm font-semibold text-hi hover:text-indigo-600"
+                  className="text-sm font-semibold text-hi hover:text-accent"
                 >
                   {group.name}
                 </Link>
@@ -184,7 +184,7 @@ export default async function AllTasksPage({
         </div>
       ) : (
         /* Flat list */
-        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
           <TaskTable tasks={tasks} buildHref={buildHref} showCustomer />
         </div>
       )}
@@ -199,7 +199,7 @@ export default async function AllTasksPage({
             {currentPage > 1 && (
               <Link
                 href={buildHref({ page: currentPage - 1 })}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-canvas"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-elevated"
               >
                 ← Anterior
               </Link>
@@ -207,7 +207,7 @@ export default async function AllTasksPage({
             {currentPage < totalPages && (
               <Link
                 href={buildHref({ page: currentPage + 1 })}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-canvas"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-elevated"
               >
                 Próxima →
               </Link>
@@ -256,11 +256,11 @@ function TaskTable({
       </thead>
       <tbody className="divide-y divide-slate-100">
         {tasks.map((task) => (
-          <tr key={task.id} className="transition-colors hover:bg-canvas">
+          <tr key={task.id} className="transition-colors hover:bg-elevated">
             <td className="px-4 py-3">
               <Link
                 href={`/customers/${task.customerId}/tasks/${task.id}`}
-                className="line-clamp-1 text-sm font-medium text-hi hover:text-indigo-600"
+                className="line-clamp-1 text-sm font-medium text-hi hover:text-accent"
               >
                 {task.title}
               </Link>
@@ -272,7 +272,7 @@ function TaskTable({
               <td className="hidden px-4 py-3 lg:table-cell">
                 <Link
                   href={`/customers/${task.customerId}/tasks`}
-                  className="text-xs text-md hover:text-indigo-600 hover:underline"
+                  className="text-xs text-md hover:text-accent hover:underline"
                 >
                   {task.customerName ?? task.customerId.slice(0, 8)}
                 </Link>
@@ -302,7 +302,7 @@ function TaskTable({
             <td className="px-4 py-3 text-right">
               <Link
                 href={`/customers/${task.customerId}/tasks/${task.id}`}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-xs text-accent hover:underline"
               >
                 Ver
               </Link>

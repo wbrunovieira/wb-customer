@@ -27,7 +27,7 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 const STATUS_CLASS: Record<TaskStatus, string> = {
   idea_could: 'bg-purple-500/10 text-purple-400 ring-purple-600/20',
   idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
-  backlog: 'bg-canvas text-md ring-slate-400/20',
+  backlog: 'bg-canvas text-md ring-border',
   todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
@@ -47,7 +47,7 @@ function IceScoreDisplay({ impact, confidence, effort, iceScore }: {
   iceScore: number | null
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+    <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">ICE Score</h2>
       <div className="grid grid-cols-3 gap-4 text-center mb-4">
         <div>
@@ -156,7 +156,7 @@ export default async function TaskDetailPage({
             <span className="truncate max-w-xs text-hi">{t.title}</span>
           </div>
           <div className="mt-1 flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-hi">{t.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">{t.title}</h1>
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[t.status]}`}>
               {STATUS_LABEL[t.status]}
             </span>
@@ -169,7 +169,7 @@ export default async function TaskDetailPage({
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href={`/customers/${id}/tasks`}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm text-md hover:bg-canvas"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm text-md hover:bg-elevated"
           >
             ← Voltar
           </Link>
@@ -182,7 +182,7 @@ export default async function TaskDetailPage({
         <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Description */}
           {t.description && (
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-md">Descrição</h2>
               <p className="text-sm text-hi whitespace-pre-wrap">{t.description}</p>
             </div>
@@ -190,7 +190,7 @@ export default async function TaskDetailPage({
 
           {/* Progress */}
           {t.progress > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-md">Progresso</h2>
                 <span className="text-sm font-medium text-hi">{t.progress}%</span>
@@ -205,17 +205,17 @@ export default async function TaskDetailPage({
           )}
 
           {/* Checklist */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <ChecklistSection customerId={id} taskId={t.id} items={checklist} />
           </div>
 
           {/* Subtasks */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <SubtasksSection customerId={id} taskId={t.id} subtasks={subtasks} />
           </div>
 
           {/* Comments */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <CommentsSection
               customerId={id}
               taskId={t.id}
@@ -225,14 +225,14 @@ export default async function TaskDetailPage({
           </div>
 
           {/* Edit form */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Editar Tarefa</h2>
             <UpdateTaskForm customerId={id} task={t} sprints={sprints} />
           </div>
 
           {/* Activity log */}
           {activityLog.length > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Histórico</h2>
               <ul className="flex flex-col gap-2">
                 {activityLog.map((log) => (
@@ -261,13 +261,13 @@ export default async function TaskDetailPage({
         {/* Right column: status, dates, ICE, tags */}
         <div className="flex flex-col gap-6">
           {/* Status changer */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-md">Status</h2>
             <StatusChanger customerId={id} taskId={t.id} currentStatus={t.status} />
           </div>
 
           {/* Dates */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Datas</h2>
             <dl className="flex flex-col gap-3">
               <div>
@@ -307,7 +307,7 @@ export default async function TaskDetailPage({
           />
 
           {/* Tags */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <TagsSection
               customerId={id}
               taskId={t.id}

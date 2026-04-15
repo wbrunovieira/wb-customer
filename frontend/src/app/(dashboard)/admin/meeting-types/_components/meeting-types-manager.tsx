@@ -44,7 +44,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
     <div className="flex flex-col gap-4">
       {/* Existing types */}
       {initialTypes.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-canvas">
               <tr>
@@ -56,7 +56,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
             </thead>
             <tbody className="divide-y divide-border">
               {initialTypes.map((t) => (
-                <tr key={t.id} className="hover:bg-canvas">
+                <tr key={t.id} className="transition-colors hover:bg-elevated">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2.5">
                       <span
@@ -76,7 +76,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
                       t.isActive
                         ? 'bg-green-500/10 text-green-400 ring-green-600/20'
-                        : 'bg-canvas text-md ring-slate-400/20'
+                        : 'bg-canvas text-md ring-border'
                     }`}>
                       {t.isActive ? 'Ativo' : 'Inativo'}
                     </span>
@@ -105,7 +105,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 self-start rounded-lg border border-border px-4 py-2 text-sm font-medium text-hi hover:bg-canvas"
+          className="flex items-center gap-2 self-start rounded-lg border border-border px-4 py-2 text-sm font-medium text-hi hover:bg-elevated"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -113,7 +113,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
           Novo tipo
         </button>
       ) : (
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+        <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
           <h3 className="mb-4 text-sm font-semibold text-hi">Novo tipo de reunião</h3>
           <form action={createAction} className="flex flex-col gap-4">
             {createState?.message && (
@@ -131,7 +131,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                   type="text"
                   required
                   placeholder="Ex: Discovery Call"
-                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                 />
                 {createState?.errors?.name && (
                   <p className="text-xs text-red-400">{createState.errors.name[0]}</p>
@@ -150,7 +150,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                   step="5"
                   required
                   defaultValue={60}
-                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+                  className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
                 />
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                 name="description"
                 type="text"
                 placeholder="Opcional"
-                className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+                className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
               />
             </div>
 
@@ -193,7 +193,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-canvas"
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-elevated"
               >
                 Cancelar
               </button>

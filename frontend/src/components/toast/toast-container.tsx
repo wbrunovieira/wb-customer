@@ -151,7 +151,7 @@ function ToastItem({ toast }: { toast: Toast }) {
           </button>
           <button
             onClick={handleCancel}
-            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-md transition-colors hover:bg-canvas active:scale-95"
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-md transition-colors hover:bg-elevated active:scale-95"
           >
             {toast.cancelLabel}
           </button>

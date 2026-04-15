@@ -16,7 +16,7 @@ export default function CustomerForm({ customer }: Props) {
   const [state, formAction, pending] = useActionState<CustomerFormState, FormData>(action, undefined)
 
   return (
-    <form action={formAction} className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+    <form action={formAction} className="rounded-xl border border-border-strong bg-surface p-6 shadow-sm">
       <div className="flex flex-col gap-5">
         {state?.message && (
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -36,7 +36,7 @@ export default function CustomerForm({ customer }: Props) {
               required
               defaultValue={customer?.name}
               placeholder="Acme Corp"
-              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
             />
             {state?.errors?.name && (
               <p className="text-xs text-red-400">{state.errors.name[0]}</p>
@@ -54,7 +54,7 @@ export default function CustomerForm({ customer }: Props) {
               required
               defaultValue={customer?.email}
               placeholder="contato@empresa.com"
-              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
             />
             {state?.errors?.email && (
               <p className="text-xs text-red-400">{state.errors.email[0]}</p>
@@ -71,7 +71,7 @@ export default function CustomerForm({ customer }: Props) {
               type="tel"
               defaultValue={customer?.phone ?? ''}
               placeholder="+55 11 99999-9999"
-              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
             />
           </div>
 
@@ -85,7 +85,7 @@ export default function CustomerForm({ customer }: Props) {
               type="text"
               defaultValue={customer?.document ?? ''}
               placeholder="12.345.678/0001-99"
-              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
             />
           </div>
 
@@ -99,7 +99,7 @@ export default function CustomerForm({ customer }: Props) {
               type="url"
               defaultValue={customer?.website ?? ''}
               placeholder="https://empresa.com"
-              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
             />
           </div>
 
@@ -112,7 +112,7 @@ export default function CustomerForm({ customer }: Props) {
                 id="status"
                 name="status"
                 defaultValue={customer.status}
-                className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+                className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
               >
                 <option value="active">Ativo</option>
                 <option value="inactive">Inativo</option>
@@ -131,7 +131,7 @@ export default function CustomerForm({ customer }: Props) {
             rows={3}
             defaultValue={customer?.notes ?? ''}
             placeholder="Informações adicionais sobre o cliente..."
-            className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
         </div>
 

@@ -17,7 +17,7 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 const STATUS_CLASS: Record<MeetingStatus, string> = {
   scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-canvas text-md ring-border',
 }
 
 type ResponseStatus = 'needsAction' | 'accepted' | 'declined' | 'tentative'
@@ -33,7 +33,7 @@ const RESPONSE_CLASS: Record<ResponseStatus, string> = {
   needsAction: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   accepted: 'bg-green-500/10 text-green-400 ring-green-600/20',
   declined: 'bg-red-500/10 text-red-400 ring-red-500/20',
-  tentative: 'bg-canvas text-md ring-slate-400/20',
+  tentative: 'bg-canvas text-md ring-border',
 }
 
 function formatDateTime(iso: string) {
@@ -100,7 +100,7 @@ export default async function MeetingsPage({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-hi">Reuniões</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Reuniões</h1>
           <p className="mt-1 text-sm text-md">{meetings.length} reunião(ões) encontrada(s)</p>
         </div>
         <Link
@@ -125,7 +125,7 @@ export default async function MeetingsPage({
               href={href}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  ? 'border-b-2 border-brand text-white'
                   : 'text-md hover:text-hi'
               }`}
             >
@@ -139,13 +139,13 @@ export default async function MeetingsPage({
         <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface gap-2">
           <p className="text-sm text-lo">Nenhuma reunião encontrada.</p>
           {customers.length === 0 && (
-            <Link href="/customers" className="text-xs text-indigo-600 hover:underline">
+            <Link href="/customers" className="text-xs text-accent hover:underline">
               Cadastre um cliente primeiro
             </Link>
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-canvas">
               <tr>
@@ -160,7 +160,7 @@ export default async function MeetingsPage({
             </thead>
             <tbody className="divide-y divide-border">
               {meetings.map((m) => (
-                <tr key={`${m.customer.id}-${m.id}`} className="hover:bg-canvas">
+                <tr key={`${m.customer.id}-${m.id}`} className="transition-colors hover:bg-elevated">
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-hi">{m.title}</p>
                     {m.description && (
@@ -170,7 +170,7 @@ export default async function MeetingsPage({
                   <td className="px-6 py-4">
                     <Link
                       href={`/customers/${m.customer.id}/meetings`}
-                      className="text-sm text-indigo-600 hover:underline"
+                      className="text-sm text-accent hover:underline"
                     >
                       {m.customer.name}
                     </Link>
@@ -212,7 +212,7 @@ export default async function MeetingsPage({
                           href={m.meetLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm font-medium text-indigo-600 hover:underline"
+                          className="text-sm font-medium text-accent hover:underline"
                         >
                           Entrar
                         </a>

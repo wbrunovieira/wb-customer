@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 const STATUS_CLASS: Record<MeetingStatus, string> = {
   scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-canvas text-md ring-border',
 }
 
 const RSVP_LABEL: Record<string, string> = {
@@ -30,7 +30,7 @@ const RSVP_CLASS: Record<string, string> = {
   needsAction: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   accepted: 'bg-green-500/10 text-green-400 ring-green-600/20',
   declined: 'bg-red-500/10 text-red-400 ring-red-500/20',
-  tentative: 'bg-canvas text-md ring-slate-400/20',
+  tentative: 'bg-canvas text-md ring-border',
 }
 
 function formatDateTime(iso: string | null) {
@@ -106,7 +106,7 @@ export default async function MeetingDetailPage({
             <span className="text-hi truncate max-w-xs">{m.title}</span>
           </div>
           <div className="mt-1 flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-hi">{m.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">{m.title}</h1>
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
               {STATUS_LABEL[m.status]}
             </span>
@@ -150,7 +150,7 @@ export default async function MeetingDetailPage({
         {/* Left column: details + attendees + summary form */}
         <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Date/time card */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Datas</h2>
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
@@ -190,7 +190,7 @@ export default async function MeetingDetailPage({
 
           {/* Attendees */}
           {(m.attendees?.length ?? 0) > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Participantes</h2>
               <ul className="flex flex-col gap-2">
                 {(m.attendees ?? []).map((a) => (
@@ -206,7 +206,7 @@ export default async function MeetingDetailPage({
           )}
 
           {/* Summary */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Resumo</h2>
             {m.meetingSummary ? (
               <p className="text-sm text-hi whitespace-pre-wrap mb-4">{m.meetingSummary}</p>
@@ -226,7 +226,7 @@ export default async function MeetingDetailPage({
         {/* Right column: recording + transcript */}
         <div className="flex flex-col gap-6">
           {/* Recording */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Gravação</h2>
             {m.recordingDriveId ? (
               <div className="flex flex-col gap-3">
@@ -243,7 +243,7 @@ export default async function MeetingDetailPage({
                     href={m.recordingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-indigo-600 hover:underline"
+                    className="text-xs text-accent hover:underline"
                   >
                     Abrir no Google Drive
                   </a>
@@ -259,7 +259,7 @@ export default async function MeetingDetailPage({
           </div>
 
           {/* Transcript */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Transcrição</h2>
             {m.transcriptText ? (
               <div className="flex flex-col gap-2">
@@ -271,7 +271,7 @@ export default async function MeetingDetailPage({
                     href={m.nativeTranscriptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-indigo-600 hover:underline"
+                    className="text-xs text-accent hover:underline"
                   >
                     Ver transcrição completa no Drive
                   </a>
@@ -282,7 +282,7 @@ export default async function MeetingDetailPage({
                 href={m.nativeTranscriptUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-indigo-600 hover:underline"
+                className="text-sm text-accent hover:underline"
               >
                 Ver transcrição no Drive
               </a>

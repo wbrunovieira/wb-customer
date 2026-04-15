@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 const STATUS_CLASS: Record<MeetingStatus, string> = {
   scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-canvas text-md ring-border',
 }
 
 function formatDateTime(iso: string) {
@@ -56,7 +56,7 @@ export default async function PortalMeetingsPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-hi">Reuniões</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Reuniões</h1>
         <p className="mt-1 text-sm text-md">{total} reunião(ões)</p>
       </div>
 
@@ -71,7 +71,7 @@ export default async function PortalMeetingsPage({
               href={href}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'border-b-2 border-indigo-600 text-indigo-600'
+                  ? 'border-b-2 border-brand text-white'
                   : 'text-md hover:text-hi'
               }`}
             >
@@ -93,7 +93,7 @@ export default async function PortalMeetingsPage({
             {filterStatus ? 'Nenhuma reunião com este status.' : 'Nenhuma reunião disponível.'}
           </p>
           {filterStatus && (
-            <Link href="/portal/meetings" className="text-xs text-indigo-600 hover:underline">
+            <Link href="/portal/meetings" className="text-xs text-accent hover:underline">
               Ver todas as reuniões
             </Link>
           )}
@@ -162,7 +162,7 @@ export default async function PortalMeetingsPage({
                   )}
                   <Link
                     href={`/portal/meetings/${m.id}`}
-                    className="text-xs text-indigo-600 hover:underline"
+                    className="text-xs text-accent hover:underline"
                   >
                     Ver detalhes
                   </Link>

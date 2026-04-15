@@ -34,7 +34,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
           name="title"
           placeholder="Título da tarefa"
           required
-          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
         {errors?.title && <p className="mt-0.5 text-xs text-red-400">{errors.title[0]}</p>}
       </div>
@@ -43,7 +43,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
         name="description"
         rows={2}
         placeholder="Descrição (opcional)"
-        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
       />
 
       <div className="grid grid-cols-2 gap-2">
@@ -52,7 +52,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
           <select
             name="status"
             defaultValue={defaultStatus}
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           >
             <option value="idea_could">Ideia (could)</option>
             <option value="idea_should">Ideia (should)</option>
@@ -69,7 +69,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
             <label className="text-xs text-md">Sprint</label>
             <select
               name="sprintId"
-              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             >
               <option value="">Sem sprint</option>
               {sprints.map((s) => (
@@ -86,7 +86,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
           <input
             name="startAt"
             type="datetime-local"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -94,7 +94,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
           <input
             name="endAt"
             type="datetime-local"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -105,7 +105,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
             min="0"
             step="0.5"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
             min="1"
             max="10"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -130,7 +130,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
             min="1"
             max="10"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
@@ -141,7 +141,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
             min="1"
             max="10"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
       </div>

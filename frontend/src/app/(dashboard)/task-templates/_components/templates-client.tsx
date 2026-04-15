@@ -47,7 +47,7 @@ function CreateTemplateForm({ onCreated }: { onCreated: () => void }) {
           name="name"
           type="text"
           placeholder="Ex: Processo de Release"
-          className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
         {errors?.name && <p className="mt-1 text-xs text-red-400">{errors.name[0]}</p>}
       </div>
@@ -58,7 +58,7 @@ function CreateTemplateForm({ onCreated }: { onCreated: () => void }) {
           <button
             type="button"
             onClick={addTask}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-accent hover:underline"
           >
             + Adicionar
           </button>
@@ -154,7 +154,7 @@ function ApplyModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-border-strong bg-surface p-6 shadow-xl">
         <h3 className="text-base font-semibold text-hi">Aplicar "{template.name}"</h3>
         <p className="mt-1 text-xs text-md">
           Serão criadas {template.tasks.length} tarefa(s) no cliente selecionado.
@@ -170,7 +170,7 @@ function ApplyModal({
             <select
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+              className="mt-1 w-full rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
             >
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -183,7 +183,7 @@ function ApplyModal({
         <div className="mt-4 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="rounded-lg border border-border px-4 py-2 text-sm text-md hover:bg-canvas"
+            className="rounded-lg border border-border px-4 py-2 text-sm text-md hover:bg-elevated"
           >
             {result?.taskIds ? 'Fechar' : 'Cancelar'}
           </button>
@@ -257,14 +257,14 @@ export default function TemplatesClient({
       {templates.length === 0 ? (
         <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface gap-2">
           <p className="text-sm text-lo">Nenhum template criado ainda.</p>
-          <button onClick={() => setShowCreate(true)} className="text-xs text-indigo-600 hover:underline">
+          <button onClick={() => setShowCreate(true)} className="text-xs text-accent hover:underline">
             Criar primeiro template
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((t) => (
-            <div key={t.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div key={t.id} className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-hi">{t.name}</h3>

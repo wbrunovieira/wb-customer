@@ -21,7 +21,7 @@ function AddItemForm({ customerId, taskId }: { customerId: string; taskId: strin
         <input
           name="text"
           placeholder="Adicionar item..."
-          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
         {errors?.text && <p className="mt-0.5 text-xs text-red-400">{errors.text[0]}</p>}
       </div>

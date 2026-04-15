@@ -16,7 +16,7 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 const STATUS_CLASS: Record<MeetingStatus, string> = {
   scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
   ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
-  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-canvas text-md ring-border',
 }
 
 function formatDateTime(iso: string) {
@@ -79,7 +79,7 @@ export default async function CustomerMeetingsPage({
             <span>/</span>
             <span className="text-hi">Reuniões</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
             Reuniões — {customer!.name}
           </h1>
           <p className="mt-1 text-sm text-md">{meetings.length} reunião(ões)</p>
@@ -103,7 +103,7 @@ export default async function CustomerMeetingsPage({
             href={tab.href}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.label === 'Reuniões'
-                ? 'border-b-2 border-indigo-600 text-indigo-600'
+                ? 'border-b-2 border-brand text-white'
                 : 'text-md hover:text-hi'
             }`}
           >
@@ -117,7 +117,7 @@ export default async function CustomerMeetingsPage({
           <p className="text-sm text-lo">Nenhuma reunião agendada.</p>
           <Link
             href={`/meetings/new?customerId=${id}`}
-            className="text-xs text-indigo-600 hover:underline"
+            className="text-xs text-accent hover:underline"
           >
             Agendar primeira reunião
           </Link>
@@ -127,7 +127,7 @@ export default async function CustomerMeetingsPage({
           {meetings.map((m) => {
             const type = m.meetingTypeId ? typeMap.get(m.meetingTypeId) : undefined
             return (
-              <div key={m.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+              <div key={m.id} className="rounded-xl border border-border-strong bg-surface p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -182,7 +182,7 @@ export default async function CustomerMeetingsPage({
                                 ? 'bg-green-500/10 text-green-400 ring-green-600/20'
                                 : a.responseStatus === 'declined'
                                   ? 'bg-red-500/10 text-red-400 ring-red-500/20'
-                                  : 'bg-canvas text-md ring-slate-400/20'
+                                  : 'bg-canvas text-md ring-border'
                             }`}
                           >
                             {a.email}
@@ -202,7 +202,7 @@ export default async function CustomerMeetingsPage({
                     {/* Summary form */}
                     {(m.status === 'ended' || m.status === 'scheduled') && (
                       <details className="mt-3">
-                        <summary className="cursor-pointer text-xs text-indigo-600 hover:underline">
+                        <summary className="cursor-pointer text-xs text-accent hover:underline">
                           {m.meetingSummary ? 'Editar resumo' : 'Adicionar resumo'}
                         </summary>
                         <div className="mt-2">
@@ -234,7 +234,7 @@ export default async function CustomerMeetingsPage({
                     )}
                     <Link
                       href={`/customers/${id}/meetings/${m.id}`}
-                      className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-md hover:bg-canvas"
+                      className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-md hover:bg-elevated"
                     >
                       Ver detalhes
                     </Link>

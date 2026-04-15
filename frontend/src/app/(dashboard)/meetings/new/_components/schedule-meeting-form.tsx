@@ -80,7 +80,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           required
           value={customerId}
           onChange={(e) => handleCustomerChange(e.target.value)}
-          className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         >
           <option value="">Selecione um cliente...</option>
           {customers.map((c) => (
@@ -99,7 +99,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           type="text"
           required
           placeholder="Ex: Kickoff do Projeto"
-          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
         {state?.errors?.title && <p className="text-xs text-red-400">{state.errors.title[0]}</p>}
       </div>
@@ -110,7 +110,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           <label className="text-sm font-medium text-hi">Tipo de Reunião</label>
           <select
             name="meetingTypeId"
-            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           >
             <option value="">Sem tipo específico</option>
             {meetingTypes.map((t) => (
@@ -133,7 +133,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             type="datetime-local"
             required
             defaultValue={defaultStart}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
           {state?.errors?.startAt && <p className="text-xs text-red-400">{state.errors.startAt[0]}</p>}
         </div>
@@ -146,7 +146,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             type="datetime-local"
             required
             defaultValue={defaultEnd}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
           {state?.errors?.endAt && <p className="text-xs text-red-400">{state.errors.endAt[0]}</p>}
         </div>
@@ -190,12 +190,12 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             onChange={(e) => setEmailInput(e.target.value)}
             onKeyDown={handleEmailKeyDown}
             placeholder="Adicionar outro participante..."
-            className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
           <button
             type="button"
             onClick={addEmail}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-md hover:bg-canvas"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-md hover:bg-elevated"
           >
             Adicionar
           </button>
@@ -212,7 +212,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           name="description"
           rows={3}
           placeholder="Pauta, objetivos ou informações adicionais..."
-          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 
@@ -241,7 +241,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             </>
           )}
         </button>
-        <a href="/meetings" className="flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-canvas">
+        <a href="/meetings" className="flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-elevated">
           Cancelar
         </a>
       </div>

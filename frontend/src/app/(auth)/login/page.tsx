@@ -17,7 +17,7 @@ export default function LoginPage() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-hi">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           WB Customer
         </h1>
         <p className="mt-1 text-sm text-md">

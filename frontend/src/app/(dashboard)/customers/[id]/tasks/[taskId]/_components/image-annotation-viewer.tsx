@@ -85,7 +85,7 @@ export default function ImageAnnotationViewer({
             </div>
             {/* Tooltip */}
             <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-10 hidden min-w-[120px] max-w-[200px] rounded-lg border border-border bg-surface px-2 py-1 text-xs text-hi shadow-lg group-hover:block">
-              <span className="font-semibold text-indigo-600">#{ann.number}</span>{' '}{ann.text}
+              <span className="font-semibold text-accent">#{ann.number}</span>{' '}{ann.text}
             </div>
           </div>
         ))}
@@ -151,7 +151,7 @@ export default function ImageAnnotationViewer({
             onKeyDown={(e) => { if (e.key === 'Enter') submitAnnotation() }}
             placeholder="Descreva o ponto anotado..."
             autoFocus
-            className="w-full rounded-lg border border-border px-3 py-1.5 text-xs text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+            className="w-full rounded-lg border border-border-strong bg-elevated px-3 py-1.5 text-xs text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25"
           />
           {error && <p className="text-xs text-red-400">{error}</p>}
           <div className="flex gap-2">
@@ -166,7 +166,7 @@ export default function ImageAnnotationViewer({
             <button
               type="button"
               onClick={() => setPendingPin(null)}
-              className="rounded-lg border border-border px-3 py-1 text-xs text-md hover:bg-canvas"
+              className="rounded-lg border border-border px-3 py-1 text-xs text-md hover:bg-elevated"
             >
               Cancelar
             </button>

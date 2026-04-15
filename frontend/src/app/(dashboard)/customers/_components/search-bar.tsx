@@ -49,14 +49,14 @@ export default function SearchBar({ defaultValue, defaultStatus }: Props) {
           placeholder="Buscar por nome ou e-mail..."
           defaultValue={defaultValue}
           onChange={(e) => updateParams('search', e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
+          className="w-full rounded-lg border border-border-strong bg-elevated py-2 pl-9 pr-3 text-sm text-hi placeholder-lo transition-colors focus:border-brand/60 focus:bg-surface focus:outline-none focus:ring-1 focus:ring-brand/25"
         />
       </div>
 
       <select
         defaultValue={defaultStatus}
         onChange={(e) => updateParams('status', e.target.value)}
-        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
+        className="rounded-lg border border-border-strong bg-elevated px-3 py-2 text-sm text-hi transition-colors focus:border-brand/60 focus:outline-none focus:ring-1 focus:ring-brand/25 cursor-pointer"
       >
         <option value="">Todos os status</option>
         <option value="active">Ativo</option>
