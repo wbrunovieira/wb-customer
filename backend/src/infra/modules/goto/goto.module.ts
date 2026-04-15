@@ -20,6 +20,6 @@ import { GoToTranscriptionService } from '@/infra/services/goto/goto-transcripti
     GoToRecordingService,
     GoToTranscriptionService,
   ],
-  exports: [GoToTokenService],
+  exports: [GoToTokenService, GoToPhoneMatcherService],
 })
 export class GoToModule {}

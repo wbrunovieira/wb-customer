@@ -13,6 +13,7 @@ import { TasksModule } from '@/infra/modules/tasks/tasks.module'
 import { NotificationsModule } from '@/infra/modules/notifications/notifications.module'
 import { ActivitiesModule } from '@/infra/modules/activities/activities.module'
 import { GoToModule } from '@/infra/modules/goto/goto.module'
+import { WhatsAppModule } from '@/infra/modules/whatsapp/whatsapp.module'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GoToModule } from '@/infra/modules/goto/goto.module'
     NotificationsModule,
     ActivitiesModule,
     GoToModule,
+    WhatsAppModule,
   ],
   controllers: [HealthController],
 })
