@@ -116,9 +116,11 @@ model Customer {
   documents    Document[]
   meetings     Meeting[]
   portalUsers  CustomerUser[]
-  sprints     Sprint[]
-  tasks       Task[]
-  activityLogs Activity[]
+  sprints          Sprint[]
+  tasks            Task[]
+  activityLogs     Activity[]
+  creatives        Creative[]
+  creativeStrategies CreativeStrategy[]
 
   @@index([categoryId])
   @@map("customers")
@@ -543,6 +545,138 @@ model CommentReaction {
 
   @@id([commentId, userId, emoji])
   @@map("comment_reactions")
+}
+
+// ─────────────────────────────────────────
+// CREATIVES
+// ─────────────────────────────────────────
+
+enum CreativeType {
+  image
+  video
+  carousel
+}
+
+enum CreativeStatus {
+  draft
+  active
+  paused
+  archived
+}
+
+enum CampaignObjective {
+  awareness
+  traffic
+  engagement
+  leads
+  sales
+  retargeting
+}
+
+enum StrategyPhase {
+  exploration
+  refinement
+}
+
+enum StrategyStatus {
+  active
+  completed
+  paused
+}
+
+model Creative {
+  id                String            @id @default(uuid())
+  customerId        String            @map("customer_id")
+  title             String
+  caption           String?
+  designDescription String?           @map("design_description")
+  type              CreativeType
+  objective         CampaignObjective?
+  status            CreativeStatus    @default(draft)
+
+  driveFileId       String?           @map("drive_file_id")
+  driveViewUrl      String?           @map("drive_view_url")
+  driveDownloadUrl  String?           @map("drive_download_url")
+  thumbnailUrl      String?           @map("thumbnail_url")
+  mimeType          String?           @map("mime_type")
+  sizeBytes         BigInt?           @map("size_bytes")
+
+  createdByUserId   String            @map("created_by_user_id")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  deletedAt         DateTime?         @map("deleted_at")
+
+  customer          Customer          @relation(fields: [customerId], references: [id])
+  strategyItems     CreativeStrategyItem[]
+  performances      CreativePerformance[]
+
+  @@index([customerId])
+  @@map("creatives")
+}
+
+model CreativePerformance {
+  id          String    @id @default(uuid())
+  creativeId  String    @map("creative_id")
+  platform    String
+  campaignId  String?   @map("campaign_id")
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+  conversions Int       @default(0)
+  spend       Float     @default(0)
+  ctr         Float?
+  cpc         Float?
+  cpa         Float?
+  roas        Float?
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  notes       String?
+  recordedAt  DateTime  @default(now()) @map("recorded_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  creative Creative @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+
+  @@index([creativeId])
+  @@map("creative_performances")
+}
+
+model CreativeStrategy {
+  id               String            @id @default(uuid())
+  customerId       String            @map("customer_id")
+  name             String
+  phase            StrategyPhase
+  status           StrategyStatus    @default(active)
+  objective        CampaignObjective?
+  budget           Float?
+  durationDays     Int?              @map("duration_days")
+  startAt          DateTime?         @map("start_at")
+  endAt            DateTime?         @map("end_at")
+  winnerId         String?           @map("winner_id")
+  parentStrategyId String?           @map("parent_strategy_id")
+  notes            String?
+  createdByUserId  String            @map("created_by_user_id")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  customer       Customer               @relation(fields: [customerId], references: [id])
+  items          CreativeStrategyItem[]
+  parentStrategy CreativeStrategy?      @relation("StrategyRefinements", fields: [parentStrategyId], references: [id])
+  refinements    CreativeStrategy[]     @relation("StrategyRefinements")
+
+  @@index([customerId])
+  @@map("creative_strategies")
+}
+
+model CreativeStrategyItem {
+  strategyId String   @map("strategy_id")
+  creativeId String   @map("creative_id")
+  position   Int      @default(0)
+  addedAt    DateTime @default(now()) @map("added_at")
+
+  strategy CreativeStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  creative Creative         @relation(fields: [creativeId], references: [id], onDelete: Cascade)
+
+  @@id([strategyId, creativeId])
+  @@map("creative_strategy_items")
 }
 
 // ─────────────────────────────────────────

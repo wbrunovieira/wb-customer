@@ -15,6 +15,7 @@ import { ActivitiesModule } from '@/infra/modules/activities/activities.module'
 import { GoToModule } from '@/infra/modules/goto/goto.module'
 import { WhatsAppModule } from '@/infra/modules/whatsapp/whatsapp.module'
 import { GmailModule } from '@/infra/modules/gmail/gmail.module'
+import { CreativesModule } from '@/infra/modules/creatives/creatives.module'
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { GmailModule } from '@/infra/modules/gmail/gmail.module'
     GoToModule,
     WhatsAppModule,
     GmailModule,
+    CreativesModule,
   ],
   controllers: [HealthController],
 })
