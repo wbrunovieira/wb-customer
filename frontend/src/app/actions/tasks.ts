@@ -195,45 +195,81 @@ export async function createSubtask(
 export async function addComment(
   customerId: string,
   taskId: string,
-  _state: unknown,
-  formData: FormData,
-) {
-  const body = formData.get('body') as string
-  if (!body?.trim()) return { errors: { body: ['Comentário obrigatório'] } }
+  body: string | null,
+  parentId?: string,
+  audioUrl?: string,
+): Promise<{ commentId: string } | { message: string }> {
+  if (!body?.trim() && !audioUrl) return { message: 'Comentário vazio' }
 
   try {
-    await apiServer.post(`/api/v1/customers/${customerId}/tasks/${taskId}/comments`, {
-      body: body.trim(),
-    })
+    const result = await apiServer.post<{ commentId: string }>(
+      `/api/v1/customers/${customerId}/tasks/${taskId}/comments`,
+      { body: body?.trim() || null, parentId: parentId || undefined, audioUrl: audioUrl || undefined },
+    )
+    revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+    return { commentId: result.commentId }
   } catch (err) {
     return { message: (err as Error).message }
   }
+}
 
+export async function addCommentAttachment(
+  customerId: string,
+  taskId: string,
+  commentId: string,
+  formData: FormData,
+): Promise<void> {
+  await apiServer.upload(
+    `/api/v1/customers/${customerId}/tasks/${taskId}/comments/${commentId}/attachments`,
+    formData,
+  )
   revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
-  return { success: true }
+}
+
+export async function createAudioComment(
+  customerId: string,
+  taskId: string,
+  formData: FormData,
+): Promise<{ commentId: string } | { message: string }> {
+  try {
+    const { audioUrl } = await apiServer.upload<{ audioUrl: string }>(
+      `/api/v1/customers/${customerId}/tasks/${taskId}/comments/audio-upload`,
+      formData,
+    )
+    return addComment(customerId, taskId, null, undefined, audioUrl)
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
+export async function addImageAnnotation(
+  customerId: string,
+  taskId: string,
+  commentId: string,
+  imageUrl: string,
+  x: number,
+  y: number,
+  text: string,
+): Promise<{ annotationId: string; number: number } | { message: string }> {
+  try {
+    const result = await apiServer.post<{ annotationId: string; number: number }>(
+      `/api/v1/customers/${customerId}/tasks/${taskId}/comments/${commentId}/annotations`,
+      { imageUrl, x, y, text },
+    )
+    revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+    return result
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
 }
 
 export async function replyToComment(
   customerId: string,
   taskId: string,
   parentId: string,
-  _state: unknown,
-  formData: FormData,
-) {
-  const body = formData.get('body') as string
-  if (!body?.trim()) return { errors: { body: ['Resposta obrigatória'] } }
-
-  try {
-    await apiServer.post(`/api/v1/customers/${customerId}/tasks/${taskId}/comments`, {
-      body: body.trim(),
-      parentId,
-    })
-  } catch (err) {
-    return { message: (err as Error).message }
-  }
-
-  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
-  return { success: true }
+  body: string,
+): Promise<{ commentId: string } | { message: string }> {
+  return addComment(customerId, taskId, body, parentId)
 }
 
 export async function resolveComment(customerId: string, taskId: string, commentId: string) {

@@ -1,6 +1,6 @@
 # WB Customer — Plano de Implementação
 
-> **Última revisão:** 2026-04-14 (sessão 8)
+> **Última revisão:** 2026-04-15 (sessão 9)
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
@@ -9,7 +9,8 @@
 > **2026-04-14 (sessão 4):** Fase 6 — gravação e transcrição de reuniões implementadas. `MeetingFilesFinderService` (pesquisa Drive em "Meet Recordings" por nome do título + fallback por data). `TranscriptorService` (client para API transcritor: submit MP4, poll status, get result). `MeetingRecordingDetectorService` reescrito com 3 passes: Pass 0 Drive-first (detecta reuniões via arquivos novos no Drive independente de horário agendado), Pass 1 time-based (marca reuniões expiradas como ended), Pass 2 retry (retenta reuniões ended sem gravação por até 4h). Estratégia de transcrição: 1º doc Gemini nativo do Meet (summary + transcript), fallback: envia MP4 ao transcritor externo. `MeetingTranscriptionPollerService` reescrito para usar `TranscriptorService`.  
 > **2026-04-14 (sessão 5):** Página de detalhe de reunião implementada (`/customers/[id]/meetings/[meetingId]`): gravação embed Drive, transcrição, attendees RSVP, summary editável. `MeetingPresenter.toHTTP` corrigido para expor `nativeTranscriptUrl` e `transcriptText`. Link "Ver detalhes" adicionado nos cards da lista. Fases 7–11 planejadas: Tarefas (Scrum + ICE + Gantt + comentários ricos), Atividades (log de comunicações + integrações GoTo/Gmail/WhatsApp), Criativos (Drive + performance A/B), Tráfego Pago (Meta BM + campanhas), CRM do Cliente (funil de vendas + leads).  
 > **2026-04-14 (sessão 6–7):** Fase 7 implementada. Backend: migration `task_comments`/`comment_attachments`/`image_annotations`/`comment_reactions`; entidade `TaskComment`; use-cases: AddComment, ListComments, ResolveComment, ReactToComment, DeleteComment, AddSubtask, ProcessRecurringTasks; `RecurringTasksScheduler` (cron diário); `AllTasksController` com enrichment de `customerName`. Frontend: `/tasks` com coluna cliente, groupBy, filtros, botão "Nova tarefa" com busca de cliente; `/customers/[id]/tasks/[taskId]` com SubtasksSection + CommentsSection (respostas, reações emoji, resolver, soft-delete). Campos `startAt`/`endAt`/`estimatedHours` adicionados nos formulários de criação; inputs tipo `datetime-local`.  
-> **2026-04-14 (sessão 8):** Fase 8 implementada. Backend: migration `activities`/`activity_attachments`; entidade `Activity` com complete/cancel/softDelete; use-cases: CreateActivity, UpdateActivity, GetActivity, ListCustomerActivities, DeleteActivity (12 testes); `ActivitiesController` com Swagger; `ActivitiesModule`. Frontend: `/customers/[id]/activities` timeline vertical com ícones por tipo, badges de status, filtros por tipo e status, formulário inline, botão de exclusão com toast. Sidebar + aba no cliente.
+> **2026-04-14 (sessão 8):** Fase 8 implementada. Backend: migration `activities`/`activity_attachments`; entidade `Activity` com complete/cancel/softDelete; use-cases: CreateActivity, UpdateActivity, GetActivity, ListCustomerActivities, DeleteActivity (12 testes); `ActivitiesController` com Swagger; `ActivitiesModule`. Frontend: `/customers/[id]/activities` timeline vertical com ícones por tipo, badges de status, filtros por tipo e status, formulário inline, botão de exclusão com toast. Sidebar + aba no cliente.  
+> **2026-04-15 (sessão 9):** Fase 7 — pendências concluídas em TDD. Backend: `StartTimeTrackingUseCase`, `StopTimeTrackingUseCase`, `GetTaskTimeEntriesUseCase`, `ReorderTasksUseCase`; migration `time_entries`; `TaskTemplate` entity + migration; use-cases: `CreateTaskTemplateUseCase`, `ListTaskTemplatesUseCase`, `ApplyTaskTemplateUseCase`, `CreateTemplateFromTasksUseCase`; `TemplatesController` com Swagger; `AddCommentAttachmentUseCase`, `UploadCommentAudioUseCase`, `AddImageAnnotationUseCase`. Frontend: views Calendário e Gantt (SVG puro); `TimeTracker` no detalhe da tarefa; reorder within-column no kanban. Total: 369 testes passando (71 arquivos).
 
 ---
 
@@ -1585,12 +1586,23 @@ Fase 7 inclui o sino de notificações no header. Eventos publicados via EventBu
 - [x] `/tasks` global: coluna cliente, groupBy, filtros, botão "Nova tarefa" com busca de cliente
 - [x] Campos `startAt`, `endAt`, `estimatedHours` nos formulários de criação (datetime-local)
 
-**Pendente — Fase 7 (iterações futuras)**
-- [ ] Templates de tarefas: salvar seleção de tarefas → aplicar em cliente
-- [ ] View Calendário (`?view=calendar`) — tarefas nos dias previstos
-- [ ] View Gantt (`?view=gantt`) usando Recharts
-- [ ] Time-tracking: `StartTimeTrackUseCase` / `StopTimeTrackUseCase` + timer no detalhe da tarefa
-- [ ] `ReorderTasksUseCase` — persistir `boardPosition` após drag no kanban
+**Concluído na sessão 9 ✅**
+- [x] Migration: `time_entries`; use-cases: `StartTimeTracking`, `StopTimeTracking`, `GetTaskTimeEntries` (TDD)
+- [x] `ReorderTasksUseCase` — persiste `boardPosition` após drag no kanban (TDD)
+- [x] Entidade `TaskTemplate` + migration `task_templates`
+- [x] Use-cases: `CreateTaskTemplate`, `ListTaskTemplates`, `ApplyTaskTemplate`, `CreateTemplateFromTasks` (TDD, 13 testes)
+- [x] `TemplatesController` com Swagger (`POST /task-templates`, `GET /task-templates`, `POST /task-templates/:id/apply/:customerId`, `POST /task-templates/from-tasks`, `DELETE /task-templates/:id`)
+- [x] `AddCommentAttachmentUseCase` — upload via `IStorageAdapter`, salva `CommentAttachment` (TDD)
+- [x] `UploadCommentAudioUseCase` — valida MIME audio, retorna `audioUrl` (TDD)
+- [x] `AddImageAnnotationUseCase` — auto-incrementa número de anotação por comentário (TDD)
+- [x] View Calendário (`?view=calendar`) — grid mensal com tarefas nos dias previstos
+- [x] View Gantt (`?view=gantt`) — SVG puro com barras e tooltips (sem dependência recharts)
+- [x] `TimeTracker` no detalhe da tarefa com timer ao vivo
+
+**Pendente — Fase 7 (frontend não implementado)**
+- [ ] UI de gestão de templates (listar, criar, aplicar a cliente) — backend pronto, sem tela
+- [ ] UI de upload de arquivo/áudio em comentários — backend pronto, sem componente de upload
+- [ ] UI de anotação em imagem (canvas com pins numerados) — backend pronto, sem componente visual
 
 ---
 

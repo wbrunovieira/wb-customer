@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
-import { Customer, Task, TaskStatus, Sprint, PaginatedResponse } from '@/lib/definitions'
+import { Customer, Task, TaskStatus, Sprint, TaskTemplate, PaginatedResponse } from '@/lib/definitions'
 import MoveStatusButton from './_components/move-status-button'
 import DeleteTaskButton from './_components/delete-task-button'
 import NewTaskForm from './_components/new-task-form'
 import KanbanBoard from './_components/kanban-board'
 import CalendarView from './_components/calendar-view'
 import GanttView from './_components/gantt-view'
+import TemplatesSection from './_components/templates-section'
 
 export const metadata = { title: 'Tarefas — WB Customer' }
 
@@ -107,6 +108,7 @@ export default async function CustomerTasksPage({
   let customer: Customer
   let tasks: Task[] = []
   let sprints: Sprint[] = []
+  let templates: TaskTemplate[] = []
 
   try {
     customer = await apiServer.get<Customer>(`/api/v1/customers/${id}`)
@@ -120,12 +122,14 @@ export default async function CustomerTasksPage({
     if (sprintId) query.set('sprintId', sprintId)
     query.set('limit', '200')
 
-    const [tasksRes, sprintsRes] = await Promise.all([
+    const [tasksRes, sprintsRes, templatesRes] = await Promise.all([
       apiServer.get<PaginatedResponse<Task>>(`/api/v1/customers/${id}/tasks?${query}`),
       apiServer.get<{ sprints: Sprint[] }>(`/api/v1/customers/${id}/sprints`),
+      apiServer.get<{ templates: TaskTemplate[] }>('/api/v1/task-templates').catch(() => ({ templates: [] })),
     ])
     tasks = tasksRes.items
     sprints = sprintsRes.sprints
+    templates = templatesRes.templates
   } catch {
     // show empty
   }
@@ -305,6 +309,9 @@ export default async function CustomerTasksPage({
           ))}
         </div>
       )}
+
+      {/* Templates section */}
+      <TemplatesSection customerId={id} templates={templates} tasks={tasks} />
 
       {/* Sprints section */}
       {sprints.length > 0 && (

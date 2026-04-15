@@ -296,6 +296,24 @@ export type Sprint = {
   updatedAt: string
 }
 
+export type TemplateTaskData = {
+  title: string
+  description?: string | null
+  estimatedHours?: number | null
+  impact?: number | null
+  confidence?: number | null
+  effort?: number | null
+}
+
+export type TaskTemplate = {
+  id: string
+  name: string
+  description: string | null
+  tasks: TemplateTaskData[]
+  createdAt: string
+  updatedAt: string
+}
+
 // ─── Activities ──────────────────────────────────────────────
 
 export type ActivityType = 'email' | 'whatsapp' | 'phone_call' | 'note' | 'meeting'
