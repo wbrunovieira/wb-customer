@@ -324,12 +324,12 @@ export class CustomersController {
     if (result.isLeft()) throw new NotFoundException(result.value.message)
   }
 
-  @Get(':id/activities')
-  @ApiOperation({ summary: 'List activity log for a customer' })
+  @Get(':id/audit')
+  @ApiOperation({ summary: 'List audit log for a customer' })
   @ApiParam({ name: 'id', description: 'Customer ID' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
-  @ApiResponse({ status: 200, description: 'Paginated activity log' })
+  @ApiResponse({ status: 200, description: 'Paginated audit log' })
   @ApiResponse({ status: 404, description: 'Customer not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getActivities(

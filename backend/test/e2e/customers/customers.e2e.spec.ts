@@ -421,8 +421,8 @@ describe('Contacts /api/v1/customers/:id/contacts', () => {
 // ACTIVITIES
 // ─────────────────────────────────────────
 
-describe('GET /api/v1/customers/:id/activities', () => {
-  it('should return activities for a customer', async () => {
+describe('GET /api/v1/customers/:id/audit', () => {
+  it('should return audit log for a customer', async () => {
     const create = await request(app.getHttpServer())
       .post('/api/v1/customers')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -430,7 +430,7 @@ describe('GET /api/v1/customers/:id/activities', () => {
     const customerId = (create.body as { customerId: string }).customerId
 
     const res = await request(app.getHttpServer())
-      .get(`/api/v1/customers/${customerId}/activities`)
+      .get(`/api/v1/customers/${customerId}/audit`)
       .set('Authorization', `Bearer ${adminToken}`)
 
     expect(res.status).toBe(200)
@@ -441,7 +441,7 @@ describe('GET /api/v1/customers/:id/activities', () => {
 
   it('should return 404 for unknown customer', async () => {
     const res = await request(app.getHttpServer())
-      .get('/api/v1/customers/non-existent/activities')
+      .get('/api/v1/customers/non-existent/audit')
       .set('Authorization', `Bearer ${adminToken}`)
 
     expect(res.status).toBe(404)

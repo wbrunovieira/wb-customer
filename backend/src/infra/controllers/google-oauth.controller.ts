@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Query,
   Delete,
   Res,
@@ -25,6 +26,8 @@ import { IGoogleTokenService } from '@/domain/meetings/application/services/i-go
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
+import { MeetingRecordingDetectorService } from '@/infra/services/meetings/meeting-recording-detector.service'
+import { MeetingTranscriptionPollerService } from '@/infra/services/meetings/meeting-transcription-poller.service'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
@@ -44,6 +47,8 @@ export class GoogleOAuthController {
   constructor(
     private readonly tokenService: IGoogleTokenService,
     private readonly config: ConfigService<Env, true>,
+    private readonly recordingDetector: MeetingRecordingDetectorService,
+    private readonly transcriptionPoller: MeetingTranscriptionPollerService,
   ) {}
 
   private createOAuthClient() {
@@ -135,5 +140,31 @@ export class GoogleOAuthController {
   @ApiResponse({ status: 204, description: 'Google account disconnected' })
   async disconnect() {
     await this.tokenService.deleteToken()
+  }
+
+  @Post('check-recordings')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Trigger recording detection job (external cron)' })
+  @ApiQuery({ name: 'secret', required: true, description: 'CRON_SECRET value' })
+  @ApiResponse({ status: 200, description: 'Job triggered successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid or missing cron secret' })
+  async checkRecordings(@Query('secret') secret: string) {
+    const cronSecret = this.config.get('CRON_SECRET', { infer: true })
+    if (!cronSecret || secret !== cronSecret) throw new UnauthorizedException('Invalid cron secret')
+    await this.recordingDetector.run()
+    return { ok: true }
+  }
+
+  @Post('check-transcriptions')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Trigger transcription polling job (external cron)' })
+  @ApiQuery({ name: 'secret', required: true, description: 'CRON_SECRET value' })
+  @ApiResponse({ status: 200, description: 'Job triggered successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid or missing cron secret' })
+  async checkTranscriptions(@Query('secret') secret: string) {
+    const cronSecret = this.config.get('CRON_SECRET', { infer: true })
+    if (!cronSecret || secret !== cronSecret) throw new UnauthorizedException('Invalid cron secret')
+    await this.transcriptionPoller.pollTranscriptionJobs()
+    return { ok: true }
   }
 }
