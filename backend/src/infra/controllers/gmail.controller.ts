@@ -33,6 +33,12 @@ import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
 
+class SendEmailAttachmentDto {
+  @ApiProperty() fileName!: string
+  @ApiProperty() mimeType!: string
+  @ApiProperty({ description: 'Base64-encoded file content' }) base64!: string
+}
+
 class SendEmailDto {
   @ApiProperty({ example: ['contato@empresa.com'] })
   to!: string[]
@@ -48,6 +54,9 @@ class SendEmailDto {
 
   @ApiPropertyOptional({ description: 'Gmail thread ID for replies' })
   threadId?: string
+
+  @ApiPropertyOptional({ type: [SendEmailAttachmentDto] })
+  attachments?: SendEmailAttachmentDto[]
 }
 
 @ApiTags('Gmail')
@@ -103,12 +112,21 @@ export class GmailController {
   ) {
     if (!body.to?.length) throw new BadRequestException('At least one recipient required')
 
+    const attachments = body.attachments?.length
+      ? body.attachments.map((att) => ({
+          fileName: att.fileName,
+          mimeType: att.mimeType,
+          buffer: Buffer.from(att.base64, 'base64'),
+        }))
+      : undefined
+
     const result = await this.gmailService.sendEmail({
       to: body.to,
       cc: body.cc,
       subject: body.subject,
       htmlBody: body.htmlBody,
       threadId: body.threadId,
+      attachments,
     })
 
     // Create Activity for sent email

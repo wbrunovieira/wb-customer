@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
 import { CustomerDetail } from '@/lib/definitions'
 import DeleteButton from '../_components/delete-button'
+import { PhoneLink } from '@/components/ui/phone-link'
+import { EmailLink } from '@/components/ui/email-link'
 
 export const metadata = { title: 'Cliente — WB Customer' }
 
@@ -128,7 +130,9 @@ export default async function CustomerDetailPage({ params }: Props) {
               {customer.phone && (
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-lo">Telefone</dt>
-                  <dd className="mt-1 text-sm text-hi">{customer.phone}</dd>
+                  <dd className="mt-1 text-sm">
+                    <PhoneLink phone={customer.phone} />
+                  </dd>
                 </div>
               )}
               {customer.document && (
@@ -179,8 +183,16 @@ export default async function CustomerDetailPage({ params }: Props) {
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-md">
-                        {[contact.role, contact.email, contact.phone].filter(Boolean).join(' · ')}
+                      <p className="text-xs text-md flex flex-wrap items-center gap-x-1">
+                        {contact.role && <span>{contact.role}</span>}
+                        {contact.role && (contact.email || contact.phone) && <span>·</span>}
+                        {contact.email && (
+                          <EmailLink email={contact.email} customerId={id} className="text-xs" />
+                        )}
+                        {contact.email && contact.phone && <span>·</span>}
+                        {contact.phone && (
+                          <PhoneLink phone={contact.phone} className="text-xs" />
+                        )}
                       </p>
                     </div>
                   </li>

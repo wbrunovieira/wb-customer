@@ -337,4 +337,32 @@ export type Activity = {
   assignedToUserId: string | null
   createdAt: string
   updatedAt: string
+  // GoTo Connect
+  gotoCallOutcome: string | null
+  gotoDuration: number | null
+  gotoRecordingUrl: string | null
+  gotoTranscriptText: string | null
+  callContactType: string | null
+  // Email
+  emailMessageId: string | null
+  emailThreadId: string | null
+  emailSubject: string | null
+  emailFromAddress: string | null
+  emailFromName: string | null
+  emailReplied: boolean
+  // WhatsApp messages (nested when fetched with include)
+  whatsappMessages?: WhatsAppMessage[]
+}
+
+export type WhatsAppMessage = {
+  id: string
+  remoteJid: string
+  fromMe: boolean
+  senderName: string | null
+  text: string | null
+  messageType: string
+  mediaLabel: string | null
+  mediaUrl: string | null
+  mediaTranscriptText: string | null
+  timestamp: string
 }

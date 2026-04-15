@@ -1,6 +1,19 @@
 import { AggregateRoot } from '@/core/aggregate-root'
 import { UniqueEntityID } from '@/core/unique-entity-id'
 
+export interface WhatsAppMessageData {
+  id: string
+  remoteJid: string
+  fromMe: boolean
+  senderName?: string | null
+  text?: string | null
+  messageType: string
+  mediaUrl?: string | null
+  mediaLabel?: string | null
+  mediaTranscriptText?: string | null
+  timestamp: string
+}
+
 export interface ActivityProps {
   customerId: string
   contactId?: string | null
@@ -37,6 +50,8 @@ export interface ActivityProps {
   emailFromAddress?: string | null
   emailFromName?: string | null
   emailReplied?: boolean
+  // WhatsApp messages (read-only, loaded from relation)
+  whatsappMessages?: WhatsAppMessageData[]
 }
 
 export class Activity extends AggregateRoot<ActivityProps> {
@@ -98,6 +113,7 @@ export class Activity extends AggregateRoot<ActivityProps> {
   get emailFromAddress(): string | null | undefined { return this.props.emailFromAddress }
   get emailFromName(): string | null | undefined { return this.props.emailFromName }
   get emailReplied(): boolean { return this.props.emailReplied ?? false }
+  get whatsappMessages(): WhatsAppMessageData[] | undefined { return this.props.whatsappMessages }
 
   update(fields: Partial<Pick<ActivityProps, 'subject' | 'description' | 'status' | 'scheduledAt' | 'occurredAt' | 'durationSecs' | 'assignedToUserId' | 'transcriptText'>>): void {
     Object.assign(this.props, fields)

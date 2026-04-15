@@ -54,6 +54,22 @@ function toHttp(a: Activity) {
     assignedToUserId: a.assignedToUserId ?? null,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
+    // GoTo Connect
+    gotoCallOutcome: a.gotoCallOutcome ?? null,
+    gotoDuration: a.gotoDuration ?? null,
+    gotoRecordingUrl: a.gotoRecordingUrl ?? null,
+    gotoRecordingUrl2: a.gotoRecordingUrl2 ?? null,
+    gotoTranscriptText: a.gotoTranscriptText ?? null,
+    callContactType: a.callContactType ?? null,
+    // Email
+    emailMessageId: a.emailMessageId ?? null,
+    emailThreadId: a.emailThreadId ?? null,
+    emailSubject: a.emailSubject ?? null,
+    emailFromAddress: a.emailFromAddress ?? null,
+    emailFromName: a.emailFromName ?? null,
+    emailReplied: a.emailReplied,
+    // WhatsApp messages
+    whatsappMessages: a.whatsappMessages ?? [],
   }
 }
 

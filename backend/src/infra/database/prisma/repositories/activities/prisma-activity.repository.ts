@@ -9,7 +9,10 @@ export class PrismaActivityRepository implements IActivityRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string): Promise<Activity | null> {
-    const raw = await this.prisma.activity.findFirst({ where: { id, deletedAt: null } })
+    const raw = await this.prisma.activity.findFirst({
+      where: { id, deletedAt: null },
+      include: { whatsappMessages: { orderBy: { timestamp: 'asc' } } },
+    })
     return raw ? ActivityMapper.toDomain(raw) : null
   }
 
@@ -39,6 +42,7 @@ export class PrismaActivityRepository implements IActivityRepository {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: { whatsappMessages: { orderBy: { timestamp: 'asc' } } },
       }),
       this.prisma.activity.count({ where }),
     ])

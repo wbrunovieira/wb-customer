@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 import { GoToApiClient } from './goto-api.client'
 import { GoToPhoneMatcherService } from './goto-phone-matcher.service'
+import { NotificationsService } from '@/infra/notifications/notifications.service'
 
 export interface GoToWebhookPayload {
   conversationSpaceId?: string
@@ -17,6 +18,7 @@ export class GoToWebhookService {
     private readonly prisma: PrismaService,
     private readonly apiClient: GoToApiClient,
     private readonly phoneMatcher: GoToPhoneMatcherService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async process(payload: GoToWebhookPayload): Promise<void> {
@@ -93,5 +95,12 @@ export class GoToWebhookService {
     })
 
     this.logger.log(`GoTo Activity created for call ${conversationSpaceId} → customer ${match.customerId}`)
+
+    this.notifications.pushBroadcast({
+      type: 'activity.phone_call',
+      title: 'Nova ligação',
+      body: subject,
+      meta: { customerId: match.customerId, gotoCallId: conversationSpaceId },
+    })
   }
 }

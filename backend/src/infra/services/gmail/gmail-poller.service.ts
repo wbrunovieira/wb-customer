@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 import { GmailService } from './gmail.service'
 import { GoToPhoneMatcherService } from '@/infra/services/goto/goto-phone-matcher.service'
+import { NotificationsService } from '@/infra/notifications/notifications.service'
 
 @Injectable()
 export class GmailPollerService {
@@ -11,6 +12,7 @@ export class GmailPollerService {
     private readonly prisma: PrismaService,
     private readonly gmail: GmailService,
     private readonly phoneMatcher: GoToPhoneMatcherService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async poll(): Promise<void> {
@@ -84,6 +86,13 @@ export class GmailPollerService {
     })
 
     this.logger.log(`Gmail Activity created for email ${msg.messageId} → customer ${match.customerId}`)
+
+    this.notifications.pushBroadcast({
+      type: 'activity.email',
+      title: `E-mail — ${msg.fromName || msg.fromAddress}`,
+      body: msg.subject,
+      meta: { customerId: match.customerId, emailMessageId: msg.messageId },
+    })
   }
 
   private async matchEmail(

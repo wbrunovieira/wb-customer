@@ -4,6 +4,9 @@ import { apiServer } from '@/lib/api-server'
 import { Customer, Activity, ActivityType, ActivityStatus, PaginatedResponse } from '@/lib/definitions'
 import NewActivityForm from './_components/new-activity-form'
 import DeleteActivityButton from './_components/delete-activity-button'
+import { GoToCallCard } from './_components/goto-call-card'
+import { WhatsAppCard } from './_components/whatsapp-card'
+import { EmailCard } from './_components/email-card'
 
 export const metadata = { title: 'Atividades — WB Customer' }
 
@@ -305,6 +308,23 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
                       <p className="mt-1 text-xs text-lo">
                         Duração: {Math.floor(activity.durationSecs / 60)}min
                       </p>
+                    )}
+
+                    {/* Integration-specific cards */}
+                    {activity.type === 'phone_call' && activity.gotoCallOutcome && (
+                      <GoToCallCard activity={activity} />
+                    )}
+
+                    {activity.type === 'whatsapp' && activity.whatsappMessages && activity.whatsappMessages.length > 0 && (
+                      <WhatsAppCard
+                        customerId={id}
+                        remoteJid={activity.whatsappMessages[0].remoteJid}
+                        messages={activity.whatsappMessages}
+                      />
+                    )}
+
+                    {activity.type === 'email' && (
+                      <EmailCard customerId={id} activity={activity} />
                     )}
                   </div>
                 </div>

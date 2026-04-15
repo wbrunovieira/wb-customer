@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 import { WhatsAppMediaService } from './whatsapp-media.service'
 import { GoToPhoneMatcherService } from '@/infra/services/goto/goto-phone-matcher.service'
+import { NotificationsService } from '@/infra/notifications/notifications.service'
 
 export interface EvolutionWebhookPayload {
   event?: string
@@ -35,6 +36,7 @@ export class WhatsAppWebhookService {
     private readonly prisma: PrismaService,
     private readonly phoneMatcher: GoToPhoneMatcherService,
     private readonly mediaService: WhatsAppMediaService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async process(payload: EvolutionWebhookPayload): Promise<void> {
@@ -144,6 +146,17 @@ export class WhatsAppWebhookService {
       this.mediaService
         .process(messageId, remoteJid, messageType, activityId, match.customerId)
         .catch((err) => this.logger.error(`WhatsApp media error: ${err}`))
+    }
+
+    // SSE notification — only for incoming messages
+    if (!fromMe) {
+      const content = text ?? mediaLabel ?? 'Mensagem recebida'
+      this.notifications.pushBroadcast({
+        type: 'activity.whatsapp',
+        title: `WhatsApp — ${senderName}`,
+        body: content,
+        meta: { customerId: match.customerId, activityId, remoteJid },
+      })
     }
   }
 

@@ -1,5 +1,18 @@
-import { Activity } from '@/domain/activities/enterprise/entities/activity'
+import { Activity, WhatsAppMessageData } from '@/domain/activities/enterprise/entities/activity'
 import { UniqueEntityID } from '@/core/unique-entity-id'
+
+type WhatsAppMessageRaw = {
+  id: string
+  remoteJid: string
+  fromMe: boolean
+  senderName: string | null
+  text: string | null
+  messageType: string
+  mediaUrl: string | null
+  mediaLabel: string | null
+  mediaTranscriptText: string | null
+  timestamp: Date
+}
 
 type ActivityRaw = {
   id: string
@@ -38,10 +51,23 @@ type ActivityRaw = {
   emailFromAddress: string | null
   emailFromName: string | null
   emailReplied: boolean
+  whatsappMessages?: WhatsAppMessageRaw[]
 }
 
 export class ActivityMapper {
   static toDomain(raw: ActivityRaw): Activity {
+    const whatsappMessages: WhatsAppMessageData[] | undefined = raw.whatsappMessages?.map((m) => ({
+      id: m.id,
+      remoteJid: m.remoteJid,
+      fromMe: m.fromMe,
+      senderName: m.senderName,
+      text: m.text,
+      messageType: m.messageType,
+      mediaUrl: m.mediaUrl,
+      mediaLabel: m.mediaLabel,
+      mediaTranscriptText: m.mediaTranscriptText,
+      timestamp: m.timestamp.toISOString(),
+    }))
     return Activity.restore(
       {
         customerId: raw.customerId,
@@ -77,12 +103,13 @@ export class ActivityMapper {
         emailFromAddress: raw.emailFromAddress,
         emailFromName: raw.emailFromName,
         emailReplied: raw.emailReplied,
+        whatsappMessages,
       },
       new UniqueEntityID(raw.id),
     )
   }
 
-  static toPrisma(activity: Activity): ActivityRaw & { id: string } {
+  static toPrisma(activity: Activity): Omit<ActivityRaw, 'whatsappMessages'> & { id: string } {
     return {
       id: activity.id.value,
       customerId: activity.customerId,
