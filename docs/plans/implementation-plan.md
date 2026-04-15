@@ -1,6 +1,6 @@
 # WB Customer — Plano de Implementação
 
-> **Última revisão:** 2026-04-15 (sessão 9)
+> **Última revisão:** 2026-04-15 (sessão 10)
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
@@ -10,7 +10,8 @@
 > **2026-04-14 (sessão 5):** Página de detalhe de reunião implementada (`/customers/[id]/meetings/[meetingId]`): gravação embed Drive, transcrição, attendees RSVP, summary editável. `MeetingPresenter.toHTTP` corrigido para expor `nativeTranscriptUrl` e `transcriptText`. Link "Ver detalhes" adicionado nos cards da lista. Fases 7–11 planejadas: Tarefas (Scrum + ICE + Gantt + comentários ricos), Atividades (log de comunicações + integrações GoTo/Gmail/WhatsApp), Criativos (Drive + performance A/B), Tráfego Pago (Meta BM + campanhas), CRM do Cliente (funil de vendas + leads).  
 > **2026-04-14 (sessão 6–7):** Fase 7 implementada. Backend: migration `task_comments`/`comment_attachments`/`image_annotations`/`comment_reactions`; entidade `TaskComment`; use-cases: AddComment, ListComments, ResolveComment, ReactToComment, DeleteComment, AddSubtask, ProcessRecurringTasks; `RecurringTasksScheduler` (cron diário); `AllTasksController` com enrichment de `customerName`. Frontend: `/tasks` com coluna cliente, groupBy, filtros, botão "Nova tarefa" com busca de cliente; `/customers/[id]/tasks/[taskId]` com SubtasksSection + CommentsSection (respostas, reações emoji, resolver, soft-delete). Campos `startAt`/`endAt`/`estimatedHours` adicionados nos formulários de criação; inputs tipo `datetime-local`.  
 > **2026-04-14 (sessão 8):** Fase 8 implementada. Backend: migration `activities`/`activity_attachments`; entidade `Activity` com complete/cancel/softDelete; use-cases: CreateActivity, UpdateActivity, GetActivity, ListCustomerActivities, DeleteActivity (12 testes); `ActivitiesController` com Swagger; `ActivitiesModule`. Frontend: `/customers/[id]/activities` timeline vertical com ícones por tipo, badges de status, filtros por tipo e status, formulário inline, botão de exclusão com toast. Sidebar + aba no cliente.  
-> **2026-04-15 (sessão 9):** Fase 7 — pendências concluídas em TDD. Backend: `StartTimeTrackingUseCase`, `StopTimeTrackingUseCase`, `GetTaskTimeEntriesUseCase`, `ReorderTasksUseCase`; migration `time_entries`; `TaskTemplate` entity + migration; use-cases: `CreateTaskTemplateUseCase`, `ListTaskTemplatesUseCase`, `ApplyTaskTemplateUseCase`, `CreateTemplateFromTasksUseCase`; `TemplatesController` com Swagger; `AddCommentAttachmentUseCase`, `UploadCommentAudioUseCase`, `AddImageAnnotationUseCase`. Frontend: views Calendário e Gantt (SVG puro); `TimeTracker` no detalhe da tarefa; reorder within-column no kanban. Total: 369 testes passando (71 arquivos).
+> **2026-04-15 (sessão 9):** Fase 7 — pendências concluídas em TDD. Backend: `StartTimeTrackingUseCase`, `StopTimeTrackingUseCase`, `GetTaskTimeEntriesUseCase`, `ReorderTasksUseCase`; migration `time_entries`; `TaskTemplate` entity + migration; use-cases: `CreateTaskTemplateUseCase`, `ListTaskTemplatesUseCase`, `ApplyTaskTemplateUseCase`, `CreateTemplateFromTasksUseCase`; `TemplatesController` com Swagger; `AddCommentAttachmentUseCase`, `UploadCommentAudioUseCase`, `AddImageAnnotationUseCase`. Frontend: views Calendário e Gantt (SVG puro); `TimeTracker` no detalhe da tarefa; reorder within-column no kanban. Total: 369 testes passando (71 arquivos).  
+> **2026-04-15 (sessão 10):** Fase 7 — frontend das pendências concluído. `/task-templates` (página global): listar, criar do zero com rows de tarefas, excluir, aplicar a qualquer cliente via modal. `TemplatesSection` na página de tarefas do cliente: aplicar template com um clique + criar template via multi-select das tarefas existentes. `CommentsSection` reescrita: botão 📎 de anexo de arquivo + gravador de áudio ao vivo com `MediaRecorder` e timer. `ImageAnnotationViewer`: imagem com pins numerados sobrepostos, modo crosshair para clicar e anotar. Link "Templates" no sidebar. Fase 7 totalmente concluída.
 
 ---
 
@@ -1599,10 +1600,16 @@ Fase 7 inclui o sino de notificações no header. Eventos publicados via EventBu
 - [x] View Gantt (`?view=gantt`) — SVG puro com barras e tooltips (sem dependência recharts)
 - [x] `TimeTracker` no detalhe da tarefa com timer ao vivo
 
-**Pendente — Fase 7 (frontend não implementado)**
-- [ ] UI de gestão de templates (listar, criar, aplicar a cliente) — backend pronto, sem tela
-- [ ] UI de upload de arquivo/áudio em comentários — backend pronto, sem componente de upload
-- [ ] UI de anotação em imagem (canvas com pins numerados) — backend pronto, sem componente visual
+**Concluído na sessão 10 ✅**
+- [x] `/task-templates` — página global: listar templates, criar do zero (rows de tarefas editáveis com horas/impacto), excluir, aplicar a qualquer cliente via modal
+- [x] `TemplatesSection` na página de tarefas do cliente: aplica template com um clique; cria template a partir de tarefas selecionadas via checkboxes
+- [x] Link "Templates" no sidebar
+- [x] `AddCommentForm` reescrita: botão 📎 abre file picker, arquivo é enviado junto ao comentário via `addCommentAttachment`
+- [x] Gravador de áudio ao vivo com `MediaRecorder` + timer; ao parar, cria comentário com `audioUrl` via `createAudioComment`
+- [x] `ImageAnnotationViewer`: imagem com pins numerados sobrepostos em `(x%, y%)`; modo "Anotar" com cursor crosshair — clique na imagem marca ponto, campo de texto salva a anotação
+- [x] Server actions: `addCommentAttachment`, `createAudioComment`, `addImageAnnotation`, `listTemplates`, `createTemplate`, `createTemplateFromTasks`, `applyTemplate`, `deleteTemplate`
+
+**Fase 7 — 100% concluída ✅**
 
 ---
 
