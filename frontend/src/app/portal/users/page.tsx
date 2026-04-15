@@ -17,8 +17,8 @@ export default async function PortalUsersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Usuários do Portal</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-hi">Usuários do Portal</h1>
+        <p className="mt-1 text-sm text-md">
           Gerencie os usuários com acesso ao portal da sua empresa.
         </p>
       </div>

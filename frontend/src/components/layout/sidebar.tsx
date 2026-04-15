@@ -110,14 +110,18 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col bg-slate-900">
-      <div className="flex h-16 items-center gap-2.5 border-b border-slate-800 px-5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600">
+    <aside
+      className="flex w-60 shrink-0 flex-col"
+      style={{ background: 'linear-gradient(180deg, var(--wb-sidebar-bg) 0%, #060610 100%)', borderRight: '1px solid var(--wb-sidebar-border)' }}
+    >
+      {/* Logo */}
+      <div className="flex h-16 items-center gap-2.5 px-5" style={{ borderBottom: '1px solid var(--wb-sidebar-border)' }}>
+        <div className="btn-brand flex h-7 w-7 items-center justify-center rounded-lg">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-white">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <span className="text-sm font-semibold text-white">
+        <span className="text-sm font-semibold tracking-wide text-white">
           WB Customer
         </span>
       </div>
@@ -129,11 +133,14 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-white/10 text-white'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                isActive ? 'text-white' : 'hover:text-white hover:bg-white/5'
               }`}
+              style={{
+                color: isActive ? '#fff' : 'var(--wb-sidebar-text)',
+                background: isActive ? 'var(--wb-sidebar-active)' : undefined,
+                boxShadow: isActive ? 'inset 0 0 0 1px var(--wb-sidebar-active-border)' : undefined,
+              }}
             >
               {item.icon}
               {item.label}
@@ -142,18 +149,23 @@ export default function Sidebar() {
         })}
 
         <div className="mt-auto pt-4">
-          <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider text-slate-600">Admin</p>
+          <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--wb-sidebar-section)' }}>
+            Admin
+          </p>
           {adminItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                  isActive ? 'text-white' : 'hover:text-white hover:bg-white/5'
                 }`}
+                style={{
+                  color: isActive ? '#fff' : 'var(--wb-sidebar-text)',
+                  background: isActive ? 'var(--wb-sidebar-active)' : undefined,
+                  boxShadow: isActive ? 'inset 0 0 0 1px var(--wb-sidebar-active-border)' : undefined,
+                }}
               >
                 {item.icon}
                 {item.label}

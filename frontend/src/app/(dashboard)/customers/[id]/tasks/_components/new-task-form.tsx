@@ -27,32 +27,32 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
-      {message && <p className="text-xs text-red-600">{message}</p>}
+      {message && <p className="text-xs text-red-400">{message}</p>}
 
       <div>
         <input
           name="title"
           placeholder="Título da tarefa"
           required
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
         />
-        {errors?.title && <p className="mt-0.5 text-xs text-red-600">{errors.title[0]}</p>}
+        {errors?.title && <p className="mt-0.5 text-xs text-red-400">{errors.title[0]}</p>}
       </div>
 
       <textarea
         name="description"
         rows={2}
         placeholder="Descrição (opcional)"
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
       />
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-slate-500">Status</label>
+          <label className="text-xs text-md">Status</label>
           <select
             name="status"
             defaultValue={defaultStatus}
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           >
             <option value="idea_could">Ideia (could)</option>
             <option value="idea_should">Ideia (should)</option>
@@ -66,10 +66,10 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
 
         {sprints.length > 0 && (
           <div>
-            <label className="text-xs text-slate-500">Sprint</label>
+            <label className="text-xs text-md">Sprint</label>
             <select
               name="sprintId"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             >
               <option value="">Sem sprint</option>
               {sprints.map((s) => (
@@ -82,66 +82,66 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
 
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="text-xs text-slate-500">Início (opcional)</label>
+          <label className="text-xs text-md">Início (opcional)</label>
           <input
             name="startAt"
             type="datetime-local"
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500">Prazo (opcional)</label>
+          <label className="text-xs text-md">Prazo (opcional)</label>
           <input
             name="endAt"
             type="datetime-local"
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500">Horas estimadas</label>
+          <label className="text-xs text-md">Horas estimadas</label>
           <input
             name="estimatedHours"
             type="number"
             min="0"
             step="0.5"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="text-xs text-slate-500">Impacto (1-10)</label>
+          <label className="text-xs text-md">Impacto (1-10)</label>
           <input
             name="impact"
             type="number"
             min="1"
             max="10"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500">Confiança (1-10)</label>
+          <label className="text-xs text-md">Confiança (1-10)</label>
           <input
             name="confidence"
             type="number"
             min="1"
             max="10"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
         <div>
-          <label className="text-xs text-slate-500">Esforço (1-10)</label>
+          <label className="text-xs text-md">Esforço (1-10)</label>
           <input
             name="effort"
             type="number"
             min="1"
             max="10"
             placeholder="—"
-            className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+            className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function NewTaskForm({ customerId, sprints, defaultStatus = 'back
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        className="self-start rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
         {pending ? 'Criando...' : 'Criar tarefa'}
       </button>

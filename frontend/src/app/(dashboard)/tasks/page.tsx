@@ -17,14 +17,14 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 }
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
-  idea_could: 'bg-purple-50 text-purple-700 ring-purple-600/20',
-  idea_should: 'bg-violet-50 text-violet-700 ring-violet-600/20',
-  backlog: 'bg-slate-50 text-slate-500 ring-slate-400/20',
-  todo: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  in_progress: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  review: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-  done: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-red-50 text-red-600 ring-red-500/20',
+  idea_could: 'bg-purple-500/10 text-purple-400 ring-purple-600/20',
+  idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
+  backlog: 'bg-canvas text-md ring-slate-400/20',
+  todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
+  review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
+  done: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
 const FILTER_STATUSES: TaskStatus[] = ['backlog', 'todo', 'in_progress', 'review', 'done']
@@ -98,24 +98,24 @@ export default async function AllTasksPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tarefas</h1>
-          <p className="mt-1 text-sm text-slate-500">{total} tarefa(s) no total</p>
+          <h1 className="text-2xl font-bold tracking-tight text-hi">Tarefas</h1>
+          <p className="mt-1 text-sm text-md">{total} tarefa(s) no total</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <CreateTaskModal customers={customers} />
 
           {/* Group toggle */}
-          <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0">
+          <div className="flex rounded-lg border border-border bg-surface overflow-hidden shrink-0">
           <Link
             href={buildHref({ groupBy: undefined, page: 1 })}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${!isGrouped ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${!isGrouped ? 'btn-brand text-white' : 'text-md hover:bg-canvas'}`}
           >
             Lista
           </Link>
           <Link
             href={buildHref({ groupBy: 'customer', page: 1 })}
-            className={`px-3 py-1.5 text-xs font-medium transition-colors ${isGrouped ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+            className={`px-3 py-1.5 text-xs font-medium transition-colors ${isGrouped ? 'btn-brand text-white' : 'text-md hover:bg-canvas'}`}
           >
             Por cliente
           </Link>
@@ -130,7 +130,7 @@ export default async function AllTasksPage({
           <Link
             href={buildHref({ status: undefined, page: 1 })}
             className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-              !status ? 'bg-slate-800 text-white ring-slate-700' : 'bg-white text-slate-500 ring-slate-200 hover:ring-slate-300'
+              !status ? 'bg-elevated text-hi ring-border-strong' : 'bg-surface text-md ring-border hover:ring-border-strong'
             }`}
           >
             Todas
@@ -140,7 +140,7 @@ export default async function AllTasksPage({
               key={s}
               href={buildHref({ status: status === s ? undefined : s, page: 1 })}
               className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                status === s ? STATUS_CLASS[s] : 'bg-white text-slate-500 ring-slate-200 hover:ring-slate-300'
+                status === s ? STATUS_CLASS[s] : 'bg-surface text-md ring-border hover:ring-border-strong'
               }`}
             >
               {STATUS_LABEL[s]}
@@ -152,7 +152,7 @@ export default async function AllTasksPage({
         {(status || customerId) && (
           <Link
             href="/tasks"
-            className="ml-1 text-xs text-slate-400 underline hover:text-slate-600"
+            className="ml-1 text-xs text-lo underline hover:text-md"
           >
             Limpar filtros
           </Link>
@@ -161,22 +161,22 @@ export default async function AllTasksPage({
 
       {/* Content */}
       {tasks.length === 0 ? (
-        <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
-          <p className="text-sm text-slate-400">Nenhuma tarefa encontrada.</p>
+        <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-border bg-surface">
+          <p className="text-sm text-lo">Nenhuma tarefa encontrada.</p>
         </div>
       ) : isGrouped ? (
         /* Grouped by customer */
         <div className="flex flex-col gap-6">
           {[...grouped.entries()].map(([cid, group]) => (
-            <div key={cid} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
+            <div key={cid} className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+              <div className="flex items-center justify-between border-b border-border bg-canvas px-4 py-3">
                 <Link
                   href={`/customers/${cid}/tasks`}
-                  className="text-sm font-semibold text-slate-900 hover:text-indigo-600"
+                  className="text-sm font-semibold text-hi hover:text-indigo-600"
                 >
                   {group.name}
                 </Link>
-                <span className="text-xs text-slate-400">{group.tasks.length} tarefa(s)</span>
+                <span className="text-xs text-lo">{group.tasks.length} tarefa(s)</span>
               </div>
               <TaskTable tasks={group.tasks} customerId={cid} buildHref={buildHref} showCustomer={false} />
             </div>
@@ -184,7 +184,7 @@ export default async function AllTasksPage({
         </div>
       ) : (
         /* Flat list */
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
           <TaskTable tasks={tasks} buildHref={buildHref} showCustomer />
         </div>
       )}
@@ -192,14 +192,14 @@ export default async function AllTasksPage({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-md">
             Página {currentPage} de {totalPages}
           </p>
           <div className="flex gap-2">
             {currentPage > 1 && (
               <Link
                 href={buildHref({ page: currentPage - 1 })}
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-canvas"
               >
                 ← Anterior
               </Link>
@@ -207,7 +207,7 @@ export default async function AllTasksPage({
             {currentPage < totalPages && (
               <Link
                 href={buildHref({ page: currentPage + 1 })}
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-md hover:bg-canvas"
               >
                 Próxima →
               </Link>
@@ -231,24 +231,24 @@ function TaskTable({
   buildHref: (o: Partial<SearchParams & { page: number }>) => string
 }) {
   return (
-    <table className="min-w-full divide-y divide-slate-200">
-      <thead className="bg-slate-50">
+    <table className="min-w-full divide-y divide-border">
+      <thead className="bg-canvas">
         <tr>
-          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-md">
             Tarefa
           </th>
           {showCustomer && (
-            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 lg:table-cell">
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-md lg:table-cell">
               Cliente
             </th>
           )}
-          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-md">
             Status
           </th>
-          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:table-cell">
+          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-md sm:table-cell">
             ICE
           </th>
-          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 md:table-cell">
+          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-md md:table-cell">
             Prazo
           </th>
           <th className="px-4 py-3" />
@@ -256,23 +256,23 @@ function TaskTable({
       </thead>
       <tbody className="divide-y divide-slate-100">
         {tasks.map((task) => (
-          <tr key={task.id} className="transition-colors hover:bg-slate-50">
+          <tr key={task.id} className="transition-colors hover:bg-canvas">
             <td className="px-4 py-3">
               <Link
                 href={`/customers/${task.customerId}/tasks/${task.id}`}
-                className="line-clamp-1 text-sm font-medium text-slate-900 hover:text-indigo-600"
+                className="line-clamp-1 text-sm font-medium text-hi hover:text-indigo-600"
               >
                 {task.title}
               </Link>
               {task.description && (
-                <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">{task.description}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-lo">{task.description}</p>
               )}
             </td>
             {showCustomer && (
               <td className="hidden px-4 py-3 lg:table-cell">
                 <Link
                   href={`/customers/${task.customerId}/tasks`}
-                  className="text-xs text-slate-600 hover:text-indigo-600 hover:underline"
+                  className="text-xs text-md hover:text-indigo-600 hover:underline"
                 >
                   {task.customerName ?? task.customerId.slice(0, 8)}
                 </Link>
@@ -287,16 +287,16 @@ function TaskTable({
               {task.iceScore !== null ? (
                 <span className="text-xs font-medium text-orange-600">{task.iceScore.toFixed(1)}</span>
               ) : (
-                <span className="text-xs text-slate-300">—</span>
+                <span className="text-xs text-lo">—</span>
               )}
             </td>
             <td className="hidden px-4 py-3 md:table-cell">
               {task.endAt ? (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-md">
                   {new Date(task.endAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
                 </span>
               ) : (
-                <span className="text-xs text-slate-300">—</span>
+                <span className="text-xs text-lo">—</span>
               )}
             </td>
             <td className="px-4 py-3 text-right">

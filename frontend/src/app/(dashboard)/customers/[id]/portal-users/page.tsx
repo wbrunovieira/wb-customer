@@ -38,24 +38,24 @@ export default async function CustomerPortalUsersPage({
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <span className="text-slate-900">Portal</span>
+            <span className="text-hi">Portal</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
             Portal — {customer!.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-md">
             Usuários com acesso ao portal do cliente.
           </p>
         </div>
       </div>
 
       {/* Sub-navigation tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {subTabs.map((tab) => (
           <Link
             key={tab.href}
@@ -63,7 +63,7 @@ export default async function CustomerPortalUsersPage({
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.label === 'Portal'
                 ? 'border-b-2 border-indigo-600 text-indigo-600'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-md hover:text-hi'
             }`}
           >
             {tab.label}

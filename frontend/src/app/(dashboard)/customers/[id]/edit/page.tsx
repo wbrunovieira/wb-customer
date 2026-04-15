@@ -26,7 +26,7 @@ export default async function EditCustomerPage({ params }: Props) {
       <div className="flex items-center gap-4">
         <Link
           href={`/customers/${id}`}
-          className="flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-900"
+          className="flex items-center gap-1.5 text-sm text-md transition-colors hover:text-hi"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -36,8 +36,8 @@ export default async function EditCustomerPage({ params }: Props) {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Editar cliente</h1>
-        <p className="mt-1 text-sm text-slate-500">Atualize os dados do cliente</p>
+        <h1 className="text-2xl font-bold tracking-tight text-hi">Editar cliente</h1>
+        <p className="mt-1 text-sm text-md">Atualize os dados do cliente</p>
       </div>
 
       <div className="max-w-2xl">

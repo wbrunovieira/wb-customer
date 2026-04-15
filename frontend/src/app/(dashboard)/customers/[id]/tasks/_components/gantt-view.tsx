@@ -88,8 +88,8 @@ export default function GanttView({ tasks, customerId }: Props) {
 
   if (datedTasks.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
-        <p className="text-sm text-slate-400">Nenhuma tarefa com data cadastrada para exibir no Gantt.</p>
+      <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-border bg-surface">
+        <p className="text-sm text-lo">Nenhuma tarefa com data cadastrada para exibir no Gantt.</p>
       </div>
     )
   }
@@ -99,24 +99,24 @@ export default function GanttView({ tasks, customerId }: Props) {
   const todayOffset = Math.round((today.getTime() - minDate.getTime()) / 86400_000)
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <div style={{ display: 'flex', minWidth: LABEL_WIDTH + totalWidth }}>
           {/* Label column */}
-          <div style={{ width: LABEL_WIDTH, flexShrink: 0 }} className="border-r border-slate-200">
+          <div style={{ width: LABEL_WIDTH, flexShrink: 0 }} className="border-r border-border">
             {/* Header spacer */}
-            <div className="h-10 border-b border-slate-200 flex items-center px-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tarefa</span>
+            <div className="h-10 border-b border-border flex items-center px-3">
+              <span className="text-xs font-semibold text-md uppercase tracking-wide">Tarefa</span>
             </div>
             {datedTasks.map((t) => (
-              <div key={t.id} style={{ height: ROW_HEIGHT }} className="flex items-center border-b border-slate-100 px-3 gap-2">
+              <div key={t.id} style={{ height: ROW_HEIGHT }} className="flex items-center border-b border-border px-3 gap-2">
                 <span
                   className="inline-block h-2 w-2 rounded-full shrink-0"
                   style={{ backgroundColor: BAR_COLOR[t.status] }}
                 />
                 <Link
                   href={`/customers/${customerId}/tasks/${t.id}`}
-                  className="truncate text-xs text-slate-700 hover:text-indigo-600"
+                  className="truncate text-xs text-hi hover:text-indigo-600"
                   title={t.title}
                 >
                   {t.title}
@@ -245,20 +245,20 @@ export default function GanttView({ tasks, customerId }: Props) {
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="pointer-events-none fixed z-50 rounded-lg border border-slate-200 bg-white p-3 shadow-lg text-xs"
+          className="pointer-events-none fixed z-50 rounded-lg border border-border bg-surface p-3 shadow-lg text-xs"
           style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
         >
-          <div className="font-semibold text-slate-900 mb-1">{tooltip.task.title}</div>
-          <div className="text-slate-500">
+          <div className="font-semibold text-hi mb-1">{tooltip.task.title}</div>
+          <div className="text-md">
             {STATUS_LABEL[tooltip.task.status]}
           </div>
           {tooltip.task.startAt && (
-            <div className="text-slate-400 mt-0.5">
+            <div className="text-lo mt-0.5">
               Início: {new Date(tooltip.task.startAt).toLocaleDateString('pt-BR')}
             </div>
           )}
           {tooltip.task.endAt && (
-            <div className="text-slate-400">
+            <div className="text-lo">
               Prazo: {new Date(tooltip.task.endAt).toLocaleDateString('pt-BR')}
             </div>
           )}

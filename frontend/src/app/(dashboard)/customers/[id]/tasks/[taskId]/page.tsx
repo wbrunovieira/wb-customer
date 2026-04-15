@@ -25,14 +25,14 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 }
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
-  idea_could: 'bg-purple-50 text-purple-700 ring-purple-600/20',
-  idea_should: 'bg-violet-50 text-violet-700 ring-violet-600/20',
-  backlog: 'bg-slate-50 text-slate-500 ring-slate-400/20',
-  todo: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  in_progress: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  review: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-  done: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-red-50 text-red-600 ring-red-500/20',
+  idea_could: 'bg-purple-500/10 text-purple-400 ring-purple-600/20',
+  idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
+  backlog: 'bg-canvas text-md ring-slate-400/20',
+  todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
+  review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
+  done: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
 function formatDate(iso: string | null) {
@@ -47,29 +47,29 @@ function IceScoreDisplay({ impact, confidence, effort, iceScore }: {
   iceScore: number | null
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">ICE Score</h2>
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">ICE Score</h2>
       <div className="grid grid-cols-3 gap-4 text-center mb-4">
         <div>
-          <div className="text-2xl font-bold text-slate-900">{impact ?? '—'}</div>
-          <div className="text-xs text-slate-400 mt-0.5">Impacto</div>
+          <div className="text-2xl font-bold text-hi">{impact ?? '—'}</div>
+          <div className="text-xs text-lo mt-0.5">Impacto</div>
         </div>
         <div>
-          <div className="text-2xl font-bold text-slate-900">{confidence ?? '—'}</div>
-          <div className="text-xs text-slate-400 mt-0.5">Confiança</div>
+          <div className="text-2xl font-bold text-hi">{confidence ?? '—'}</div>
+          <div className="text-xs text-lo mt-0.5">Confiança</div>
         </div>
         <div>
-          <div className="text-2xl font-bold text-slate-900">{effort ?? '—'}</div>
-          <div className="text-xs text-slate-400 mt-0.5">Esforço</div>
+          <div className="text-2xl font-bold text-hi">{effort ?? '—'}</div>
+          <div className="text-xs text-lo mt-0.5">Esforço</div>
         </div>
       </div>
       {iceScore !== null && (
-        <div className="flex items-center justify-center rounded-lg bg-orange-50 py-2">
-          <span className="text-lg font-bold text-orange-700">ICE {iceScore.toFixed(1)}</span>
+        <div className="flex items-center justify-center rounded-lg bg-orange-500/10 py-2">
+          <span className="text-lg font-bold text-orange-400">ICE {iceScore.toFixed(1)}</span>
         </div>
       )}
       {iceScore === null && (
-        <p className="text-center text-xs text-slate-400">Preencha impacto, confiança e esforço para calcular.</p>
+        <p className="text-center text-xs text-lo">Preencha impacto, confiança e esforço para calcular.</p>
       )}
     </div>
   )
@@ -146,30 +146,30 @@ export default async function TaskDetailPage({
       {/* Breadcrumbs + header */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm text-slate-500 flex-wrap">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md flex-wrap">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <Link href={`/customers/${id}/tasks`} className="hover:text-slate-900">Tarefas</Link>
+            <Link href={`/customers/${id}/tasks`} className="hover:text-hi">Tarefas</Link>
             <span>/</span>
-            <span className="truncate max-w-xs text-slate-900">{t.title}</span>
+            <span className="truncate max-w-xs text-hi">{t.title}</span>
           </div>
           <div className="mt-1 flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-hi">{t.title}</h1>
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[t.status]}`}>
               {STATUS_LABEL[t.status]}
             </span>
           </div>
           {sprint && (
-            <p className="mt-1 text-sm text-slate-400">Sprint: {sprint.name}</p>
+            <p className="mt-1 text-sm text-lo">Sprint: {sprint.name}</p>
           )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href={`/customers/${id}/tasks`}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm text-md hover:bg-canvas"
           >
             ← Voltar
           </Link>
@@ -182,22 +182,22 @@ export default async function TaskDetailPage({
         <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Description */}
           {t.description && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Descrição</h2>
-              <p className="text-sm text-slate-700 whitespace-pre-wrap">{t.description}</p>
+            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-md">Descrição</h2>
+              <p className="text-sm text-hi whitespace-pre-wrap">{t.description}</p>
             </div>
           )}
 
           {/* Progress */}
           {t.progress > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Progresso</h2>
-                <span className="text-sm font-medium text-slate-700">{t.progress}%</span>
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-md">Progresso</h2>
+                <span className="text-sm font-medium text-hi">{t.progress}%</span>
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-100">
+              <div className="h-2 w-full rounded-full bg-elevated">
                 <div
-                  className="h-2 rounded-full bg-indigo-500"
+                  className="h-2 rounded-full bg-indigo-500/100"
                   style={{ width: `${t.progress}%` }}
                 />
               </div>
@@ -205,17 +205,17 @@ export default async function TaskDetailPage({
           )}
 
           {/* Checklist */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <ChecklistSection customerId={id} taskId={t.id} items={checklist} />
           </div>
 
           {/* Subtasks */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <SubtasksSection customerId={id} taskId={t.id} subtasks={subtasks} />
           </div>
 
           {/* Comments */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <CommentsSection
               customerId={id}
               taskId={t.id}
@@ -225,27 +225,27 @@ export default async function TaskDetailPage({
           </div>
 
           {/* Edit form */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Editar Tarefa</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Editar Tarefa</h2>
             <UpdateTaskForm customerId={id} task={t} sprints={sprints} />
           </div>
 
           {/* Activity log */}
           {activityLog.length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Histórico</h2>
+            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Histórico</h2>
               <ul className="flex flex-col gap-2">
                 {activityLog.map((log) => (
                   <li key={log.id} className="flex items-start gap-3 text-sm">
-                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-slate-300" />
+                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-border-strong" />
                     <div className="flex-1">
-                      <span className="text-slate-700">{log.action}</span>
+                      <span className="text-hi">{log.action}</span>
                       {log.fromValue && log.toValue && (
-                        <span className="text-slate-400 ml-1">
+                        <span className="text-lo ml-1">
                           ({log.fromValue} → {log.toValue})
                         </span>
                       )}
-                      <span className="ml-2 text-xs text-slate-400">
+                      <span className="ml-2 text-xs text-lo">
                         {new Date(log.createdAt).toLocaleString('pt-BR', {
                           day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
                         })}
@@ -261,30 +261,30 @@ export default async function TaskDetailPage({
         {/* Right column: status, dates, ICE, tags */}
         <div className="flex flex-col gap-6">
           {/* Status changer */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Status</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-md">Status</h2>
             <StatusChanger customerId={id} taskId={t.id} currentStatus={t.status} />
           </div>
 
           {/* Dates */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Datas</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Datas</h2>
             <dl className="flex flex-col gap-3">
               <div>
-                <dt className="text-xs text-slate-400">Início</dt>
-                <dd className="mt-0.5 text-sm text-slate-900">{formatDate(t.startAt)}</dd>
+                <dt className="text-xs text-lo">Início</dt>
+                <dd className="mt-0.5 text-sm text-hi">{formatDate(t.startAt)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-400">Prazo</dt>
-                <dd className="mt-0.5 text-sm text-slate-900">{formatDate(t.endAt)}</dd>
+                <dt className="text-xs text-lo">Prazo</dt>
+                <dd className="mt-0.5 text-sm text-hi">{formatDate(t.endAt)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-400">Criado em</dt>
-                <dd className="mt-0.5 text-sm text-slate-900">{formatDate(t.createdAt)}</dd>
+                <dt className="text-xs text-lo">Criado em</dt>
+                <dd className="mt-0.5 text-sm text-hi">{formatDate(t.createdAt)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-400">Atualizado em</dt>
-                <dd className="mt-0.5 text-sm text-slate-900">{formatDate(t.updatedAt)}</dd>
+                <dt className="text-xs text-lo">Atualizado em</dt>
+                <dd className="mt-0.5 text-sm text-hi">{formatDate(t.updatedAt)}</dd>
               </div>
             </dl>
           </div>
@@ -307,7 +307,7 @@ export default async function TaskDetailPage({
           />
 
           {/* Tags */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <TagsSection
               customerId={id}
               taskId={t.id}

@@ -25,7 +25,7 @@ export default function DocumentStatusSelect({ customerId, documentId, currentSt
     <select
       defaultValue={currentStatus}
       onChange={handleChange}
-      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-indigo-500 focus:outline-none"
+      className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-hi focus:border-brand/60 focus:outline-none"
     >
       {STATUS_OPTIONS.map((opt) => (
         <option key={opt.value} value={opt.value}>{opt.label}</option>

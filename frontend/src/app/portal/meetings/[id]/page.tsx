@@ -12,9 +12,9 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 }
 
 const STATUS_CLASS: Record<MeetingStatus, string> = {
-  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  ended: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+  scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-canvas text-md ring-slate-400/20',
 }
 
 type ResponseStatus = 'needsAction' | 'accepted' | 'declined' | 'tentative'
@@ -25,10 +25,10 @@ const RSVP_LABEL: Record<ResponseStatus, string> = {
   tentative: 'Tentativo',
 }
 const RSVP_CLASS: Record<ResponseStatus, string> = {
-  needsAction: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  accepted: 'bg-green-50 text-green-700 ring-green-600/20',
-  declined: 'bg-red-50 text-red-600 ring-red-500/20',
-  tentative: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+  needsAction: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
+  accepted: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  declined: 'bg-red-500/10 text-red-400 ring-red-500/20',
+  tentative: 'bg-canvas text-md ring-slate-400/20',
 }
 
 function formatDateTime(iso: string) {
@@ -74,7 +74,7 @@ export default async function PortalMeetingDetailPage({
       {/* Back link */}
       <Link
         href="/portal/meetings"
-        className="flex items-center gap-1.5 self-start text-sm text-slate-500 transition-colors hover:text-slate-900"
+        className="flex items-center gap-1.5 self-start text-sm text-md transition-colors hover:text-hi"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
@@ -83,22 +83,22 @@ export default async function PortalMeetingDetailPage({
       </Link>
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <Link href="/portal/meetings" className="hover:text-slate-900">Reuniões</Link>
+      <div className="flex items-center gap-2 text-sm text-md">
+        <Link href="/portal/meetings" className="hover:text-hi">Reuniões</Link>
         <span>/</span>
-        <span className="text-slate-900">{meeting.title}</span>
+        <span className="text-hi">{meeting.title}</span>
       </div>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{meeting.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-hi">{meeting.title}</h1>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[meeting.status]}`}>
               {STATUS_LABEL[meeting.status]}
             </span>
             {duration && (
-              <span className="text-sm text-slate-500">{duration}</span>
+              <span className="text-sm text-md">{duration}</span>
             )}
           </div>
         </div>
@@ -107,7 +107,7 @@ export default async function PortalMeetingDetailPage({
             href={meeting.meetLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 shrink-0"
+            className="flex items-center gap-1.5 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="23 7 16 12 23 17 23 7" />
@@ -119,37 +119,37 @@ export default async function PortalMeetingDetailPage({
       </div>
 
       {/* Details card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col gap-5">
+      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm flex flex-col gap-5">
 
         {/* Date/time */}
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Data e Horário</p>
-          <p className="text-sm text-slate-900">{formatDateTime(meeting.startAt)}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-md">Data e Horário</p>
+          <p className="text-sm text-hi">{formatDateTime(meeting.startAt)}</p>
           {meeting.endAt && (
-            <p className="text-sm text-slate-500">até {formatDateTime(meeting.endAt)}</p>
+            <p className="text-sm text-md">até {formatDateTime(meeting.endAt)}</p>
           )}
         </div>
 
         {meeting.description && (
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Descrição</p>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{meeting.description}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-md">Descrição</p>
+            <p className="text-sm text-hi whitespace-pre-wrap">{meeting.description}</p>
           </div>
         )}
 
         {/* Attendees */}
         {meeting.attendees.length > 0 && (
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Participantes</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-md">Participantes</p>
             <div className="flex flex-wrap gap-2">
               {meeting.attendees.map((a) => (
-                <div key={a.email} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5">
-                  <span className="text-sm text-slate-900">{a.email}</span>
+                <div key={a.email} className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5">
+                  <span className="text-sm text-hi">{a.email}</span>
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${RSVP_CLASS[a.responseStatus as ResponseStatus]}`}>
                     {RSVP_LABEL[a.responseStatus as ResponseStatus]}
                   </span>
                   {a.organizer && (
-                    <span className="text-xs text-slate-400">(organizador)</span>
+                    <span className="text-xs text-lo">(organizador)</span>
                   )}
                 </div>
               ))}
@@ -160,7 +160,7 @@ export default async function PortalMeetingDetailPage({
         {/* Recording */}
         {meeting.recordingUrl && (
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Gravação</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-md">Gravação</p>
             <a
               href={meeting.recordingUrl}
               target="_blank"
@@ -179,21 +179,21 @@ export default async function PortalMeetingDetailPage({
 
       {/* Summary */}
       {meeting.meetingSummary && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-3">Resumo da Reunião</p>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{meeting.meetingSummary}</p>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-md mb-3">Resumo da Reunião</p>
+          <p className="text-sm text-hi whitespace-pre-wrap leading-relaxed">{meeting.meetingSummary}</p>
         </div>
       )}
 
       {/* Transcript */}
       {meeting.transcriptText && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-3">Transcrição</p>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{meeting.transcriptText}</p>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-md mb-3">Transcrição</p>
+          <p className="text-sm text-hi whitespace-pre-wrap leading-relaxed">{meeting.transcriptText}</p>
         </div>
       )}
 
-      <Link href="/portal/meetings" className="self-start text-sm text-slate-500 hover:text-slate-900">
+      <Link href="/portal/meetings" className="self-start text-sm text-md hover:text-hi">
         ← Voltar para reuniões
       </Link>
     </div>

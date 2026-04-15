@@ -43,7 +43,7 @@ export default function TagsSection({ customerId, taskId, attachedTags, allTags 
 
   return (
     <div>
-      <h3 className="text-sm font-semibold text-slate-700 mb-2">Tags</h3>
+      <h3 className="text-sm font-semibold text-hi mb-2">Tags</h3>
 
       <div className="flex flex-wrap gap-1.5 mb-3">
         {attachedTags.map((tag) => (
@@ -64,7 +64,7 @@ export default function TagsSection({ customerId, taskId, attachedTags, allTags 
           </span>
         ))}
         {attachedTags.length === 0 && (
-          <span className="text-xs text-slate-400">Nenhuma tag.</span>
+          <span className="text-xs text-lo">Nenhuma tag.</span>
         )}
       </div>
 
@@ -75,7 +75,7 @@ export default function TagsSection({ customerId, taskId, attachedTags, allTags 
               key={tag.id}
               disabled={pending}
               onClick={() => startTransition(() => attachTag(customerId, taskId, tag.id))}
-              className="inline-flex items-center rounded-full border border-dashed px-2.5 py-0.5 text-xs font-medium text-slate-500 hover:border-slate-400 disabled:opacity-40"
+              className="inline-flex items-center rounded-full border border-dashed px-2.5 py-0.5 text-xs font-medium text-md hover:border-border-strong disabled:opacity-40"
             >
               + {tag.name}
             </button>
@@ -84,12 +84,12 @@ export default function TagsSection({ customerId, taskId, attachedTags, allTags 
       )}
 
       {showCreate ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nome da tag"
-            className="w-full rounded border border-slate-200 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded border border-border px-2 py-1 text-sm focus:border-brand/60 focus:outline-none"
           />
           <div className="flex flex-wrap gap-1.5">
             {TAG_COLORS.map((c) => (
@@ -106,13 +106,13 @@ export default function TagsSection({ customerId, taskId, attachedTags, allTags 
             <button
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
-              className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-lg btn-brand px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
             >
               {creating ? '...' : 'Criar e adicionar'}
             </button>
             <button
               onClick={() => setShowCreate(false)}
-              className="text-xs text-slate-400 hover:text-slate-600"
+              className="text-xs text-lo hover:text-md"
             >
               Cancelar
             </button>

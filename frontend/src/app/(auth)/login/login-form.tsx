@@ -11,7 +11,7 @@ export default function LoginForm() {
   return (
     <form action={action} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-slate-900">
+        <label htmlFor="email" className="text-sm font-medium text-hi">
           E-mail
         </label>
         <input
@@ -21,7 +21,7 @@ export default function LoginForm() {
           autoComplete="email"
           required
           placeholder="seu@email.com"
-          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+          className="h-10 rounded-lg border border-border bg-surface px-3 text-sm text-hi placeholder:text-lo outline-none focus:border-brand/60 focus:ring-2///20 transition-all"
         />
         {state?.errors?.email && (
           <p className="text-xs text-red-500">{state.errors.email[0]}</p>
@@ -29,7 +29,7 @@ export default function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-slate-900">
+        <label htmlFor="password" className="text-sm font-medium text-hi">
           Senha
         </label>
         <div className="relative">
@@ -40,13 +40,13 @@ export default function LoginForm() {
             autoComplete="current-password"
             required
             placeholder="••••••••"
-            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="h-10 w-full rounded-lg border border-border bg-surface px-3 pr-10 text-sm text-hi placeholder:text-lo outline-none focus:border-brand/60 focus:ring-2///20 transition-all"
           />
           <button
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-lo hover:text-md"
           >
             {showPassword ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -67,7 +67,7 @@ export default function LoginForm() {
       </div>
 
       {state?.message && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 border border-red-100">
+        <p className="rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400 border border-red-100">
           {state.message}
         </p>
       )}
@@ -75,7 +75,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-1 h-10 rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+        className="mt-1 h-10 rounded-lg btn-brand px-4 text-sm font-semibold text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
       >
         {pending ? 'Entrando…' : 'Entrar'}
       </button>

@@ -12,8 +12,8 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_CLASS: Record<string, string> = {
-  active: 'bg-green-50 text-green-700 ring-green-600/20',
-  inactive: 'bg-slate-50 text-slate-600 ring-slate-500/20',
+  active: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  inactive: 'bg-canvas text-md ring-slate-500/20',
 }
 
 type Props = {
@@ -36,7 +36,7 @@ export default async function CustomerDetailPage({ params }: Props) {
         <div className="flex items-center gap-4">
           <Link
             href="/customers"
-            className="flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-900"
+            className="flex items-center gap-1.5 text-sm text-md transition-colors hover:text-hi"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
@@ -47,7 +47,7 @@ export default async function CustomerDetailPage({ params }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/customers/${id}/activities`}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -56,7 +56,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/tasks`}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 11 12 14 22 4" />
@@ -66,7 +66,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/documents`}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -76,7 +76,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/meetings`}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -88,7 +88,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/portal-users`}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -98,7 +98,7 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Link>
           <Link
             href={`/customers/${id}/edit`}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-canvas"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -113,11 +113,11 @@ export default async function CustomerDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main info */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">{customer.name}</h1>
-                <p className="mt-1 text-sm text-slate-500">{customer.email}</p>
+                <h1 className="text-xl font-bold text-hi">{customer.name}</h1>
+                <p className="mt-1 text-sm text-md">{customer.email}</p>
               </div>
               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[customer.status] ?? ''}`}>
                 {STATUS_LABEL[customer.status] ?? customer.status}
@@ -127,20 +127,20 @@ export default async function CustomerDetailPage({ params }: Props) {
             <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {customer.phone && (
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">Telefone</dt>
-                  <dd className="mt-1 text-sm text-slate-900">{customer.phone}</dd>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-lo">Telefone</dt>
+                  <dd className="mt-1 text-sm text-hi">{customer.phone}</dd>
                 </div>
               )}
               {customer.document && (
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">CNPJ</dt>
-                  <dd className="mt-1 text-sm text-slate-900">{customer.document}</dd>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-lo">CNPJ</dt>
+                  <dd className="mt-1 text-sm text-hi">{customer.document}</dd>
                 </div>
               )}
               {customer.website && (
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">Website</dt>
-                  <dd className="mt-1 text-sm text-slate-900">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-lo">Website</dt>
+                  <dd className="mt-1 text-sm text-hi">
                     <a href={customer.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
                       {customer.website}
                     </a>
@@ -148,38 +148,38 @@ export default async function CustomerDetailPage({ params }: Props) {
                 </div>
               )}
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">Criado em</dt>
-                <dd className="mt-1 text-sm text-slate-900">
+                <dt className="text-xs font-medium uppercase tracking-wide text-lo">Criado em</dt>
+                <dd className="mt-1 text-sm text-hi">
                   {new Date(customer.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </dd>
               </div>
             </dl>
 
             {customer.notes && (
-              <div className="mt-6 border-t border-slate-100 pt-6">
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">Observações</dt>
-                <dd className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">{customer.notes}</dd>
+              <div className="mt-6 border-t border-border pt-6">
+                <dt className="text-xs font-medium uppercase tracking-wide text-lo">Observações</dt>
+                <dd className="mt-2 text-sm text-hi whitespace-pre-wrap">{customer.notes}</dd>
               </div>
             )}
           </div>
 
           {/* Contacts */}
           {customer.contacts.length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-900">Contatos</h2>
+            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+              <h2 className="text-sm font-semibold text-hi">Contatos</h2>
               <ul className="mt-4 flex flex-col divide-y divide-slate-100">
                 {customer.contacts.map((contact) => (
                   <li key={contact.id} className="flex items-center justify-between py-3">
                     <div>
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-sm font-medium text-hi">
                         {contact.name}
                         {contact.isPrimary && (
-                          <span className="ml-2 inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20">
+                          <span className="ml-2 inline-flex items-center rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-600/20">
                             Principal
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-md">
                         {[contact.role, contact.email, contact.phone].filter(Boolean).join(' · ')}
                       </p>
                     </div>
@@ -193,8 +193,8 @@ export default async function CustomerDetailPage({ params }: Props) {
         {/* Sidebar info */}
         <div className="flex flex-col gap-6">
           {customer.driveFolderId && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-900">Google Drive</h2>
+            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+              <h2 className="text-sm font-semibold text-hi">Google Drive</h2>
               <a
                 href={customer.driveFolderId}
                 target="_blank"
@@ -211,14 +211,14 @@ export default async function CustomerDetailPage({ params }: Props) {
             </div>
           )}
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-900">Responsáveis</h2>
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="text-sm font-semibold text-hi">Responsáveis</h2>
             {customer.employees.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">Nenhum responsável atribuído.</p>
+              <p className="mt-3 text-sm text-md">Nenhum responsável atribuído.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-2">
                 {customer.employees.map((e) => (
-                  <li key={e.userId} className="text-sm text-slate-700">
+                  <li key={e.userId} className="text-sm text-hi">
                     {e.userId}
                   </li>
                 ))}

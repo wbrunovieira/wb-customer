@@ -24,10 +24,10 @@ const STATUS_LABEL: Record<DocumentStatus, string> = {
 }
 
 const STATUS_CLASS: Record<DocumentStatus, string> = {
-  pending_signature: 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
-  signed: 'bg-green-50 text-green-700 ring-green-600/20',
-  expired: 'bg-slate-50 text-slate-500 ring-slate-400/20',
-  cancelled: 'bg-red-50 text-red-600 ring-red-500/20',
+  pending_signature: 'bg-yellow-500/10 text-yellow-400 ring-yellow-600/20',
+  signed: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  expired: 'bg-canvas text-md ring-slate-400/20',
+  cancelled: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
 type Props = {
@@ -65,20 +65,20 @@ export default async function CustomerDocumentsPage({ params }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <span className="text-slate-900">Documentos</span>
+            <span className="text-hi">Documentos</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Documentos</h1>
-          <p className="mt-1 text-sm text-slate-500">{data.total} documento{data.total !== 1 ? 's' : ''}</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">Documentos</h1>
+          <p className="mt-1 text-sm text-md">{data.total} documento{data.total !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
       {/* Sub-navigation tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {subTabs.map((tab) => (
           <Link
             key={tab.href}
@@ -86,7 +86,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.label === 'Documentos'
                 ? 'border-b-2 border-indigo-600 text-indigo-600'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-md hover:text-hi'
             }`}
           >
             {tab.label}
@@ -97,8 +97,8 @@ export default async function CustomerDocumentsPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Upload */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold text-slate-900">Enviar documento</h2>
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-sm font-semibold text-hi">Enviar documento</h2>
             <Suspense>
               <UploadZone customerId={id} />
             </Suspense>
@@ -108,28 +108,28 @@ export default async function CustomerDocumentsPage({ params }: Props) {
         {/* Document list */}
         <div className="lg:col-span-2">
           {data.items.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
-              <p className="text-sm text-slate-400">Nenhum documento enviado ainda.</p>
+            <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface">
+              <p className="text-sm text-lo">Nenhum documento enviado ainda.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               {data.items.map((doc) => (
-                <div key={doc.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div key={doc.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50">
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14,2 14,8 20,8" />
                         </svg>
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-900">{doc.title}</p>
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="truncate text-sm font-medium text-hi">{doc.title}</p>
+                        <p className="mt-0.5 text-xs text-md">
                           {TYPE_LABEL[doc.type]} · {formatBytes(doc.sizeBytes)} · {new Date(doc.createdAt).toLocaleDateString('pt-BR')}
                         </p>
                         {doc.notes && (
-                          <p className="mt-1 text-xs text-slate-400 italic">{doc.notes}</p>
+                          <p className="mt-1 text-xs text-lo italic">{doc.notes}</p>
                         )}
                       </div>
                     </div>
@@ -141,7 +141,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                     <DocumentStatusSelect
                       customerId={id}
                       documentId={doc.id}
@@ -152,7 +152,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
                         href={doc.driveViewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded px-2 py-1 text-xs text-indigo-600 transition-colors hover:bg-indigo-50"
+                        className="rounded px-2 py-1 text-xs text-indigo-600 transition-colors hover:bg-indigo-500/10"
                       >
                         Visualizar
                       </a>
@@ -160,7 +160,7 @@ export default async function CustomerDocumentsPage({ params }: Props) {
                         href={doc.driveDownloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded px-2 py-1 text-xs text-slate-600 transition-colors hover:bg-slate-100"
+                        className="rounded px-2 py-1 text-xs text-md transition-colors hover:bg-elevated"
                       >
                         Download
                       </a>

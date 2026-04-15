@@ -31,7 +31,7 @@ export default function SearchBar({ defaultValue, defaultStatus }: Props) {
     <div className="flex gap-3">
       <div className="relative flex-1">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-lo"
           width="16"
           height="16"
           viewBox="0 0 24 24"
@@ -49,14 +49,14 @@ export default function SearchBar({ defaultValue, defaultStatus }: Props) {
           placeholder="Buscar por nome ou e-mail..."
           defaultValue={defaultValue}
           onChange={(e) => updateParams('search', e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
         />
       </div>
 
       <select
         defaultValue={defaultStatus}
         onChange={(e) => updateParams('status', e.target.value)}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
       >
         <option value="">Todos os status</option>
         <option value="active">Ativo</option>

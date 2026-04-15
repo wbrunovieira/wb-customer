@@ -14,9 +14,9 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 }
 
 const STATUS_CLASS: Record<MeetingStatus, string> = {
-  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  ended: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+  scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-canvas text-md ring-slate-400/20',
 }
 
 function formatDateTime(iso: string) {
@@ -72,21 +72,21 @@ export default async function CustomerMeetingsPage({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <span className="text-slate-900">Reuniões</span>
+            <span className="text-hi">Reuniões</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
             Reuniões — {customer!.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">{meetings.length} reunião(ões)</p>
+          <p className="mt-1 text-sm text-md">{meetings.length} reunião(ões)</p>
         </div>
         <Link
           href={`/meetings/new?customerId=${id}`}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          className="flex items-center gap-2 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -96,7 +96,7 @@ export default async function CustomerMeetingsPage({
       </div>
 
       {/* Sub-navigation tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {subTabs.map((tab) => (
           <Link
             key={tab.href}
@@ -104,7 +104,7 @@ export default async function CustomerMeetingsPage({
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.label === 'Reuniões'
                 ? 'border-b-2 border-indigo-600 text-indigo-600'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-md hover:text-hi'
             }`}
           >
             {tab.label}
@@ -113,8 +113,8 @@ export default async function CustomerMeetingsPage({
       </div>
 
       {meetings.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white gap-2">
-          <p className="text-sm text-slate-400">Nenhuma reunião agendada.</p>
+        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface gap-2">
+          <p className="text-sm text-lo">Nenhuma reunião agendada.</p>
           <Link
             href={`/meetings/new?customerId=${id}`}
             className="text-xs text-indigo-600 hover:underline"
@@ -127,11 +127,11 @@ export default async function CustomerMeetingsPage({
           {meetings.map((m) => {
             const type = m.meetingTypeId ? typeMap.get(m.meetingTypeId) : undefined
             return (
-              <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div key={m.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-semibold text-slate-900">{m.title}</h3>
+                      <h3 className="text-base font-semibold text-hi">{m.title}</h3>
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
                         {STATUS_LABEL[m.status]}
                       </span>
@@ -145,7 +145,7 @@ export default async function CustomerMeetingsPage({
                       )}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500">
+                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-md">
                       <span className="flex items-center gap-1">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -168,7 +168,7 @@ export default async function CustomerMeetingsPage({
                     </div>
 
                     {m.description && (
-                      <p className="mt-2 text-sm text-slate-600">{m.description}</p>
+                      <p className="mt-2 text-sm text-md">{m.description}</p>
                     )}
 
                     {/* Attendees */}
@@ -179,10 +179,10 @@ export default async function CustomerMeetingsPage({
                             key={a.email}
                             className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
                               a.responseStatus === 'accepted'
-                                ? 'bg-green-50 text-green-700 ring-green-600/20'
+                                ? 'bg-green-500/10 text-green-400 ring-green-600/20'
                                 : a.responseStatus === 'declined'
-                                  ? 'bg-red-50 text-red-600 ring-red-500/20'
-                                  : 'bg-slate-50 text-slate-500 ring-slate-400/20'
+                                  ? 'bg-red-500/10 text-red-400 ring-red-500/20'
+                                  : 'bg-canvas text-md ring-slate-400/20'
                             }`}
                           >
                             {a.email}
@@ -193,9 +193,9 @@ export default async function CustomerMeetingsPage({
 
                     {/* Summary */}
                     {m.meetingSummary && (
-                      <div className="mt-3 rounded-lg bg-slate-50 p-3">
-                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Resumo</p>
-                        <p className="text-sm text-slate-700 whitespace-pre-wrap">{m.meetingSummary}</p>
+                      <div className="mt-3 rounded-lg bg-canvas p-3">
+                        <p className="text-xs font-medium text-md uppercase tracking-wide mb-1">Resumo</p>
+                        <p className="text-sm text-hi whitespace-pre-wrap">{m.meetingSummary}</p>
                       </div>
                     )}
 
@@ -223,7 +223,7 @@ export default async function CustomerMeetingsPage({
                         href={m.meetLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                        className="flex items-center gap-1.5 rounded-lg btn-brand px-3 py-1.5 text-xs font-medium text-white"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="23 7 16 12 23 17 23 7" />
@@ -234,7 +234,7 @@ export default async function CustomerMeetingsPage({
                     )}
                     <Link
                       href={`/customers/${id}/meetings/${m.id}`}
-                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-md hover:bg-canvas"
                     >
                       Ver detalhes
                     </Link>

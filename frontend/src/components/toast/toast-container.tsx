@@ -49,28 +49,28 @@ function WarningIcon() {
 
 const THEME = {
   success: {
-    bg: 'bg-white',
-    border: 'border-green-200',
+    bg: 'bg-surface',
+    border: 'border-green-500/30',
     icon: 'text-green-500',
     bar: 'bg-green-400',
     IconComponent: SuccessIcon,
   },
   error: {
-    bg: 'bg-white',
-    border: 'border-red-200',
+    bg: 'bg-surface',
+    border: 'border-red-500/30',
     icon: 'text-red-500',
     bar: 'bg-red-400',
     IconComponent: ErrorIcon,
   },
   info: {
-    bg: 'bg-white',
+    bg: 'bg-surface',
     border: 'border-indigo-200',
     icon: 'text-indigo-500',
     bar: 'bg-indigo-400',
     IconComponent: InfoIcon,
   },
   confirm: {
-    bg: 'bg-white',
+    bg: 'bg-surface',
     border: 'border-amber-200',
     icon: 'text-amber-500',
     bar: '',
@@ -123,14 +123,14 @@ function ToastItem({ toast }: { toast: Toast }) {
           <Icon />
         </span>
 
-        <p className="flex-1 text-sm font-medium leading-snug text-slate-800">
+        <p className="flex-1 text-sm font-medium leading-snug text-hi">
           {toast.message}
         </p>
 
         {toast.type !== 'confirm' && (
           <button
             onClick={() => dismiss(toast.id)}
-            className="shrink-0 rounded p-0.5 text-slate-400 transition-colors hover:text-slate-700"
+            className="shrink-0 rounded p-0.5 text-lo transition-colors hover:text-hi"
             aria-label="Fechar"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -142,7 +142,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       </div>
 
       {toast.type === 'confirm' && (
-        <div className="flex gap-2 border-t border-slate-100 px-4 pb-3 pt-2">
+        <div className="flex gap-2 border-t border-border px-4 pb-3 pt-2">
           <button
             onClick={handleConfirm}
             className="flex-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700 active:scale-95"
@@ -151,7 +151,7 @@ function ToastItem({ toast }: { toast: Toast }) {
           </button>
           <button
             onClick={handleCancel}
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-md transition-colors hover:bg-canvas active:scale-95"
           >
             {toast.cancelLabel}
           </button>

@@ -51,11 +51,11 @@ const TYPE_ICON: Record<ActivityType, React.ReactNode> = {
 }
 
 const TYPE_COLOR: Record<ActivityType, string> = {
-  email: 'bg-blue-100 text-blue-700',
-  whatsapp: 'bg-green-100 text-green-700',
-  phone_call: 'bg-purple-100 text-purple-700',
-  note: 'bg-amber-100 text-amber-700',
-  meeting: 'bg-indigo-100 text-indigo-700',
+  email: 'bg-blue-500/15 text-blue-400',
+  whatsapp: 'bg-green-500/15 text-green-400',
+  phone_call: 'bg-purple-500/15 text-purple-400',
+  note: 'bg-amber-500/15 text-amber-400',
+  meeting: 'bg-indigo-100 text-indigo-400',
 }
 
 const STATUS_LABEL: Record<ActivityStatus, string> = {
@@ -67,11 +67,11 @@ const STATUS_LABEL: Record<ActivityStatus, string> = {
 }
 
 const STATUS_CLASS: Record<ActivityStatus, string> = {
-  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  open: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  done: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
-  skipped: 'bg-red-50 text-red-600 ring-red-500/20',
+  scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  open: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
+  done: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-canvas text-md ring-slate-400/20',
+  skipped: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
 function formatDate(iso: string | null) {
@@ -149,22 +149,22 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <span className="text-slate-900">Atividades</span>
+            <span className="text-hi">Atividades</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
             Atividades — {customer!.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">{total} atividade(s)</p>
+          <p className="mt-1 text-sm text-md">{total} atividade(s)</p>
         </div>
 
         <Link
           href={`/customers/${id}/activities?newActivity=1${type ? `&type=${type}` : ''}${status ? `&status=${status}` : ''}`}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          className="flex items-center gap-2 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -174,7 +174,7 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
       </div>
 
       {/* Sub-navigation tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {subTabs.map((tab) => (
           <Link
             key={tab.href}
@@ -182,7 +182,7 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.active
                 ? 'border-b-2 border-indigo-600 text-indigo-600'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-md hover:text-hi'
             }`}
           >
             {tab.label}
@@ -192,12 +192,12 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
 
       {/* New activity inline form */}
       {newActivity && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">Nova Atividade</h3>
+        <div className="rounded-xl border border-indigo-200 bg-indigo-500/10 p-5">
+          <h3 className="mb-3 text-sm font-semibold text-hi">Nova Atividade</h3>
           <NewActivityForm customerId={id} />
           <Link
             href={`/customers/${id}/activities`}
-            className="mt-3 inline-block text-xs text-slate-500 hover:text-slate-700"
+            className="mt-3 inline-block text-xs text-md hover:text-hi"
           >
             Cancelar
           </Link>
@@ -214,8 +214,8 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
               href={`/customers/${id}/activities?${f.value ? `type=${f.value}` : ''}${status ? `&status=${status}` : ''}`}
               className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
                 type === f.value || (!type && !f.value)
-                  ? 'bg-indigo-600 text-white ring-indigo-600'
-                  : 'bg-white text-slate-500 ring-slate-200 hover:ring-slate-300'
+                  ? 'btn-brand text-white ring-indigo-600'
+                  : 'bg-surface text-md ring-border hover:ring-border-strong'
               }`}
             >
               {f.label}
@@ -231,8 +231,8 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
               href={`/customers/${id}/activities?${type ? `type=${type}&` : ''}${f.value ? `status=${f.value}` : ''}`}
               className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
                 status === f.value || (!status && !f.value)
-                  ? 'bg-slate-800 text-white ring-slate-800'
-                  : 'bg-white text-slate-500 ring-slate-200 hover:ring-slate-300'
+                  ? 'bg-elevated text-hi ring-border-strong'
+                  : 'bg-surface text-md ring-border hover:ring-border-strong'
               }`}
             >
               {f.label}
@@ -243,8 +243,8 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
 
       {/* Timeline */}
       {activities.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white gap-2">
-          <p className="text-sm text-slate-400">Nenhuma atividade encontrada.</p>
+        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface gap-2">
+          <p className="text-sm text-lo">Nenhuma atividade encontrada.</p>
           <Link
             href={`/customers/${id}/activities?newActivity=1`}
             className="text-xs text-indigo-600 hover:underline"
@@ -255,7 +255,7 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
       ) : (
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-200" />
+          <div className="absolute left-5 top-0 bottom-0 w-px bg-elevated" />
 
           <div className="flex flex-col gap-0">
             {activities.map((activity) => {
@@ -264,23 +264,23 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
               return (
                 <div key={activity.id} className="relative flex gap-4 pb-6">
                   {/* Icon bubble */}
-                  <div className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[actType] ?? 'bg-slate-100 text-slate-600'}`}>
+                  <div className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${TYPE_COLOR[actType] ?? 'bg-elevated text-md'}`}>
                     {TYPE_ICON[actType]}
                   </div>
 
                   {/* Card */}
-                  <div className="flex-1 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex-1 rounded-xl border border-border bg-surface p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLOR[actType]}`}>
                           {TYPE_LABEL[actType] ?? activity.type}
                         </span>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[actStatus] ?? 'bg-slate-50 text-slate-600 ring-slate-400/20'}`}>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[actStatus] ?? 'bg-canvas text-md ring-slate-400/20'}`}>
                           {STATUS_LABEL[actStatus] ?? activity.status}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-lo">
                           {formatDate(activity.occurredAt ?? activity.createdAt)}
                         </span>
                         <DeleteActivityButton customerId={id} activityId={activity.id} />
@@ -288,21 +288,21 @@ export default async function CustomerActivitiesPage({ params, searchParams }: P
                     </div>
 
                     {activity.subject && (
-                      <h3 className="mt-2 text-sm font-semibold text-slate-900">{activity.subject}</h3>
+                      <h3 className="mt-2 text-sm font-semibold text-hi">{activity.subject}</h3>
                     )}
 
                     {activity.description && (
-                      <p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">{activity.description}</p>
+                      <p className="mt-1 text-sm text-md whitespace-pre-wrap">{activity.description}</p>
                     )}
 
                     {activity.scheduledAt && actStatus === 'scheduled' && (
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs text-md">
                         Agendado para: {formatDate(activity.scheduledAt)}
                       </p>
                     )}
 
                     {activity.durationSecs && (
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-lo">
                         Duração: {Math.floor(activity.durationSecs / 60)}min
                       </p>
                     )}

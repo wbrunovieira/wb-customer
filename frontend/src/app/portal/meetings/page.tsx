@@ -11,9 +11,9 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 }
 
 const STATUS_CLASS: Record<MeetingStatus, string> = {
-  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  ended: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+  scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-canvas text-md ring-slate-400/20',
 }
 
 function formatDateTime(iso: string) {
@@ -56,12 +56,12 @@ export default async function PortalMeetingsPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Reuniões</h1>
-        <p className="mt-1 text-sm text-slate-500">{total} reunião(ões)</p>
+        <h1 className="text-2xl font-bold tracking-tight text-hi">Reuniões</h1>
+        <p className="mt-1 text-sm text-md">{total} reunião(ões)</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {tabs.map((tab) => {
           const isActive = filterStatus === tab.value
           const href = tab.value ? `/portal/meetings?status=${tab.value}` : '/portal/meetings'
@@ -72,7 +72,7 @@ export default async function PortalMeetingsPage({
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 isActive
                   ? 'border-b-2 border-indigo-600 text-indigo-600'
-                  : 'text-slate-500 hover:text-slate-900'
+                  : 'text-md hover:text-hi'
               }`}
             >
               {tab.label}
@@ -82,14 +82,14 @@ export default async function PortalMeetingsPage({
       </div>
 
       {meetings.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-white">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300">
+        <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-lo">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-md">
             {filterStatus ? 'Nenhuma reunião com este status.' : 'Nenhuma reunião disponível.'}
           </p>
           {filterStatus && (
@@ -101,17 +101,17 @@ export default async function PortalMeetingsPage({
       ) : (
         <div className="flex flex-col gap-4">
           {meetings.map((m) => (
-            <div key={m.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={m.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-semibold text-slate-900">{m.title}</h3>
+                    <h3 className="text-base font-semibold text-hi">{m.title}</h3>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
                       {STATUS_LABEL[m.status]}
                     </span>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500">
+                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-md">
                     <span className="flex items-center gap-1">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -134,13 +134,13 @@ export default async function PortalMeetingsPage({
                   </div>
 
                   {m.description && (
-                    <p className="mt-2 text-sm text-slate-600">{m.description}</p>
+                    <p className="mt-2 text-sm text-md">{m.description}</p>
                   )}
 
                   {m.meetingSummary && (
-                    <div className="mt-3 rounded-lg bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-1">Resumo</p>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{m.meetingSummary}</p>
+                    <div className="mt-3 rounded-lg bg-canvas p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-md mb-1">Resumo</p>
+                      <p className="text-sm text-hi whitespace-pre-wrap">{m.meetingSummary}</p>
                     </div>
                   )}
                 </div>
@@ -151,7 +151,7 @@ export default async function PortalMeetingsPage({
                       href={m.meetLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                      className="flex items-center gap-1.5 rounded-lg btn-brand px-3 py-1.5 text-xs font-medium text-white"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="23 7 16 12 23 17 23 7" />

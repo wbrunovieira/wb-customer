@@ -58,17 +58,17 @@ export default function TimeTracker({
   const totalSecs = trackedSeconds + (running ? elapsed : 0)
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Tempo Rastreado</h2>
+    <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-md">Tempo Rastreado</h2>
 
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-2xl font-bold tabular-nums text-slate-900">
+          <div className="text-2xl font-bold tabular-nums text-hi">
             {formatDuration(totalSecs)}
           </div>
           {running && (
             <div className="mt-0.5 flex items-center gap-1.5 text-xs text-amber-600">
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500/100" />
               Cronômetro ativo
             </div>
           )}
@@ -87,7 +87,7 @@ export default function TimeTracker({
         ) : (
           <button
             onClick={handleStart}
-            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5,3 19,12 5,21" />
@@ -98,7 +98,7 @@ export default function TimeTracker({
       </div>
 
       {running && elapsed > 0 && (
-        <div className="mt-2 text-xs text-slate-400">
+        <div className="mt-2 text-xs text-lo">
           Esta sessão: {formatDuration(elapsed)}
         </div>
       )}

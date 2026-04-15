@@ -62,7 +62,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
   return (
     <form action={formAction} className="flex flex-col gap-5">
       {state?.message && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {state.message}
         </div>
       )}
@@ -72,7 +72,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
 
       {/* Customer */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-hi">
           Cliente <span className="text-red-500">*</span>
         </label>
         <select
@@ -80,7 +80,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           required
           value={customerId}
           onChange={(e) => handleCustomerChange(e.target.value)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
         >
           <option value="">Selecione um cliente...</option>
           {customers.map((c) => (
@@ -91,7 +91,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
 
       {/* Title */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-hi">
           Título <span className="text-red-500">*</span>
         </label>
         <input
@@ -99,18 +99,18 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
           type="text"
           required
           placeholder="Ex: Kickoff do Projeto"
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
         />
-        {state?.errors?.title && <p className="text-xs text-red-600">{state.errors.title[0]}</p>}
+        {state?.errors?.title && <p className="text-xs text-red-400">{state.errors.title[0]}</p>}
       </div>
 
       {/* Meeting type */}
       {meetingTypes.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">Tipo de Reunião</label>
+          <label className="text-sm font-medium text-hi">Tipo de Reunião</label>
           <select
             name="meetingTypeId"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
           >
             <option value="">Sem tipo específico</option>
             {meetingTypes.map((t) => (
@@ -125,7 +125,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
       {/* Date/time */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-medium text-hi">
             Início <span className="text-red-500">*</span>
           </label>
           <input
@@ -133,12 +133,12 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             type="datetime-local"
             required
             defaultValue={defaultStart}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
           />
-          {state?.errors?.startAt && <p className="text-xs text-red-600">{state.errors.startAt[0]}</p>}
+          {state?.errors?.startAt && <p className="text-xs text-red-400">{state.errors.startAt[0]}</p>}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-medium text-hi">
             Término <span className="text-red-500">*</span>
           </label>
           <input
@@ -146,21 +146,21 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             type="datetime-local"
             required
             defaultValue={defaultEnd}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
           />
-          {state?.errors?.endAt && <p className="text-xs text-red-600">{state.errors.endAt[0]}</p>}
+          {state?.errors?.endAt && <p className="text-xs text-red-400">{state.errors.endAt[0]}</p>}
         </div>
       </div>
 
       {/* Attendee emails */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700">Participantes</label>
+        <label className="text-sm font-medium text-hi">Participantes</label>
 
         {/* Chips — customer email (locked) + extras */}
         {allEmails.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 min-h-[38px]">
+          <div className="flex flex-wrap gap-1.5 rounded-lg border border-border bg-canvas px-3 py-2 min-h-[38px]">
             {customerEmail && (
-              <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+              <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-400">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
@@ -168,12 +168,12 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
               </span>
             )}
             {extraEmails.map((email) => (
-              <span key={email} className="flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+              <span key={email} className="flex items-center gap-1 rounded-full bg-elevated px-2.5 py-0.5 text-xs font-medium text-hi">
                 {email}
                 <button
                   type="button"
                   onClick={() => removeExtraEmail(email)}
-                  className="ml-0.5 text-slate-400 hover:text-slate-700"
+                  className="ml-0.5 text-lo hover:text-hi"
                 >
                   ×
                 </button>
@@ -190,29 +190,29 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             onChange={(e) => setEmailInput(e.target.value)}
             onKeyDown={handleEmailKeyDown}
             placeholder="Adicionar outro participante..."
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
           />
           <button
             type="button"
             onClick={addEmail}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-md hover:bg-canvas"
           >
             Adicionar
           </button>
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-lo">
           O e-mail do cliente é adicionado automaticamente. Pressione Enter ou vírgula para incluir outros.
         </p>
       </div>
 
       {/* Description */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700">Descrição</label>
+        <label className="text-sm font-medium text-hi">Descrição</label>
         <textarea
           name="description"
           rows={3}
           placeholder="Pauta, objetivos ou informações adicionais..."
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
         />
       </div>
 
@@ -220,7 +220,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
         <button
           type="submit"
           disabled={pending || !customerId}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg btn-brand px-5 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
         >
           {pending ? (
             <>
@@ -241,7 +241,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
             </>
           )}
         </button>
-        <a href="/meetings" className="flex items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+        <a href="/meetings" className="flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-canvas">
           Cancelar
         </a>
       </div>

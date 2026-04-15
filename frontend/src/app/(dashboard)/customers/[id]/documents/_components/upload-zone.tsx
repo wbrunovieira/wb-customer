@@ -60,7 +60,7 @@ export default function UploadZone({ customerId }: Props) {
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-5">
       {state?.message && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {state.message}
         </div>
       )}
@@ -73,10 +73,10 @@ export default function UploadZone({ customerId }: Props) {
         onClick={() => inputRef.current?.click()}
         className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors ${
           dragging
-            ? 'border-indigo-400 bg-indigo-50'
+            ? 'border-indigo-400 bg-indigo-500/10'
             : selectedFile
-              ? 'border-green-300 bg-green-50'
-              : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-indigo-50/50'
+              ? 'border-green-300 bg-green-500/10'
+              : 'border-border bg-canvas hover:border-indigo-300 hover:bg-indigo-500/10/50'
         }`}
       >
         <input
@@ -95,29 +95,29 @@ export default function UploadZone({ customerId }: Props) {
               <polyline points="9 12 11 14 15 10" />
             </svg>
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-900">{selectedFile.name}</p>
-              <p className="text-xs text-slate-500">{formatBytes(selectedFile.size)}</p>
+              <p className="text-sm font-medium text-hi">{selectedFile.name}</p>
+              <p className="text-xs text-md">{formatBytes(selectedFile.size)}</p>
             </div>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setSelectedFile(null); if (inputRef.current) inputRef.current.value = '' }}
-              className="text-xs text-slate-400 hover:text-slate-600"
+              className="text-xs text-lo hover:text-md"
             >
               Trocar arquivo
             </button>
           </>
         ) : (
           <>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-lo">
               <polyline points="16 16 12 12 8 16" />
               <line x1="12" y1="12" x2="12" y2="21" />
               <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
             </svg>
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-700">
+              <p className="text-sm font-medium text-hi">
                 Arraste o arquivo ou <span className="text-indigo-600">clique para selecionar</span>
               </p>
-              <p className="mt-1 text-xs text-slate-400">PDF, Word, Excel, PNG, JPG</p>
+              <p className="mt-1 text-xs text-lo">PDF, Word, Excel, PNG, JPG</p>
             </div>
           </>
         )}
@@ -126,7 +126,7 @@ export default function UploadZone({ customerId }: Props) {
       {/* Fields */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700" htmlFor="doc-title">
+          <label className="text-sm font-medium text-hi" htmlFor="doc-title">
             Título <span className="text-red-500">*</span>
           </label>
           <input
@@ -135,22 +135,22 @@ export default function UploadZone({ customerId }: Props) {
             type="text"
             required
             placeholder="Ex: Contrato de Prestação de Serviços"
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
           />
           {state?.errors?.title && (
-            <p className="text-xs text-red-600">{state.errors.title[0]}</p>
+            <p className="text-xs text-red-400">{state.errors.title[0]}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700" htmlFor="doc-type">
+          <label className="text-sm font-medium text-hi" htmlFor="doc-type">
             Tipo <span className="text-red-500">*</span>
           </label>
           <select
             id="doc-type"
             name="type"
             required
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
           >
             <option value="">Selecione...</option>
             {DOC_TYPES.map((t) => (
@@ -158,13 +158,13 @@ export default function UploadZone({ customerId }: Props) {
             ))}
           </select>
           {state?.errors?.type && (
-            <p className="text-xs text-red-600">{state.errors.type[0]}</p>
+            <p className="text-xs text-red-400">{state.errors.type[0]}</p>
           )}
         </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-slate-700" htmlFor="doc-notes">
+        <label className="text-sm font-medium text-hi" htmlFor="doc-notes">
           Observações
         </label>
         <textarea
@@ -172,14 +172,14 @@ export default function UploadZone({ customerId }: Props) {
           name="notes"
           rows={2}
           placeholder="Notas opcionais sobre este documento..."
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending || !selectedFile}
-        className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+        className="flex items-center justify-center gap-2 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
       >
         {pending ? (
           <>

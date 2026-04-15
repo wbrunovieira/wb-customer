@@ -31,7 +31,7 @@ export default function StatusChanger({ customerId, taskId, currentStatus }: Pro
       onChange={(e) =>
         startTransition(() => moveTaskStatus(customerId, taskId, e.target.value))
       }
-      className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-50"
+      className="rounded-lg border border-border px-3 py-1.5 text-sm text-hi focus:border-brand/60 focus:outline-none disabled:opacity-50"
     >
       {ALL_STATUSES.map((s) => (
         <option key={s.value} value={s.value}>{s.label}</option>

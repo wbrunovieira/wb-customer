@@ -23,8 +23,8 @@ export default async function TaskTemplatesPage() {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Templates de Tarefas</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-hi">Templates de Tarefas</h1>
+        <p className="mt-1 text-sm text-md">
           Conjuntos de tarefas pré-definidos para aplicar rapidamente a qualquer cliente.
         </p>
       </div>

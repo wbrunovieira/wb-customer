@@ -36,7 +36,7 @@ export default function DeleteDocumentButton({ customerId, documentId, title }: 
     <button
       onClick={handleClick}
       disabled={pending}
-      className="rounded px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+      className="rounded px-2 py-1 text-xs text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
     >
       {pending ? 'Excluindo...' : 'Excluir'}
     </button>

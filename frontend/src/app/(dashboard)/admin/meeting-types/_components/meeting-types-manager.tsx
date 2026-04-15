@@ -44,19 +44,19 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
     <div className="flex flex-col gap-4">
       {/* Existing types */}
       {initialTypes.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-canvas">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Tipo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Duração</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Tipo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Duração</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-md">Status</th>
                 <th className="relative px-6 py-3"><span className="sr-only">Ações</span></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-border">
               {initialTypes.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50">
+                <tr key={t.id} className="hover:bg-canvas">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2.5">
                       <span
@@ -64,19 +64,19 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                         style={{ backgroundColor: t.color }}
                       />
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{t.name}</p>
+                        <p className="text-sm font-medium text-hi">{t.name}</p>
                         {t.description && (
-                          <p className="text-xs text-slate-400">{t.description}</p>
+                          <p className="text-xs text-lo">{t.description}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{t.durationMinutes} min</td>
+                  <td className="px-6 py-4 text-sm text-md">{t.durationMinutes} min</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
                       t.isActive
-                        ? 'bg-green-50 text-green-700 ring-green-600/20'
-                        : 'bg-slate-50 text-slate-500 ring-slate-400/20'
+                        ? 'bg-green-500/10 text-green-400 ring-green-600/20'
+                        : 'bg-canvas text-md ring-slate-400/20'
                     }`}>
                       {t.isActive ? 'Ativo' : 'Inativo'}
                     </span>
@@ -96,8 +96,8 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
           </table>
         </div>
       ) : (
-        <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
-          <p className="text-sm text-slate-400">Nenhum tipo cadastrado ainda.</p>
+        <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border bg-surface">
+          <p className="text-sm text-lo">Nenhum tipo cadastrado ainda.</p>
         </div>
       )}
 
@@ -105,7 +105,7 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 self-start rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="flex items-center gap-2 self-start rounded-lg border border-border px-4 py-2 text-sm font-medium text-hi hover:bg-canvas"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -113,17 +113,17 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
           Novo tipo
         </button>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-slate-900">Novo tipo de reunião</h3>
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h3 className="mb-4 text-sm font-semibold text-hi">Novo tipo de reunião</h3>
           <form action={createAction} className="flex flex-col gap-4">
             {createState?.message && (
-              <p className="text-sm text-red-600">{createState.message}</p>
+              <p className="text-sm text-red-400">{createState.message}</p>
             )}
             <input type="hidden" name="color" value={selectedColor} />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-hi">
                   Nome <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -131,15 +131,15 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                   type="text"
                   required
                   placeholder="Ex: Discovery Call"
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
                 />
                 {createState?.errors?.name && (
-                  <p className="text-xs text-red-600">{createState.errors.name[0]}</p>
+                  <p className="text-xs text-red-400">{createState.errors.name[0]}</p>
                 )}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-hi">
                   Duração (min) <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -150,23 +150,23 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
                   step="5"
                   required
                   defaultValue={60}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Descrição</label>
+              <label className="text-sm font-medium text-hi">Descrição</label>
               <input
                 name="description"
                 type="text"
                 placeholder="Opcional"
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700">Cor</label>
+              <label className="text-sm font-medium text-hi">Cor</label>
               <div className="flex gap-2">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -186,14 +186,14 @@ export default function MeetingTypesManager({ initialTypes }: Props) {
               <button
                 type="submit"
                 disabled={createPending}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                className="rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {createPending ? 'Criando...' : 'Criar tipo'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-md hover:bg-canvas"
               >
                 Cancelar
               </button>

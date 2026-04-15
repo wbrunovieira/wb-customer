@@ -4,10 +4,10 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-hi">
           Dashboard
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-md">
           Bem-vindo ao WB Customer
         </p>
       </div>
@@ -21,13 +21,13 @@ export default function DashboardPage() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-xl border border-border bg-surface p-5 shadow-sm"
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+              <p className="text-sm font-medium text-md">{stat.label}</p>
               <span className="text-xl">{stat.icon}</span>
             </div>
-            <p className="mt-3 text-2xl font-bold text-slate-900">{stat.value}</p>
+            <p className="mt-3 text-2xl font-bold text-hi">{stat.value}</p>
           </div>
         ))}
       </div>

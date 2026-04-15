@@ -48,7 +48,7 @@ export default function CreateTaskModal({ customers }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 shrink-0"
+        className="rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white shrink-0"
       >
         + Nova tarefa
       </button>
@@ -62,12 +62,12 @@ export default function CreateTaskModal({ customers }: Props) {
           />
 
           {/* Panel */}
-          <div className="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-xl overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <h2 className="text-base font-semibold text-slate-900">Nova tarefa</h2>
+          <div className="relative z-10 w-full max-w-lg rounded-xl bg-surface shadow-xl overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 className="text-base font-semibold text-hi">Nova tarefa</h2>
               <button
                 onClick={handleClose}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-lo hover:text-md"
                 aria-label="Fechar"
               >
                 ✕
@@ -83,7 +83,7 @@ export default function CreateTaskModal({ customers }: Props) {
                 />
               ) : (
                 <div className="flex flex-col gap-3">
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-md">
                     Selecione o cliente para a nova tarefa:
                   </p>
 
@@ -99,13 +99,13 @@ export default function CreateTaskModal({ customers }: Props) {
                       }}
                       onFocus={() => setShowDropdown(true)}
                       placeholder="Buscar cliente..."
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
                     />
 
                     {showDropdown && filtered.length > 0 && (
                       <div
                         ref={dropdownRef}
-                        className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg"
+                        className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-border bg-surface shadow-lg"
                       >
                         {filtered.map((c) => (
                           <button
@@ -116,14 +116,14 @@ export default function CreateTaskModal({ customers }: Props) {
                               setShowDropdown(false)
                               setSearch('')
                             }}
-                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-canvas"
                           >
-                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-400">
                               {c.name.slice(0, 2).toUpperCase()}
                             </span>
                             <div className="min-w-0">
-                              <p className="font-medium text-slate-900 truncate">{c.name}</p>
-                              <p className="text-xs text-slate-400 truncate">{c.email}</p>
+                              <p className="font-medium text-hi truncate">{c.name}</p>
+                              <p className="text-xs text-lo truncate">{c.email}</p>
                             </div>
                           </button>
                         ))}
@@ -131,28 +131,28 @@ export default function CreateTaskModal({ customers }: Props) {
                     )}
 
                     {showDropdown && search.trim() && filtered.length === 0 && (
-                      <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-lg border border-slate-200 bg-white px-3 py-3 shadow-lg">
-                        <p className="text-sm text-slate-400">Nenhum cliente encontrado.</p>
+                      <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-lg border border-border bg-surface px-3 py-3 shadow-lg">
+                        <p className="text-sm text-lo">Nenhum cliente encontrado.</p>
                       </div>
                     )}
                   </div>
 
                   {/* Quick list when not searching */}
                   {!search.trim() && (
-                    <div className="flex flex-col divide-y divide-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                    <div className="flex flex-col divide-y divide-slate-50 rounded-lg border border-border overflow-hidden">
                       {customers.slice(0, 6).map((c) => (
                         <button
                           key={c.id}
                           type="button"
                           onClick={() => setSelectedCustomer(c)}
-                          className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-slate-50"
+                          className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-canvas"
                         >
-                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-400">
                             {c.name.slice(0, 2).toUpperCase()}
                           </span>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">{c.name}</p>
-                            <p className="text-xs text-slate-400 truncate">{c.email}</p>
+                            <p className="text-sm font-medium text-hi truncate">{c.name}</p>
+                            <p className="text-xs text-lo truncate">{c.email}</p>
                           </div>
                         </button>
                       ))}
@@ -192,24 +192,24 @@ function TaskForm({
   return (
     <div className="flex flex-col gap-3">
       {/* Selected customer badge */}
-      <div className="flex items-center justify-between rounded-lg bg-indigo-50 px-3 py-2">
+      <div className="flex items-center justify-between rounded-lg bg-indigo-500/10 px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-200 text-xs font-semibold text-indigo-800">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-200 text-xs font-semibold text-indigo-300">
             {customer.name.slice(0, 2).toUpperCase()}
           </span>
-          <span className="text-sm font-medium text-indigo-900">{customer.name}</span>
+          <span className="text-sm font-medium text-indigo-300">{customer.name}</span>
         </div>
         <button
           type="button"
           onClick={onBack}
-          className="text-xs text-indigo-500 hover:text-indigo-700 underline"
+          className="text-xs text-indigo-500 hover:text-indigo-400 underline"
         >
           Trocar
         </button>
       </div>
 
       <form action={formAction} className="flex flex-col gap-3">
-        {message && <p className="text-xs text-red-600">{message}</p>}
+        {message && <p className="text-xs text-red-400">{message}</p>}
 
         <div>
           <input
@@ -217,25 +217,25 @@ function TaskForm({
             placeholder="Título da tarefa"
             required
             autoFocus
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
           />
-          {errors?.title && <p className="mt-0.5 text-xs text-red-600">{errors.title[0]}</p>}
+          {errors?.title && <p className="mt-0.5 text-xs text-red-400">{errors.title[0]}</p>}
         </div>
 
         <textarea
           name="description"
           rows={2}
           placeholder="Descrição (opcional)"
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1// resize-none"
         />
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs text-slate-500">Status</label>
+            <label className="text-xs text-md">Status</label>
             <select
               name="status"
               defaultValue="backlog"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             >
               <option value="idea_could">Ideia (could)</option>
               <option value="idea_should">Ideia (should)</option>
@@ -247,69 +247,69 @@ function TaskForm({
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-500">Horas estimadas</label>
+            <label className="text-xs text-md">Horas estimadas</label>
             <input
               name="estimatedHours"
               type="number"
               min="0"
               step="0.5"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs text-slate-500">Início (opcional)</label>
+            <label className="text-xs text-md">Início (opcional)</label>
             <input
               name="startAt"
               type="datetime-local"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500">Prazo (opcional)</label>
+            <label className="text-xs text-md">Prazo (opcional)</label>
             <input
               name="endAt"
               type="datetime-local"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <label className="text-xs text-slate-500">Impacto</label>
+            <label className="text-xs text-md">Impacto</label>
             <input
               name="impact"
               type="number"
               min="1"
               max="10"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500">Confiança</label>
+            <label className="text-xs text-md">Confiança</label>
             <input
               name="confidence"
               type="number"
               min="1"
               max="10"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500">Esforço</label>
+            <label className="text-xs text-md">Esforço</label>
             <input
               name="effort"
               type="number"
               min="1"
               max="10"
               placeholder="—"
-              className="mt-0.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none"
+              className="mt-0.5 w-full rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none"
             />
           </div>
         </div>
@@ -318,7 +318,7 @@ function TaskForm({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
             {pending ? 'Criando...' : 'Criar tarefa'}
           </button>

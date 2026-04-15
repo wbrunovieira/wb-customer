@@ -36,14 +36,14 @@ export default function PortalSidebar() {
   return (
     <aside className="flex w-60 shrink-0 flex-col bg-slate-900">
       <div className="flex h-16 items-center gap-2.5 border-b border-slate-800 px-5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg btn-brand">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-white">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
         <div>
           <span className="text-sm font-semibold text-white">WB Customer</span>
-          <p className="text-xs text-slate-400">Portal do Cliente</p>
+          <p className="text-xs text-lo">Portal do Cliente</p>
         </div>
       </div>
 
@@ -57,7 +57,7 @@ export default function PortalSidebar() {
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-white/10 text-white'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  : 'text-lo hover:bg-white/5 hover:text-white'
               }`}
             >
               {item.icon}

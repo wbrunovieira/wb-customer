@@ -75,7 +75,7 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleOpen}
-        className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors"
+        className="relative flex h-8 w-8 items-center justify-center rounded-full text-md hover:bg-elevated transition-colors"
         aria-label="Notificações"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -83,16 +83,16 @@ export default function NotificationBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/100 text-[10px] font-bold text-white">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-10 z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-lg">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <span className="text-sm font-semibold text-slate-900">Notificações</span>
+        <div className="absolute right-0 top-10 z-50 w-80 rounded-xl border border-border bg-surface shadow-lg">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <span className="text-sm font-semibold text-hi">Notificações</span>
             {notifications.length > 0 && (
               <button
                 onClick={markAllRead}
@@ -105,18 +105,18 @@ export default function NotificationBell() {
 
           <ul className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <li className="px-4 py-6 text-center text-sm text-slate-400">
+              <li className="px-4 py-6 text-center text-sm text-lo">
                 Nenhuma notificação.
               </li>
             ) : (
               notifications.map((n) => (
                 <li
                   key={n.id}
-                  className={`border-b border-slate-50 px-4 py-3 last:border-0 ${!n.readAt ? 'bg-indigo-50/40' : ''}`}
+                  className={`border-b border-border px-4 py-3 last:border-0 ${!n.readAt ? 'bg-brand/10' : ''}`}
                 >
-                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{n.body}</p>
-                  <p className="mt-1 text-xs text-slate-300">
+                  <p className="text-sm font-medium text-hi">{n.title}</p>
+                  <p className="mt-0.5 text-xs text-md">{n.body}</p>
+                  <p className="mt-1 text-xs text-lo">
                     {new Date(n.receivedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </li>

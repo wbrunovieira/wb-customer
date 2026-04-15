@@ -16,17 +16,17 @@ export default function CustomerForm({ customer }: Props) {
   const [state, formAction, pending] = useActionState<CustomerFormState, FormData>(action, undefined)
 
   return (
-    <form action={formAction} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="rounded-xl border border-border bg-surface p-6 shadow-sm">
       <div className="flex flex-col gap-5">
         {state?.message && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {state.message}
           </div>
         )}
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700" htmlFor="name">
+            <label className="text-sm font-medium text-hi" htmlFor="name">
               Nome <span className="text-red-500">*</span>
             </label>
             <input
@@ -36,15 +36,15 @@ export default function CustomerForm({ customer }: Props) {
               required
               defaultValue={customer?.name}
               placeholder="Acme Corp"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
             />
             {state?.errors?.name && (
-              <p className="text-xs text-red-600">{state.errors.name[0]}</p>
+              <p className="text-xs text-red-400">{state.errors.name[0]}</p>
             )}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700" htmlFor="email">
+            <label className="text-sm font-medium text-hi" htmlFor="email">
               E-mail <span className="text-red-500">*</span>
             </label>
             <input
@@ -54,15 +54,15 @@ export default function CustomerForm({ customer }: Props) {
               required
               defaultValue={customer?.email}
               placeholder="contato@empresa.com"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
             />
             {state?.errors?.email && (
-              <p className="text-xs text-red-600">{state.errors.email[0]}</p>
+              <p className="text-xs text-red-400">{state.errors.email[0]}</p>
             )}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700" htmlFor="phone">
+            <label className="text-sm font-medium text-hi" htmlFor="phone">
               Telefone
             </label>
             <input
@@ -71,12 +71,12 @@ export default function CustomerForm({ customer }: Props) {
               type="tel"
               defaultValue={customer?.phone ?? ''}
               placeholder="+55 11 99999-9999"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700" htmlFor="document">
+            <label className="text-sm font-medium text-hi" htmlFor="document">
               CNPJ
             </label>
             <input
@@ -85,12 +85,12 @@ export default function CustomerForm({ customer }: Props) {
               type="text"
               defaultValue={customer?.document ?? ''}
               placeholder="12.345.678/0001-99"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700" htmlFor="website">
+            <label className="text-sm font-medium text-hi" htmlFor="website">
               Website
             </label>
             <input
@@ -99,20 +99,20 @@ export default function CustomerForm({ customer }: Props) {
               type="url"
               defaultValue={customer?.website ?? ''}
               placeholder="https://empresa.com"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
             />
           </div>
 
           {customer && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-700" htmlFor="status">
+              <label className="text-sm font-medium text-hi" htmlFor="status">
                 Status
               </label>
               <select
                 id="status"
                 name="status"
                 defaultValue={customer.status}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="rounded-lg border border-border px-3 py-2 text-sm text-hi focus:border-brand/60 focus:outline-none focus:ring-1//"
               >
                 <option value="active">Ativo</option>
                 <option value="inactive">Inativo</option>
@@ -122,7 +122,7 @@ export default function CustomerForm({ customer }: Props) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-700" htmlFor="notes">
+          <label className="text-sm font-medium text-hi" htmlFor="notes">
             Observações
           </label>
           <textarea
@@ -131,21 +131,21 @@ export default function CustomerForm({ customer }: Props) {
             rows={3}
             defaultValue={customer?.notes ?? ''}
             placeholder="Informações adicionais sobre o cliente..."
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-5">
+        <div className="flex items-center justify-end gap-3 border-t border-border pt-5">
           <a
             href={customer ? `/customers/${customer.id}` : '/customers'}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
             Cancelar
           </a>
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+            className="rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-60"
           >
             {pending ? 'Salvando...' : customer ? 'Salvar alterações' : 'Criar cliente'}
           </button>

@@ -24,20 +24,20 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 }
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
-  idea_could: 'bg-purple-50 text-purple-700 ring-purple-600/20',
-  idea_should: 'bg-violet-50 text-violet-700 ring-violet-600/20',
-  backlog: 'bg-slate-50 text-slate-500 ring-slate-400/20',
-  todo: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  in_progress: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  review: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-  done: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-red-50 text-red-600 ring-red-500/20',
+  idea_could: 'bg-purple-500/10 text-purple-400 ring-purple-600/20',
+  idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
+  backlog: 'bg-canvas text-md ring-slate-400/20',
+  todo: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  in_progress: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
+  review: 'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
+  done: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-red-500/10 text-red-400 ring-red-500/20',
 }
 
 function IceScore({ value }: { value: number | null }) {
   if (value === null) return null
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-600/20">
+    <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-400 ring-1 ring-inset ring-orange-600/20">
       ICE {value.toFixed(1)}
     </span>
   )
@@ -45,11 +45,11 @@ function IceScore({ value }: { value: number | null }) {
 
 function TaskCard({ task, customerId, compact = false }: { task: Task; customerId: string; compact?: boolean }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/customers/${customerId}/tasks/${task.id}`}
-          className="flex-1 text-sm font-medium text-slate-900 hover:text-indigo-600 line-clamp-2"
+          className="flex-1 text-sm font-medium text-hi hover:text-indigo-600 line-clamp-2"
         >
           {task.title}
         </Link>
@@ -59,21 +59,21 @@ function TaskCard({ task, customerId, compact = false }: { task: Task; customerI
       </div>
 
       {task.description && !compact && (
-        <p className="mt-1 text-xs text-slate-500 line-clamp-2">{task.description}</p>
+        <p className="mt-1 text-xs text-md line-clamp-2">{task.description}</p>
       )}
 
       <div className="mt-2 flex items-center gap-2 flex-wrap">
         <IceScore value={task.iceScore} />
         {task.progress > 0 && (
           <div className="flex items-center gap-1.5">
-            <div className="h-1.5 w-16 rounded-full bg-slate-100">
-              <div className="h-1.5 rounded-full bg-indigo-500" style={{ width: `${task.progress}%` }} />
+            <div className="h-1.5 w-16 rounded-full bg-elevated">
+              <div className="h-1.5 rounded-full bg-indigo-500/100" style={{ width: `${task.progress}%` }} />
             </div>
-            <span className="text-xs text-slate-400">{task.progress}%</span>
+            <span className="text-xs text-lo">{task.progress}%</span>
           </div>
         )}
         {task.endAt && (
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-lo">
             {new Date(task.endAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
           </span>
         )}
@@ -154,22 +154,22 @@ export default async function CustomerTasksPage({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <span className="text-slate-900">Tarefas</span>
+            <span className="text-hi">Tarefas</span>
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-hi">
             Tarefas — {customer!.name}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">{tasks.length} tarefa(s)</p>
+          <p className="mt-1 text-sm text-md">{tasks.length} tarefa(s)</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {/* View toggle */}
-          <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="flex rounded-lg border border-border bg-surface overflow-hidden">
             {[
               { key: undefined, label: 'Lista' },
               { key: 'kanban',   label: 'Kanban' },
@@ -184,7 +184,7 @@ export default async function CustomerTasksPage({
                 <Link
                   key={label}
                   href={href}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'btn-brand text-white' : 'text-md hover:bg-canvas'}`}
                 >
                   {label}
                 </Link>
@@ -194,7 +194,7 @@ export default async function CustomerTasksPage({
 
           <Link
             href={`/customers/${id}/tasks?newTask=1${view ? `&view=${view}` : ''}`}
-            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            className="flex items-center gap-2 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white transition-colors"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -205,7 +205,7 @@ export default async function CustomerTasksPage({
       </div>
 
       {/* Sub-navigation tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {subTabs.map((tab) => (
           <Link
             key={tab.href}
@@ -213,7 +213,7 @@ export default async function CustomerTasksPage({
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               tab.active
                 ? 'border-b-2 border-indigo-600 text-indigo-600'
-                : 'text-slate-500 hover:text-slate-900'
+                : 'text-md hover:text-hi'
             }`}
           >
             {tab.label}
@@ -223,12 +223,12 @@ export default async function CustomerTasksPage({
 
       {/* New task inline form */}
       {newTask && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">Nova Tarefa</h3>
+        <div className="rounded-xl border border-indigo-200 bg-indigo-500/10 p-5">
+          <h3 className="mb-3 text-sm font-semibold text-hi">Nova Tarefa</h3>
           <NewTaskForm customerId={id} sprints={sprints} />
           <Link
             href={`/customers/${id}/tasks${view ? `?view=${view}` : ''}`}
-            className="mt-3 inline-block text-xs text-slate-500 hover:text-slate-700"
+            className="mt-3 inline-block text-xs text-md hover:text-hi"
           >
             Cancelar
           </Link>
@@ -243,7 +243,7 @@ export default async function CustomerTasksPage({
               key={s}
               href={`/customers/${id}/tasks?${view ? `view=${view}&` : ''}${status === s ? '' : `status=${s}`}`}
               className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition-colors ${
-                status === s ? STATUS_CLASS[s] : 'bg-white text-slate-500 ring-slate-200 hover:ring-slate-300'
+                status === s ? STATUS_CLASS[s] : 'bg-surface text-md ring-slate-200 hover:ring-slate-300'
               }`}
             >
               {STATUS_LABEL[s]}
@@ -252,7 +252,7 @@ export default async function CustomerTasksPage({
         </div>
         {sprints.length > 0 && (
           <select
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-700 focus:border-indigo-500 focus:outline-none"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-hi focus:border-brand/60 focus:outline-none"
             defaultValue={sprintId || ''}
             onChange={(e) => {
               const url = new URL(window.location.href)
@@ -271,8 +271,8 @@ export default async function CustomerTasksPage({
 
       {/* Ideas section */}
       {ideas.length > 0 && !status && (
-        <div className="rounded-xl border border-purple-200 bg-purple-50/50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-purple-800">
+        <div className="rounded-xl border border-purple-200 bg-purple-500/10/50 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-purple-400">
             💡 Ideias ({ideas.length})
           </h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -285,8 +285,8 @@ export default async function CustomerTasksPage({
 
       {/* Content */}
       {tasks.length === 0 && !ideas.length ? (
-        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white gap-2">
-          <p className="text-sm text-slate-400">Nenhuma tarefa encontrada.</p>
+        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface gap-2">
+          <p className="text-sm text-lo">Nenhuma tarefa encontrada.</p>
           <Link
             href={`/customers/${id}/tasks?newTask=1`}
             className="text-xs text-indigo-600 hover:underline"
@@ -315,14 +315,14 @@ export default async function CustomerTasksPage({
 
       {/* Sprints section */}
       {sprints.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">Sprints</h3>
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-hi">Sprints</h3>
           <div className="flex flex-col gap-2">
             {sprints.map((s) => (
-              <div key={s.id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <div key={s.id} className="flex items-center justify-between rounded-lg border border-border bg-canvas px-3 py-2">
                 <div>
-                  <span className="text-sm font-medium text-slate-900">{s.name}</span>
-                  <span className="ml-2 text-xs text-slate-400">
+                  <span className="text-sm font-medium text-hi">{s.name}</span>
+                  <span className="ml-2 text-xs text-lo">
                     {new Date(s.startAt).toLocaleDateString('pt-BR')} → {new Date(s.endAt).toLocaleDateString('pt-BR')}
                   </span>
                 </div>

@@ -37,7 +37,7 @@ export default function MoveStatusButton({ customerId, taskId, currentStatus }: 
         <button
           disabled={pending}
           onClick={() => startTransition(() => moveTaskStatus(customerId, taskId, prev))}
-          className="rounded px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100 disabled:opacity-40"
+          className="rounded px-2 py-0.5 text-xs text-md hover:bg-elevated disabled:opacity-40"
           title={`Mover para ${prev}`}
         >
           ←
@@ -47,7 +47,7 @@ export default function MoveStatusButton({ customerId, taskId, currentStatus }: 
         <button
           disabled={pending}
           onClick={() => startTransition(() => moveTaskStatus(customerId, taskId, next))}
-          className="rounded bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 hover:bg-indigo-100 disabled:opacity-40"
+          className="rounded bg-indigo-500/10 px-2 py-0.5 text-xs text-indigo-600 hover:bg-indigo-100 disabled:opacity-40"
           title={`Mover para ${next}`}
         >
           → {STATUS_LABEL[next]}

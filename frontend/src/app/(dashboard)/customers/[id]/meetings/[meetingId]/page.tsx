@@ -14,9 +14,9 @@ const STATUS_LABEL: Record<MeetingStatus, string> = {
 }
 
 const STATUS_CLASS: Record<MeetingStatus, string> = {
-  scheduled: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  ended: 'bg-green-50 text-green-700 ring-green-600/20',
-  cancelled: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+  scheduled: 'bg-blue-500/10 text-blue-400 ring-blue-600/20',
+  ended: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  cancelled: 'bg-canvas text-md ring-slate-400/20',
 }
 
 const RSVP_LABEL: Record<string, string> = {
@@ -27,10 +27,10 @@ const RSVP_LABEL: Record<string, string> = {
 }
 
 const RSVP_CLASS: Record<string, string> = {
-  needsAction: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  accepted: 'bg-green-50 text-green-700 ring-green-600/20',
-  declined: 'bg-red-50 text-red-600 ring-red-500/20',
-  tentative: 'bg-slate-50 text-slate-500 ring-slate-400/20',
+  needsAction: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
+  accepted: 'bg-green-500/10 text-green-400 ring-green-600/20',
+  declined: 'bg-red-500/10 text-red-400 ring-red-500/20',
+  tentative: 'bg-canvas text-md ring-slate-400/20',
 }
 
 function formatDateTime(iso: string | null) {
@@ -96,17 +96,17 @@ export default async function MeetingDetailPage({
       {/* Breadcrumbs + header */}
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/customers" className="hover:text-slate-900">Clientes</Link>
+          <div className="flex items-center gap-2 text-sm text-md">
+            <Link href="/customers" className="hover:text-hi">Clientes</Link>
             <span>/</span>
-            <Link href={`/customers/${id}`} className="hover:text-slate-900">{customer!.name}</Link>
+            <Link href={`/customers/${id}`} className="hover:text-hi">{customer!.name}</Link>
             <span>/</span>
-            <Link href={`/customers/${id}/meetings`} className="hover:text-slate-900">Reuniões</Link>
+            <Link href={`/customers/${id}/meetings`} className="hover:text-hi">Reuniões</Link>
             <span>/</span>
-            <span className="text-slate-900 truncate max-w-xs">{m.title}</span>
+            <span className="text-hi truncate max-w-xs">{m.title}</span>
           </div>
           <div className="mt-1 flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{m.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-hi">{m.title}</h1>
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_CLASS[m.status]}`}>
               {STATUS_LABEL[m.status]}
             </span>
@@ -120,7 +120,7 @@ export default async function MeetingDetailPage({
             )}
           </div>
           {m.description && (
-            <p className="mt-1 text-sm text-slate-500">{m.description}</p>
+            <p className="mt-1 text-sm text-md">{m.description}</p>
           )}
         </div>
 
@@ -131,7 +131,7 @@ export default async function MeetingDetailPage({
               href={m.meetLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="flex items-center gap-1.5 rounded-lg btn-brand px-4 py-2 text-sm font-medium text-white"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="23 7 16 12 23 17 23 7" />
@@ -150,39 +150,39 @@ export default async function MeetingDetailPage({
         {/* Left column: details + attendees + summary form */}
         <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Date/time card */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">Datas</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Datas</h2>
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
-                <dt className="text-xs text-slate-400">Início agendado</dt>
-                <dd className="mt-0.5 text-sm text-slate-900">{formatDateTime(m.startAt)}</dd>
+                <dt className="text-xs text-lo">Início agendado</dt>
+                <dd className="mt-0.5 text-sm text-hi">{formatDateTime(m.startAt)}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-400">Fim agendado</dt>
-                <dd className="mt-0.5 text-sm text-slate-900">{m.endAt ? formatDateTime(m.endAt) : '—'}</dd>
+                <dt className="text-xs text-lo">Fim agendado</dt>
+                <dd className="mt-0.5 text-sm text-hi">{m.endAt ? formatDateTime(m.endAt) : '—'}</dd>
               </div>
               {scheduledDuration && (
                 <div>
-                  <dt className="text-xs text-slate-400">Duração prevista</dt>
-                  <dd className="mt-0.5 text-sm text-slate-900">{scheduledDuration}</dd>
+                  <dt className="text-xs text-lo">Duração prevista</dt>
+                  <dd className="mt-0.5 text-sm text-hi">{scheduledDuration}</dd>
                 </div>
               )}
               {m.actualStartAt && (
                 <div>
-                  <dt className="text-xs text-slate-400">Início real</dt>
-                  <dd className="mt-0.5 text-sm text-slate-900">{formatDateTime(m.actualStartAt)}</dd>
+                  <dt className="text-xs text-lo">Início real</dt>
+                  <dd className="mt-0.5 text-sm text-hi">{formatDateTime(m.actualStartAt)}</dd>
                 </div>
               )}
               {m.actualEndAt && (
                 <div>
-                  <dt className="text-xs text-slate-400">Fim real</dt>
-                  <dd className="mt-0.5 text-sm text-slate-900">{formatDateTime(m.actualEndAt)}</dd>
+                  <dt className="text-xs text-lo">Fim real</dt>
+                  <dd className="mt-0.5 text-sm text-hi">{formatDateTime(m.actualEndAt)}</dd>
                 </div>
               )}
               {actualDuration && (
                 <div>
-                  <dt className="text-xs text-slate-400">Duração real</dt>
-                  <dd className="mt-0.5 text-sm font-medium text-slate-900">{actualDuration}</dd>
+                  <dt className="text-xs text-lo">Duração real</dt>
+                  <dd className="mt-0.5 text-sm font-medium text-hi">{actualDuration}</dd>
                 </div>
               )}
             </dl>
@@ -190,12 +190,12 @@ export default async function MeetingDetailPage({
 
           {/* Attendees */}
           {(m.attendees?.length ?? 0) > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">Participantes</h2>
+            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Participantes</h2>
               <ul className="flex flex-col gap-2">
                 {(m.attendees ?? []).map((a) => (
                   <li key={a.email} className="flex items-center justify-between gap-4">
-                    <span className="text-sm text-slate-900">{a.email}</span>
+                    <span className="text-sm text-hi">{a.email}</span>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${RSVP_CLASS[a.responseStatus] ?? RSVP_CLASS.needsAction}`}>
                       {RSVP_LABEL[a.responseStatus] ?? a.responseStatus}
                     </span>
@@ -206,12 +206,12 @@ export default async function MeetingDetailPage({
           )}
 
           {/* Summary */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">Resumo</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Resumo</h2>
             {m.meetingSummary ? (
-              <p className="text-sm text-slate-700 whitespace-pre-wrap mb-4">{m.meetingSummary}</p>
+              <p className="text-sm text-hi whitespace-pre-wrap mb-4">{m.meetingSummary}</p>
             ) : (
-              <p className="text-sm text-slate-400 mb-4">Nenhum resumo disponível.</p>
+              <p className="text-sm text-lo mb-4">Nenhum resumo disponível.</p>
             )}
             {(m.status === 'ended' || m.status === 'scheduled') && (
               <SummaryForm
@@ -226,11 +226,11 @@ export default async function MeetingDetailPage({
         {/* Right column: recording + transcript */}
         <div className="flex flex-col gap-6">
           {/* Recording */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">Gravação</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Gravação</h2>
             {m.recordingDriveId ? (
               <div className="flex flex-col gap-3">
-                <div className="overflow-hidden rounded-lg border border-slate-200 bg-black aspect-video">
+                <div className="overflow-hidden rounded-lg border border-border bg-black aspect-video">
                   <iframe
                     src={`https://drive.google.com/file/d/${m.recordingDriveId}/preview`}
                     className="h-full w-full"
@@ -250,7 +250,7 @@ export default async function MeetingDetailPage({
                 )}
               </div>
             ) : (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-lo">
                 {m.status === 'ended'
                   ? 'Gravação não disponível (reunião pode não ter sido gravada).'
                   : 'Gravação disponível após o término da reunião.'}
@@ -259,12 +259,12 @@ export default async function MeetingDetailPage({
           </div>
 
           {/* Transcript */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">Transcrição</h2>
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-md mb-4">Transcrição</h2>
             {m.transcriptText ? (
               <div className="flex flex-col gap-2">
-                <div className="max-h-80 overflow-y-auto rounded-lg bg-slate-50 p-3">
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{m.transcriptText}</p>
+                <div className="max-h-80 overflow-y-auto rounded-lg bg-canvas p-3">
+                  <p className="text-sm text-hi whitespace-pre-wrap">{m.transcriptText}</p>
                 </div>
                 {m.nativeTranscriptUrl && (
                   <a
@@ -287,7 +287,7 @@ export default async function MeetingDetailPage({
                 Ver transcrição no Drive
               </a>
             ) : (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-lo">
                 {m.status === 'ended'
                   ? 'Transcrição não disponível.'
                   : 'Transcrição disponível após o término da reunião.'}

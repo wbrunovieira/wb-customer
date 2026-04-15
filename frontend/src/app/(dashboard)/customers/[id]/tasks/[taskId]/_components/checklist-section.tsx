@@ -21,14 +21,14 @@ function AddItemForm({ customerId, taskId }: { customerId: string; taskId: strin
         <input
           name="text"
           placeholder="Adicionar item..."
-          className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-border px-3 py-1.5 text-sm text-hi placeholder-lo focus:border-brand/60 focus:outline-none focus:ring-1//"
         />
-        {errors?.text && <p className="mt-0.5 text-xs text-red-600">{errors.text[0]}</p>}
+        {errors?.text && <p className="mt-0.5 text-xs text-red-400">{errors.text[0]}</p>}
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        className="rounded-lg btn-brand px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
       >
         {pending ? '...' : 'Adicionar'}
       </button>
@@ -54,8 +54,8 @@ function ChecklistItemRow({
         onClick={() => startTransition(() => toggleChecklistItem(customerId, taskId, item.id))}
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors disabled:opacity-40 ${
           item.isDone
-            ? 'border-indigo-500 bg-indigo-500 text-white'
-            : 'border-slate-300 bg-white hover:border-indigo-400'
+            ? 'border-indigo-500 bg-indigo-500/100 text-white'
+            : 'border-border bg-surface hover:border-indigo-400'
         }`}
         aria-label={item.isDone ? 'Desmarcar' : 'Marcar como concluído'}
       >
@@ -65,13 +65,13 @@ function ChecklistItemRow({
           </svg>
         )}
       </button>
-      <span className={`flex-1 text-sm ${item.isDone ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+      <span className={`flex-1 text-sm ${item.isDone ? 'text-lo line-through' : 'text-hi'}`}>
         {item.text}
       </span>
       <button
         disabled={pending}
         onClick={() => startTransition(() => deleteChecklistItem(customerId, taskId, item.id))}
-        className="text-xs text-slate-300 hover:text-red-400 disabled:opacity-40"
+        className="text-xs text-lo hover:text-red-400 disabled:opacity-40"
         aria-label="Remover item"
       >
         ×
@@ -87,10 +87,10 @@ export default function ChecklistSection({ customerId, taskId, items }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-slate-700">
+        <h3 className="text-sm font-semibold text-hi">
           Checklist
           {total > 0 && (
-            <span className="ml-2 text-xs font-normal text-slate-400">
+            <span className="ml-2 text-xs font-normal text-lo">
               {done}/{total}
             </span>
           )}
@@ -99,9 +99,9 @@ export default function ChecklistSection({ customerId, taskId, items }: Props) {
 
       {total > 0 && (
         <div className="mb-3">
-          <div className="h-1.5 w-full rounded-full bg-slate-100">
+          <div className="h-1.5 w-full rounded-full bg-elevated">
             <div
-              className="h-1.5 rounded-full bg-indigo-500 transition-all"
+              className="h-1.5 rounded-full bg-indigo-500/100 transition-all"
               style={{ width: `${Math.round((done / total) * 100)}%` }}
             />
           </div>
@@ -115,7 +115,7 @@ export default function ChecklistSection({ customerId, taskId, items }: Props) {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-slate-400">Nenhum item no checklist.</p>
+        <p className="text-xs text-lo">Nenhum item no checklist.</p>
       )}
 
       <AddItemForm customerId={customerId} taskId={taskId} />

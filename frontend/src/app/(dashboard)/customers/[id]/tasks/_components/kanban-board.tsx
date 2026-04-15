@@ -33,22 +33,22 @@ const KANBAN_COLUMNS: {
   headerText: string
   overBg: string
 }[] = [
-  { status: 'backlog',     label: 'Backlog',       headerBg: 'bg-slate-100',  headerText: 'text-slate-700',  overBg: 'bg-slate-100/60'  },
-  { status: 'todo',        label: 'A Fazer',        headerBg: 'bg-blue-100',   headerText: 'text-blue-700',   overBg: 'bg-blue-100/40'   },
-  { status: 'in_progress', label: 'Em Andamento',   headerBg: 'bg-amber-100',  headerText: 'text-amber-700',  overBg: 'bg-amber-100/40'  },
-  { status: 'review',      label: 'Revisão',        headerBg: 'bg-indigo-100', headerText: 'text-indigo-700', overBg: 'bg-indigo-100/40' },
-  { status: 'done',        label: 'Concluído',      headerBg: 'bg-green-100',  headerText: 'text-green-700',  overBg: 'bg-green-100/40'  },
+  { status: 'backlog',     label: 'Backlog',       headerBg: 'bg-elevated',  headerText: 'text-hi',  overBg: 'bg-elevated/60'  },
+  { status: 'todo',        label: 'A Fazer',        headerBg: 'bg-blue-500/15',   headerText: 'text-blue-400',   overBg: 'bg-blue-500/8'   },
+  { status: 'in_progress', label: 'Em Andamento',   headerBg: 'bg-amber-500/15',  headerText: 'text-amber-400',  overBg: 'bg-amber-500/8'  },
+  { status: 'review',      label: 'Revisão',        headerBg: 'bg-indigo-500/15', headerText: 'text-indigo-400', overBg: 'bg-indigo-500/15' },
+  { status: 'done',        label: 'Concluído',      headerBg: 'bg-green-500/15',  headerText: 'text-green-400',  overBg: 'bg-green-500/8'  },
 ]
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
-  idea_could:  'bg-purple-50 text-purple-700 ring-purple-600/20',
-  idea_should: 'bg-violet-50 text-violet-700 ring-violet-600/20',
-  backlog:     'bg-slate-50  text-slate-500  ring-slate-400/20',
-  todo:        'bg-blue-50   text-blue-700   ring-blue-600/20',
-  in_progress: 'bg-amber-50  text-amber-700  ring-amber-600/20',
-  review:      'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-  done:        'bg-green-50  text-green-700  ring-green-600/20',
-  cancelled:   'bg-red-50    text-red-600    ring-red-500/20',
+  idea_could:  'bg-purple-500/10 text-purple-400 ring-purple-600/20',
+  idea_should: 'bg-violet-500/10 text-violet-400 ring-violet-600/20',
+  backlog:     'bg-elevated text-md ring-border/50',
+  todo:        'bg-blue-500/10   text-blue-400   ring-blue-600/20',
+  in_progress: 'bg-amber-500/10  text-amber-400  ring-amber-600/20',
+  review:      'bg-indigo-500/10 text-indigo-400 ring-indigo-600/20',
+  done:        'bg-green-500/10  text-green-400  ring-green-600/20',
+  cancelled:   'bg-red-500/10    text-red-400    ring-red-500/20',
 }
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -66,7 +66,7 @@ function GripHandle(props: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       {...props}
-      className="flex shrink-0 cursor-grab items-center px-1 text-slate-300 hover:text-slate-400 active:cursor-grabbing"
+      className="flex shrink-0 cursor-grab items-center px-1 text-lo hover:text-lo active:cursor-grabbing"
       title="Arrastar"
     >
       <svg width="12" height="20" viewBox="0 0 12 20" fill="currentColor">
@@ -96,10 +96,10 @@ function TaskCardContent({
 }) {
   return (
     <div
-      className={`flex items-stretch rounded-lg border bg-white shadow-sm transition-shadow ${
+      className={`flex items-stretch rounded-lg border bg-surface shadow-sm transition-shadow ${
         dragging
           ? 'border-indigo-300 shadow-xl rotate-1 opacity-95'
-          : 'border-slate-200 hover:border-slate-300 hover:shadow'
+          : 'border-border hover:border-border hover:shadow'
       }`}
     >
       {/* Drag handle strip */}
@@ -110,7 +110,7 @@ function TaskCardContent({
         <div className="flex items-start justify-between gap-2">
           <Link
             href={`/customers/${customerId}/tasks/${task.id}`}
-            className="flex-1 text-sm font-medium text-slate-900 hover:text-indigo-600 line-clamp-2"
+            className="flex-1 text-sm font-medium text-hi hover:text-indigo-600 line-clamp-2"
           >
             {task.title}
           </Link>
@@ -123,20 +123,20 @@ function TaskCardContent({
 
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {task.iceScore !== null && (
-            <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-600/20">
+            <span className="inline-flex items-center rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-400 ring-1 ring-inset ring-orange-600/20">
               ICE {task.iceScore.toFixed(1)}
             </span>
           )}
           {task.progress > 0 && (
             <div className="flex items-center gap-1.5">
-              <div className="h-1.5 w-16 rounded-full bg-slate-100">
-                <div className="h-1.5 rounded-full bg-indigo-500" style={{ width: `${task.progress}%` }} />
+              <div className="h-1.5 w-16 rounded-full bg-elevated">
+                <div className="h-1.5 rounded-full bg-indigo-500/100" style={{ width: `${task.progress}%` }} />
               </div>
-              <span className="text-xs text-slate-400">{task.progress}%</span>
+              <span className="text-xs text-lo">{task.progress}%</span>
             </div>
           )}
           {task.endAt && (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-lo">
               {new Date(task.endAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
             </span>
           )}
@@ -203,7 +203,7 @@ function DroppableColumn({
       {/* Header */}
       <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${column.headerBg}`}>
         <span className={`text-xs font-semibold ${column.headerText}`}>{column.label}</span>
-        <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+        <span className="rounded-full bg-elevated/70 px-1.5 py-0.5 text-xs font-medium text-md">
           {tasks.length}
         </span>
       </div>
@@ -225,7 +225,7 @@ function DroppableColumn({
       {/* Add button */}
       <Link
         href={`/customers/${customerId}/tasks?newTask=1&view=kanban`}
-        className="flex items-center gap-1 rounded-lg border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400 hover:border-slate-300 hover:text-slate-600"
+        className="flex items-center gap-1 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-lo hover:border-border hover:text-md"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />

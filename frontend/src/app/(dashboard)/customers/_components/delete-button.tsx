@@ -35,7 +35,7 @@ export default function DeleteButton({ id, name }: Props) {
     <button
       onClick={handleClick}
       disabled={pending}
-      className="rounded-lg px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+      className="rounded-lg px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
     >
       {pending ? 'Excluindo...' : 'Excluir'}
     </button>
