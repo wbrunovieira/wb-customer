@@ -1821,18 +1821,18 @@ Normaliza removendo não-dígitos. Testa com/sem código país (55) e com/sem DD
 
 ### Entregáveis Fase 8.1
 
-- [ ] Migration: `goto_tokens` + campos GoTo no `activities`
-- [ ] `GoToTokenService` + auto-refresh
-- [ ] `GoToApiClient` (relatório + download de gravação)
-- [ ] `GoToWebhookService` + phone matching + Activity creation
-- [ ] `GoToRecordingService` + `GoToTranscriptionService` (crons)
-- [ ] `GoToController` (webhook + 2 crons)
-- [ ] Env vars: `GOTO_CLIENT_ID`, `GOTO_CLIENT_SECRET`, `GOTO_ACCOUNT_KEY`, `GOTO_WEBHOOK_SECRET`, `GOTO_DEFAULT_OWNER_ID`, `GOTO_ACCESS_TOKEN`, `GOTO_REFRESH_TOKEN`, `GOTO_TOKEN_EXPIRES_AT`
+- [x] Migration: `goto_tokens` + campos GoTo no `activities`
+- [x] `GoToTokenService` + auto-refresh
+- [x] `GoToApiClient` (relatório + download de gravação)
+- [x] `GoToWebhookService` + phone matching + Activity creation
+- [x] `GoToRecordingService` + `GoToTranscriptionService` (crons)
+- [x] `GoToController` (webhook + 2 crons)
+- [x] Env vars: `GOTO_CLIENT_ID`, `GOTO_CLIENT_SECRET`, `GOTO_ACCOUNT_KEY`, `GOTO_WEBHOOK_SECRET`, `GOTO_DEFAULT_OWNER_ID`, `GOTO_ACCESS_TOKEN`, `GOTO_REFRESH_TOKEN`, `GOTO_TOKEN_EXPIRES_AT`
+- [x] `tsc --noEmit` sem erros
+- [x] Commit + push GitHub
 - [ ] `PhoneLink` component no frontend (link `tel:` com ícone)
 - [ ] Player de áudio inline na Activity (lê Drive URL)
 - [ ] Transcrição expandível com timestamps
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit + push GitHub
 
 ---
 
@@ -1894,18 +1894,17 @@ POST /api/v1/customers/:id/whatsapp/send           → envia mensagem (admin/emp
 
 ### Entregáveis Fase 8.2
 
-- [ ] Migration: `whatsapp_messages`
-- [ ] `EvolutionApiClient` (sendText + getBase64FromMediaMessage)
-- [ ] `WhatsAppWebhookService` (parse + match + session grouping + Activity creation)
-- [ ] `WhatsAppMediaService` (download + Drive upload + Transcriptor submit)
-- [ ] `WhatsAppTranscriptionService` (cron: poll jobs pendentes)
-- [ ] `EvolutionController` (webhook + cron + send)
-- [ ] Env vars: `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `EVOLUTION_WEBHOOK_SECRET`, `EVOLUTION_OWNER_ID`
+- [x] Migration: `whatsapp_messages`
+- [x] `EvolutionApiClient` (sendText + getBase64FromMediaMessage)
+- [x] `WhatsAppWebhookService` (parse + match + session grouping + Activity creation)
+- [x] `WhatsAppMediaService` (download + Drive upload + Transcriptor submit + poll cron)
+- [x] `EvolutionController` (webhook + cron + send)
+- [x] Env vars: `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `EVOLUTION_WEBHOOK_SECRET`, `EVOLUTION_OWNER_ID`
+- [x] `tsc --noEmit` sem erros
+- [x] Commit + push GitHub
 - [ ] Frontend: botão "Enviar WhatsApp" na página do cliente/contato
 - [ ] Frontend: exibe `WhatsAppMessage` cards dentro da Activity (chat bubble style)
 - [ ] Frontend: transcrição expandível em áudios
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit + push GitHub
 
 ---
 
@@ -1958,15 +1957,17 @@ POST /api/v1/customers/:id/email  → envia email (admin/employee)
 
 ### Entregáveis Fase 8.3
 
-- [ ] Migration: campos email no `activities` + `gmailHistoryId` no `google_tokens`
-- [ ] `GmailService` (poll history + send + buildMimeMessage)
-- [ ] `GmailPollerController` (GET /gmail-poll com x-api-key guard)
-- [ ] Env vars: `INTERNAL_API_KEY`
+- [x] Migration: campos email no `activities` (emailMessageId, emailThreadId, emailReplied, etc.)
+- [x] `GmailService` (pollInbox via history API + send + buildMimeMessage com anexos)
+- [x] `GmailPollerService` (match sender email → Contact/Customer, cria Activity)
+- [x] `GmailController` (GET /google/gmail-poll com x-api-key, POST /customers/:id/email)
+- [x] Reply automático marca emailReplied=true em toda a thread
+- [x] Env vars: `INTERNAL_API_KEY`
+- [x] `tsc --noEmit` sem erros
+- [x] Commit + push GitHub
 - [ ] Frontend: `EmailComposeModal` (to, cc, rich text, anexos, Ctrl+Enter)
 - [ ] Frontend: badge "Aguardando resposta" em Activities de email recebido sem reply
 - [ ] Frontend: botão "Responder" abre modal pré-preenchido com threadId
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit + push GitHub
 
 ---
 
