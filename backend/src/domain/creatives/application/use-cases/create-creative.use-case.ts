@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Either, left, right } from '@/core/either'
 import { ICreativeRepository } from '../repositories/i-creative.repository'
+import { ICustomerRepository } from '@/domain/customers/application/repositories/i-customer.repository'
 import { Creative, CREATIVE_TYPES, CAMPAIGN_OBJECTIVES, CreativeType, CampaignObjective } from '../../enterprise/entities/creative'
 import { CreativeNotFoundError } from '../../domain/exceptions/creative-not-found.error'
 
@@ -18,15 +19,13 @@ export interface CreateCreativeResponse {
   creativeId: string
 }
 
-type CustomerRepo = { findById(id: string): Promise<{ id: { value: string } } | null> }
-
 export type CreateCreativeResult = Either<Error, CreateCreativeResponse>
 
 @Injectable()
 export class CreateCreativeUseCase {
   constructor(
     private readonly creativeRepo: ICreativeRepository,
-    private readonly customerRepo: CustomerRepo,
+    private readonly customerRepo: ICustomerRepository,
   ) {}
 
   async execute(req: CreateCreativeRequest): Promise<CreateCreativeResult> {

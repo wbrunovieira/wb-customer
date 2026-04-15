@@ -366,3 +366,76 @@ export type WhatsAppMessage = {
   mediaTranscriptText: string | null
   timestamp: string
 }
+
+// ─── Creatives ───────────────────────────────────────────────
+
+export type CreativeType = 'image' | 'video' | 'carousel'
+export type CreativeStatus = 'draft' | 'active' | 'paused' | 'archived'
+export type CampaignObjective = 'awareness' | 'traffic' | 'engagement' | 'leads' | 'sales' | 'retargeting'
+
+export type Creative = {
+  id: string
+  customerId: string
+  title: string
+  caption: string | null
+  designDescription: string | null
+  type: CreativeType
+  objective: CampaignObjective | null
+  status: CreativeStatus
+  driveFileId: string | null
+  driveViewUrl: string | null
+  driveDownloadUrl: string | null
+  thumbnailUrl: string | null
+  mimeType: string | null
+  sizeBytes: string | null
+  createdByUserId: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreativePerformance = {
+  id: string
+  creativeId: string
+  platform: string
+  campaignId: string | null
+  impressions: number
+  clicks: number
+  conversions: number
+  spend: number
+  ctr: number | null
+  cpc: number | null
+  cpa: number | null
+  roas: number | null
+  startDate: string
+  endDate: string | null
+  notes: string | null
+  createdAt: string
+}
+
+export type StrategyPhase = 'exploration' | 'refinement'
+export type StrategyStatus = 'active' | 'completed' | 'paused'
+
+export type StrategyItem = {
+  creativeId: string
+  position: number
+}
+
+export type CreativeStrategy = {
+  id: string
+  customerId: string
+  name: string
+  phase: StrategyPhase
+  status: StrategyStatus
+  objective: CampaignObjective | null
+  budget: number | null
+  durationDays: number | null
+  startAt: string | null
+  endAt: string | null
+  winnerId: string | null
+  parentStrategyId: string | null
+  notes: string | null
+  items: StrategyItem[]
+  createdByUserId: string
+  createdAt: string
+  updatedAt: string
+}

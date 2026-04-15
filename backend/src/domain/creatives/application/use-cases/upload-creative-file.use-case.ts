@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common'
 import { Either, left, right } from '@/core/either'
 import { ICreativeRepository } from '../repositories/i-creative.repository'
 import { ICreativesFolderService } from '../services/i-creatives-folder.service'
+import { ICustomerRepository } from '@/domain/customers/application/repositories/i-customer.repository'
+import { IStorageAdapter } from '@/domain/documents/application/services/i-storage.adapter'
 import { CreativeNotFoundError } from '../../domain/exceptions/creative-not-found.error'
 
 export interface UploadCreativeFileRequest {
@@ -20,25 +22,15 @@ export interface UploadCreativeFileResponse {
   driveDownloadUrl: string
 }
 
-type CustomerRepo = { findById(id: string): Promise<{ id: { value: string }; name: string } | null> }
-type StorageAdapter = {
-  uploadFile(params: {
-    folderId: string
-    fileName: string
-    mimeType: string
-    buffer: Buffer
-  }): Promise<{ fileId: string; viewUrl: string; downloadUrl: string }>
-}
-
 export type UploadCreativeFileResult = Either<Error, UploadCreativeFileResponse>
 
 @Injectable()
 export class UploadCreativeFileUseCase {
   constructor(
     private readonly creativeRepo: ICreativeRepository,
-    private readonly customerRepo: CustomerRepo,
+    private readonly customerRepo: ICustomerRepository,
     private readonly folderService: ICreativesFolderService,
-    private readonly storage: StorageAdapter,
+    private readonly storage: IStorageAdapter,
   ) {}
 
   async execute(req: UploadCreativeFileRequest): Promise<UploadCreativeFileResult> {

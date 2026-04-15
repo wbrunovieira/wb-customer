@@ -1,6 +1,6 @@
 # WB Customer — Plano de Implementação
 
-> **Última revisão:** 2026-04-15 (sessão 10)
+> **Última revisão:** 2026-04-15 (sessão 11–12)
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
@@ -12,6 +12,8 @@
 > **2026-04-14 (sessão 8):** Fase 8 implementada. Backend: migration `activities`/`activity_attachments`; entidade `Activity` com complete/cancel/softDelete; use-cases: CreateActivity, UpdateActivity, GetActivity, ListCustomerActivities, DeleteActivity (12 testes); `ActivitiesController` com Swagger; `ActivitiesModule`. Frontend: `/customers/[id]/activities` timeline vertical com ícones por tipo, badges de status, filtros por tipo e status, formulário inline, botão de exclusão com toast. Sidebar + aba no cliente.  
 > **2026-04-15 (sessão 9):** Fase 7 — pendências concluídas em TDD. Backend: `StartTimeTrackingUseCase`, `StopTimeTrackingUseCase`, `GetTaskTimeEntriesUseCase`, `ReorderTasksUseCase`; migration `time_entries`; `TaskTemplate` entity + migration; use-cases: `CreateTaskTemplateUseCase`, `ListTaskTemplatesUseCase`, `ApplyTaskTemplateUseCase`, `CreateTemplateFromTasksUseCase`; `TemplatesController` com Swagger; `AddCommentAttachmentUseCase`, `UploadCommentAudioUseCase`, `AddImageAnnotationUseCase`. Frontend: views Calendário e Gantt (SVG puro); `TimeTracker` no detalhe da tarefa; reorder within-column no kanban. Total: 369 testes passando (71 arquivos).  
 > **2026-04-15 (sessão 10):** Fase 7 — frontend das pendências concluído. `/task-templates` (página global): listar, criar do zero com rows de tarefas, excluir, aplicar a qualquer cliente via modal. `TemplatesSection` na página de tarefas do cliente: aplicar template com um clique + criar template via multi-select das tarefas existentes. `CommentsSection` reescrita: botão 📎 de anexo de arquivo + gravador de áudio ao vivo com `MediaRecorder` e timer. `ImageAnnotationViewer`: imagem com pins numerados sobrepostos, modo crosshair para clicar e anotar. Link "Templates" no sidebar. Fase 7 totalmente concluída.
+> **2026-04-15 (sessão 11):** Fase 9 — Comunicações. Backend: `WhatsAppWebhookService.recordSentMessage()` (TDD, 8 testes) — grava mensagens enviadas como activities, reaproveita janela de sessão de 2h. `EvolutionController.send()` atualizado para chamar `recordSentMessage` e aceitar `@CurrentUser()`. 9 testes de controller adicionados.
+> **2026-04-15 (sessão 12):** Fase 10 — Criativos. Backend completo (TDD): 5 enums + 4 models Prisma (`Creative`, `CreativePerformance`, `CreativeStrategy`, `CreativeStrategyItem`); entidades DDD `Creative` + `CreativeStrategy`; 11 use-cases com specs; `PrismaCreative*` repositories; `GoogleCreativesFolderService` (Drive idempotente); `CreativesController` + `CreativeStrategiesController` com Swagger; `CreativesModule` no `AppModule`. Bug fix: 3 use-cases usavam `type CustomerRepo` (TypeScript alias, apagado em runtime) em vez de `ICustomerRepository`/`IStorageAdapter` — corrigido para injeção NestJS correta. DB atualizado via `prisma db push` (sem destruir dados). Frontend pendente: lista/detalhe de criativos, navegação no cliente.
 
 ---
 

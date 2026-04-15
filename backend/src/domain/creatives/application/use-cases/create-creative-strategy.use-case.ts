@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Either, left, right } from '@/core/either'
 import { ICreativeStrategyRepository } from '../repositories/i-creative-strategy.repository'
+import { ICustomerRepository } from '@/domain/customers/application/repositories/i-customer.repository'
 import { CreativeStrategy, StrategyPhase } from '../../enterprise/entities/creative-strategy'
 import { CampaignObjective } from '../../enterprise/entities/creative'
 import { CreativeStrategyNotFoundError } from '../../domain/exceptions/creative-strategy-not-found.error'
@@ -23,15 +24,13 @@ export interface CreateCreativeStrategyResponse {
   strategyId: string
 }
 
-type CustomerRepo = { findById(id: string): Promise<{ id: { value: string } } | null> }
-
 export type CreateCreativeStrategyResult = Either<Error, CreateCreativeStrategyResponse>
 
 @Injectable()
 export class CreateCreativeStrategyUseCase {
   constructor(
     private readonly strategyRepo: ICreativeStrategyRepository,
-    private readonly customerRepo: CustomerRepo,
+    private readonly customerRepo: ICustomerRepository,
   ) {}
 
   async execute(req: CreateCreativeStrategyRequest): Promise<CreateCreativeStrategyResult> {

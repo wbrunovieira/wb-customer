@@ -1,21 +1,21 @@
 import { UniqueEntityID } from '@/core/unique-entity-id'
+import { Customer } from '@/domain/customers/enterprise/entities/customer'
 import { Creative, CreativeType, CreativeStatus, CampaignObjective } from '../../../enterprise/entities/creative'
 import { CreativeStrategy, StrategyPhase, StrategyStatus } from '../../../enterprise/entities/creative-strategy'
 
-// ── Customer stub (minimal shape used by in-memory repo) ──────────────────
+// ── Customer factory ──────────────────────────────────────────────────────
 
-export interface CustomerStub {
-  id: UniqueEntityID
-  name: string
-  driveFolderId: string | null
-}
-
-export function makeCustomer(overrides: Partial<{ id: string; name: string }> = {}): CustomerStub {
-  return {
-    id: new UniqueEntityID(overrides.id ?? 'customer-1'),
-    name: overrides.name ?? 'Test Company',
-    driveFolderId: null,
-  }
+export function makeCustomer(
+  overrides: Partial<{ id: string; name: string; email: string }> = {},
+): Customer {
+  return Customer.create(
+    {
+      name: overrides.name ?? 'Test Company',
+      email: overrides.email ?? 'test@company.com',
+      createdByUserId: 'user-1',
+    },
+    overrides.id ? new UniqueEntityID(overrides.id) : new UniqueEntityID('customer-1'),
+  )
 }
 
 // ── Creative factory ──────────────────────────────────────────────────────
