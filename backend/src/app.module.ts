@@ -12,6 +12,7 @@ import { PortalModule } from '@/infra/modules/portal/portal.module'
 import { TasksModule } from '@/infra/modules/tasks/tasks.module'
 import { NotificationsModule } from '@/infra/modules/notifications/notifications.module'
 import { ActivitiesModule } from '@/infra/modules/activities/activities.module'
+import { GoToModule } from '@/infra/modules/goto/goto.module'
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ActivitiesModule } from '@/infra/modules/activities/activities.module'
     TasksModule,
     NotificationsModule,
     ActivitiesModule,
+    GoToModule,
   ],
   controllers: [HealthController],
 })

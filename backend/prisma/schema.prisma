@@ -570,9 +570,29 @@ model Activity {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  customer    Customer             @relation(fields: [customerId], references: [id])
-  contact     Contact?             @relation(fields: [contactId], references: [id])
-  attachments ActivityAttachment[]
+  // GoTo Connect fields
+  gotoCallId             String?  @unique @map("goto_call_id")
+  gotoCallOutcome        String?  @map("goto_call_outcome")
+  gotoDuration           Int?     @map("goto_duration")
+  gotoRecordingDriveId   String?  @map("goto_recording_drive_id")
+  gotoRecordingUrl       String?  @map("goto_recording_url")
+  gotoRecordingUrl2      String?  @map("goto_recording_url2")
+  gotoTranscriptionJobId String?  @map("goto_transcription_job_id")
+  gotoTranscriptText     String?  @map("goto_transcript_text")
+  callContactType        String?  @map("call_contact_type")
+
+  // Email (Gmail) fields
+  emailMessageId   String?  @unique @map("email_message_id")
+  emailThreadId    String?  @map("email_thread_id")
+  emailSubject     String?  @map("email_subject")
+  emailFromAddress String?  @map("email_from_address")
+  emailFromName    String?  @map("email_from_name")
+  emailReplied     Boolean  @default(false) @map("email_replied")
+
+  customer         Customer              @relation(fields: [customerId], references: [id])
+  contact          Contact?              @relation(fields: [contactId], references: [id])
+  attachments      ActivityAttachment[]
+  whatsappMessages WhatsAppMessage[]
 
   @@index([customerId])
   @@index([externalId])
@@ -591,4 +611,41 @@ model ActivityAttachment {
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 
   @@map("activity_attachments")
+}
+
+// ─── GoTo Connect ──────────────────────────────────────────────────────────
+
+model GoToToken {
+  id           String   @id @default("singleton")
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("goto_tokens")
+}
+
+// ─── WhatsApp (Evolution API) ──────────────────────────────────────────────
+
+model WhatsAppMessage {
+  id                      String    @id @default(uuid())
+  activityId              String    @map("activity_id")
+  messageId               String    @unique @map("message_id")
+  remoteJid               String    @map("remote_jid")
+  fromMe                  Boolean   @map("from_me")
+  senderName              String?   @map("sender_name")
+  text                    String?
+  messageType             String    @map("message_type")
+  mediaLabel              String?   @map("media_label")
+  mediaDriveId            String?   @map("media_drive_id")
+  mediaUrl                String?   @map("media_url")
+  mediaTranscriptionJobId String?   @map("media_transcription_job_id")
+  mediaTranscriptText     String?   @map("media_transcript_text")
+  timestamp               DateTime
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@index([remoteJid])
+  @@map("whatsapp_messages")
 }

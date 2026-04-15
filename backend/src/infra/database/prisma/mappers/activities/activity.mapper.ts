@@ -21,6 +21,23 @@ type ActivityRaw = {
   deletedAt: Date | null
   createdAt: Date
   updatedAt: Date
+  // GoTo
+  gotoCallId: string | null
+  gotoCallOutcome: string | null
+  gotoDuration: number | null
+  gotoRecordingDriveId: string | null
+  gotoRecordingUrl: string | null
+  gotoRecordingUrl2: string | null
+  gotoTranscriptionJobId: string | null
+  gotoTranscriptText: string | null
+  callContactType: string | null
+  // Email
+  emailMessageId: string | null
+  emailThreadId: string | null
+  emailSubject: string | null
+  emailFromAddress: string | null
+  emailFromName: string | null
+  emailReplied: boolean
 }
 
 export class ActivityMapper {
@@ -45,6 +62,21 @@ export class ActivityMapper {
         deletedAt: raw.deletedAt,
         createdAt: raw.createdAt,
         updatedAt: raw.updatedAt,
+        gotoCallId: raw.gotoCallId,
+        gotoCallOutcome: raw.gotoCallOutcome,
+        gotoDuration: raw.gotoDuration,
+        gotoRecordingDriveId: raw.gotoRecordingDriveId,
+        gotoRecordingUrl: raw.gotoRecordingUrl,
+        gotoRecordingUrl2: raw.gotoRecordingUrl2,
+        gotoTranscriptionJobId: raw.gotoTranscriptionJobId,
+        gotoTranscriptText: raw.gotoTranscriptText,
+        callContactType: raw.callContactType,
+        emailMessageId: raw.emailMessageId,
+        emailThreadId: raw.emailThreadId,
+        emailSubject: raw.emailSubject,
+        emailFromAddress: raw.emailFromAddress,
+        emailFromName: raw.emailFromName,
+        emailReplied: raw.emailReplied,
       },
       new UniqueEntityID(raw.id),
     )
@@ -71,6 +103,21 @@ export class ActivityMapper {
       deletedAt: activity.deletedAt ?? null,
       createdAt: activity.createdAt,
       updatedAt: activity.updatedAt,
+      gotoCallId: activity.gotoCallId ?? null,
+      gotoCallOutcome: activity.gotoCallOutcome ?? null,
+      gotoDuration: activity.gotoDuration ?? null,
+      gotoRecordingDriveId: activity.gotoRecordingDriveId ?? null,
+      gotoRecordingUrl: activity.gotoRecordingUrl ?? null,
+      gotoRecordingUrl2: activity.gotoRecordingUrl2 ?? null,
+      gotoTranscriptionJobId: activity.gotoTranscriptionJobId ?? null,
+      gotoTranscriptText: activity.gotoTranscriptText ?? null,
+      callContactType: activity.callContactType ?? null,
+      emailMessageId: activity.emailMessageId ?? null,
+      emailThreadId: activity.emailThreadId ?? null,
+      emailSubject: activity.emailSubject ?? null,
+      emailFromAddress: activity.emailFromAddress ?? null,
+      emailFromName: activity.emailFromName ?? null,
+      emailReplied: activity.emailReplied,
     }
   }
 }

@@ -70,5 +70,6 @@ import { Env } from '@/env/env'
     MeetingRecordingDetectorService,
     MeetingTranscriptionPollerService,
   ],
+  exports: [TranscriptorService],
 })
 export class MeetingsModule {}

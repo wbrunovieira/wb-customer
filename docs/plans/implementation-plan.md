@@ -1741,12 +1741,232 @@ POST   /api/v1/webhooks/whatsapp      # Evolution API
 - [x] Migrations (`activities`, `activity_attachments`)
 - [x] Domínio `activities` com TDD (12 testes: Create, Update, Get, List, Delete)
 - [x] CRUD manual de atividades no frontend com filtros e timeline por cliente
+- [x] E2E tests (15 testes: POST, GET list, GET single, PATCH, DELETE)
+- [x] `POST /google/check-recordings` e `/google/check-transcriptions` (cron HTTP externo via CRON_SECRET)
+- [x] Rota de audit log renomeada de `:id/activities` → `:id/audit` (evita conflito com ActivitiesController)
 - [x] `tsc --noEmit` sem erros
 - [x] Commit + push GitHub
-- [ ] Clicar no email do contato → abre composer (Gmail API) — requer integração Gmail
-- [ ] Clicar no número do contato → discagem GoTo — requer credenciais GoTo
-- [ ] Automações: GoTo, Gmail, WhatsApp (quando detalhes fornecidos)
-- [ ] EventBus + SSE para notificações de mensagens recebidas
+- [x] Clicar no número do contato → link `tel:` abre GoTo app (PhoneLink component) — ver Fase 8.1
+- [x] GoTo webhook → Activity automática + gravação + transcrição — ver Fase 8.1
+- [x] WhatsApp via Evolution → Activity + WhatsAppMessage + transcrição de áudios — ver Fase 8.2
+- [x] Gmail poll + envio → Activity automática + compose modal — ver Fase 8.3
+- [ ] EventBus + SSE para notificações de mensagens recebidas (pós Fase 8.3)
+
+---
+
+## FASE 8.1 — GoTo Connect (VoIP)
+
+### Visão geral
+
+Integração com GoTo Connect para registrar automaticamente ligações como Activities. O fluxo é unidirecional: usuário discam pelo app GoTo (link `tel:` no frontend), GoTo envia webhook ao CRM quando a chamada termina, CRM busca o relatório completo, associa ao cliente/contato e cria a Activity.
+
+### Fluxo
+
+1. **Click-to-call**: `<a href="tel:+55...">` no frontend abre o app GoTo no SO (sem integração de API para discar)
+2. **Chamada**: GoTo gerencia inteiramente (VOIP, gravação)
+3. **Webhook**: GoTo envia `REPORT_SUMMARY` para `POST /api/v1/goto/webhook?secret=GOTO_WEBHOOK_SECRET`
+4. **Processamento**: valida secret → busca relatório completo na GoTo API → normaliza número → match para Contact/Customer → cria Activity
+5. **Gravação** (background, se `outcome=answered`): baixa MP3 via GoTo API → sobe para Google Drive (pasta do cliente) → atualiza Activity
+6. **Transcrição** (cron 10min): submete MP3 para Transcriptor → quando done, salva JSON de segmentos em `gotoTranscriptText`
+
+### Autenticação GoTo
+
+OAuth2 com access_token + refresh_token armazenados no banco (`GoToToken` model). Auto-refresh quando expira (buffer 60s). Tokens iniciais são semeados via variáveis de ambiente na primeira inicialização.
+
+### Prisma additions
+
+```prisma
+model GoToToken {
+  id           String   @id @default("singleton")
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  @@map("goto_tokens")
+}
+```
+
+Campos adicionados ao model `Activity`:
+```
+gotoCallId              String?   @unique @map("goto_call_id")
+gotoCallOutcome         String?   @map("goto_call_outcome")   // answered|voicemail|no_answer|busy
+gotoDuration            Int?      @map("goto_duration")       // segundos
+gotoRecordingDriveId    String?   @map("goto_recording_drive_id")
+gotoRecordingUrl        String?   @map("goto_recording_url")
+gotoRecordingUrl2       String?   @map("goto_recording_url2")
+gotoTranscriptionJobId  String?   @map("goto_transcription_job_id")
+gotoTranscriptText      String?   @map("goto_transcript_text")
+callContactType         String?   @map("call_contact_type")   // decisor|gatekeeper
+```
+
+### Serviços
+
+- `GoToTokenService` — guarda/renova access_token; singleton no banco
+- `GoToApiClient` — `getCallReport(conversationSpaceId)`, `downloadRecording(recordingId)` 
+- `GoToWebhookService` — processa payload do webhook, normaliza telefone, match → Contact/Customer, cria Activity
+- `GoToRecordingService` — cron: baixa MP3 de Activities sem recording, sobe para Drive
+- `GoToTranscriptionService` — cron: submete MP3 ao Transcriptor, faz poll até done
+
+### Endpoints
+
+```
+POST /api/v1/goto/webhook?secret=          → recebe REPORT_SUMMARY do GoTo (sem auth JWT)
+POST /api/v1/goto/check-recordings?secret= → cron: baixa gravações pendentes
+POST /api/v1/goto/check-transcriptions?secret= → cron: poll transcrições pendentes
+```
+
+### Phone matching
+
+Normaliza removendo não-dígitos. Testa com/sem código país (55) e com/sem DDD. Match priority: `Contact.phone` → `Customer.phone`. Ignora se `deletedAt != null`.
+
+### Entregáveis Fase 8.1
+
+- [ ] Migration: `goto_tokens` + campos GoTo no `activities`
+- [ ] `GoToTokenService` + auto-refresh
+- [ ] `GoToApiClient` (relatório + download de gravação)
+- [ ] `GoToWebhookService` + phone matching + Activity creation
+- [ ] `GoToRecordingService` + `GoToTranscriptionService` (crons)
+- [ ] `GoToController` (webhook + 2 crons)
+- [ ] Env vars: `GOTO_CLIENT_ID`, `GOTO_CLIENT_SECRET`, `GOTO_ACCOUNT_KEY`, `GOTO_WEBHOOK_SECRET`, `GOTO_DEFAULT_OWNER_ID`, `GOTO_ACCESS_TOKEN`, `GOTO_REFRESH_TOKEN`, `GOTO_TOKEN_EXPIRES_AT`
+- [ ] `PhoneLink` component no frontend (link `tel:` com ícone)
+- [ ] Player de áudio inline na Activity (lê Drive URL)
+- [ ] Transcrição expandível com timestamps
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
+## FASE 8.2 — WhatsApp via Evolution API
+
+### Visão geral
+
+Integração bidirecional com WhatsApp via Evolution API. Mensagens recebidas e enviadas geram Activities com sessão de 2h (agrupamento). Áudios e vídeos são transcritos automaticamente.
+
+### Fluxo de recebimento
+
+1. Mensagem chega → Evolution → webhook `POST /api/v1/evolution/webhook` (header `x-webhook-secret`)
+2. Filtra: apenas `messages.upsert`, ignora grupos (`@g.us`)
+3. Normaliza JID → telefone → match Contact/Customer
+4. Sessão 2h: busca Activity do mesmo número nas últimas 2h; se existe, adiciona linha à description; se não, cria nova Activity
+5. Cria `WhatsAppMessage` (idempotência por `messageId`)
+6. Background: baixa mídia → sobe para Drive → submete áudio/vídeo ao Transcriptor
+
+### Fluxo de envio
+
+1. Server action chama Evolution: `POST {EVOLUTION_API_URL}/message/sendText/{EVOLUTION_INSTANCE}`
+2. Evolution entrega no WhatsApp e devolve webhook com `fromMe: true`
+3. Webhook processa igual ao recebimento (sender = "Você")
+
+### Prisma additions
+
+```prisma
+model WhatsAppMessage {
+  id                      String    @id @default(uuid())
+  activityId              String    @map("activity_id")
+  messageId               String    @unique @map("message_id")
+  remoteJid               String    @map("remote_jid")
+  fromMe                  Boolean   @map("from_me")
+  senderName              String?   @map("sender_name")
+  text                    String?
+  messageType             String    @map("message_type")
+  mediaLabel              String?   @map("media_label")
+  mediaDriveId            String?   @map("media_drive_id")
+  mediaUrl                String?   @map("media_url")
+  mediaTranscriptionJobId String?   @map("media_transcription_job_id")
+  mediaTranscriptText     String?   @map("media_transcript_text")
+  timestamp               DateTime
+
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@index([activityId])
+  @@index([remoteJid])
+  @@map("whatsapp_messages")
+}
+```
+
+### Endpoints
+
+```
+POST /api/v1/evolution/webhook                     → recebe mensagens (sem auth JWT)
+POST /api/v1/evolution/check-transcriptions?secret= → cron: poll transcrições de áudios
+POST /api/v1/customers/:id/whatsapp/send           → envia mensagem (admin/employee)
+```
+
+### Entregáveis Fase 8.2
+
+- [ ] Migration: `whatsapp_messages`
+- [ ] `EvolutionApiClient` (sendText + getBase64FromMediaMessage)
+- [ ] `WhatsAppWebhookService` (parse + match + session grouping + Activity creation)
+- [ ] `WhatsAppMediaService` (download + Drive upload + Transcriptor submit)
+- [ ] `WhatsAppTranscriptionService` (cron: poll jobs pendentes)
+- [ ] `EvolutionController` (webhook + cron + send)
+- [ ] Env vars: `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `EVOLUTION_WEBHOOK_SECRET`, `EVOLUTION_OWNER_ID`
+- [ ] Frontend: botão "Enviar WhatsApp" na página do cliente/contato
+- [ ] Frontend: exibe `WhatsAppMessage` cards dentro da Activity (chat bubble style)
+- [ ] Frontend: transcrição expandível em áudios
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
+
+---
+
+## FASE 8.3 — Gmail (envio + recebimento)
+
+### Visão geral
+
+Integração Gmail usando o token OAuth2 único da empresa (GoogleToken singleton). Poll a cada 5min para emails recebidos. Envio com rich text e anexos. Threads completas. Reply mantém threadId.
+
+### Fluxo de recebimento
+
+1. Cron 5min → `GET /api/v1/google/gmail-poll` (header `x-api-key: INTERNAL_API_KEY`)
+2. `gmail.users.history.list(gmailHistoryId, labelId=INBOX)` → mensagens novas
+3. `gmail.users.messages.get(id, format=full)` → extrai From, Subject, Body
+4. Match `From` email → Contact/Customer (idempotência via `emailMessageId @unique`)
+5. Cria Activity `type=email` com campos email; emite SSE `EMAIL_RECEIVED`
+6. Atualiza `gmailHistoryId` no banco para próximo poll
+
+### Fluxo de envio
+
+1. Server action valida payload com Zod
+2. `buildMimeMessage()`: text/html simples ou multipart/mixed com anexos
+3. Gmail API: `users.messages.send({ raw, threadId? })`
+4. Cria Activity `type=email` (emailReplied=false)
+5. Se reply: marca todos os emails da thread como `emailReplied=true`
+
+### Prisma additions
+
+Campos adicionados ao model `Activity`:
+```
+emailMessageId   String?  @unique @map("email_message_id")
+emailThreadId    String?  @map("email_thread_id")
+emailSubject     String?  @map("email_subject")
+emailFromAddress String?  @map("email_from_address")
+emailFromName    String?  @map("email_from_name")
+emailReplied     Boolean  @default(false) @map("email_replied")
+```
+
+Campo adicionado ao model `GoogleToken`:
+```
+gmailHistoryId   String?  @map("gmail_history_id")
+```
+
+### Endpoints
+
+```
+GET  /api/v1/google/gmail-poll    → cron poll (x-api-key header)
+POST /api/v1/customers/:id/email  → envia email (admin/employee)
+```
+
+### Entregáveis Fase 8.3
+
+- [ ] Migration: campos email no `activities` + `gmailHistoryId` no `google_tokens`
+- [ ] `GmailService` (poll history + send + buildMimeMessage)
+- [ ] `GmailPollerController` (GET /gmail-poll com x-api-key guard)
+- [ ] Env vars: `INTERNAL_API_KEY`
+- [ ] Frontend: `EmailComposeModal` (to, cc, rich text, anexos, Ctrl+Enter)
+- [ ] Frontend: badge "Aguardando resposta" em Activities de email recebido sem reply
+- [ ] Frontend: botão "Responder" abre modal pré-preenchido com threadId
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit + push GitHub
 
 ---
 

@@ -20,6 +20,23 @@ export interface ActivityProps {
   deletedAt?: Date | null
   createdAt: Date
   updatedAt: Date
+  // GoTo Connect
+  gotoCallId?: string | null
+  gotoCallOutcome?: string | null
+  gotoDuration?: number | null
+  gotoRecordingDriveId?: string | null
+  gotoRecordingUrl?: string | null
+  gotoRecordingUrl2?: string | null
+  gotoTranscriptionJobId?: string | null
+  gotoTranscriptText?: string | null
+  callContactType?: string | null
+  // Gmail / Email
+  emailMessageId?: string | null
+  emailThreadId?: string | null
+  emailSubject?: string | null
+  emailFromAddress?: string | null
+  emailFromName?: string | null
+  emailReplied?: boolean
 }
 
 export class Activity extends AggregateRoot<ActivityProps> {
@@ -64,6 +81,23 @@ export class Activity extends AggregateRoot<ActivityProps> {
   get deletedAt(): Date | null | undefined { return this.props.deletedAt }
   get createdAt(): Date { return this.props.createdAt }
   get updatedAt(): Date { return this.props.updatedAt }
+  // GoTo
+  get gotoCallId(): string | null | undefined { return this.props.gotoCallId }
+  get gotoCallOutcome(): string | null | undefined { return this.props.gotoCallOutcome }
+  get gotoDuration(): number | null | undefined { return this.props.gotoDuration }
+  get gotoRecordingDriveId(): string | null | undefined { return this.props.gotoRecordingDriveId }
+  get gotoRecordingUrl(): string | null | undefined { return this.props.gotoRecordingUrl }
+  get gotoRecordingUrl2(): string | null | undefined { return this.props.gotoRecordingUrl2 }
+  get gotoTranscriptionJobId(): string | null | undefined { return this.props.gotoTranscriptionJobId }
+  get gotoTranscriptText(): string | null | undefined { return this.props.gotoTranscriptText }
+  get callContactType(): string | null | undefined { return this.props.callContactType }
+  // Email
+  get emailMessageId(): string | null | undefined { return this.props.emailMessageId }
+  get emailThreadId(): string | null | undefined { return this.props.emailThreadId }
+  get emailSubject(): string | null | undefined { return this.props.emailSubject }
+  get emailFromAddress(): string | null | undefined { return this.props.emailFromAddress }
+  get emailFromName(): string | null | undefined { return this.props.emailFromName }
+  get emailReplied(): boolean { return this.props.emailReplied ?? false }
 
   update(fields: Partial<Pick<ActivityProps, 'subject' | 'description' | 'status' | 'scheduledAt' | 'occurredAt' | 'durationSecs' | 'assignedToUserId' | 'transcriptText'>>): void {
     Object.assign(this.props, fields)
