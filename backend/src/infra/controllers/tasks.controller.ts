@@ -20,6 +20,10 @@ import { AttachTaskTagUseCase } from '@/domain/tasks/application/use-cases/attac
 import { DetachTaskTagUseCase } from '@/domain/tasks/application/use-cases/detach-task-tag.use-case'
 import { GetTaskActivityLogUseCase } from '@/domain/tasks/application/use-cases/get-task-activity-log.use-case'
 import { AddSubtaskUseCase } from '@/domain/tasks/application/use-cases/add-subtask.use-case'
+import { ReorderTasksUseCase } from '@/domain/tasks/application/use-cases/reorder-tasks.use-case'
+import { StartTimeTrackingUseCase } from '@/domain/tasks/application/use-cases/start-time-tracking.use-case'
+import { StopTimeTrackingUseCase } from '@/domain/tasks/application/use-cases/stop-time-tracking.use-case'
+import { GetTaskTimeEntriesUseCase } from '@/domain/tasks/application/use-cases/get-task-time-entries.use-case'
 import { ITaskRepository } from '@/domain/tasks/application/repositories/i-task.repository'
 import { IChecklistItemRepository } from '@/domain/tasks/application/repositories/i-checklist-item.repository'
 import { ITaskTagRepository } from '@/domain/tasks/application/repositories/i-task-tag.repository'
@@ -58,6 +62,10 @@ class MoveTaskStatusDto {
   @ApiProperty() status!: string
 }
 
+class ReorderTasksDto {
+  @ApiProperty({ type: [String] }) orderedIds!: string[]
+}
+
 class AddChecklistItemDto {
   @ApiProperty() text!: string
   @ApiPropertyOptional() position?: number
@@ -83,6 +91,10 @@ export class TasksController {
     private readonly detachTagUseCase: DetachTaskTagUseCase,
     private readonly getActivityLogUseCase: GetTaskActivityLogUseCase,
     private readonly addSubtaskUseCase: AddSubtaskUseCase,
+    private readonly reorderTasksUseCase: ReorderTasksUseCase,
+    private readonly startTimeTrackingUseCase: StartTimeTrackingUseCase,
+    private readonly stopTimeTrackingUseCase: StopTimeTrackingUseCase,
+    private readonly getTimeEntriesUseCase: GetTaskTimeEntriesUseCase,
     private readonly checklistRepo: IChecklistItemRepository,
     private readonly tagRepo: ITaskTagRepository,
     private readonly taskRepo: ITaskRepository,
@@ -327,5 +339,67 @@ export class TasksController {
   @ApiResponse({ status: 204 })
   async detachTag(@Param('taskId') taskId: string, @Param('tagId') tagId: string) {
     await this.detachTagUseCase.execute({ taskId, tagId })
+  }
+
+  // ─── Reorder ──────────────────────────────────────────────
+  @Patch('reorder')
+  @ApiOperation({ summary: 'Reorder tasks by board position' })
+  @ApiParam({ name: 'customerId', type: String })
+  @ApiBody({ type: ReorderTasksDto })
+  @ApiResponse({ status: 200 })
+  async reorder(@Body() body: ReorderTasksDto) {
+    await this.reorderTasksUseCase.execute({ orderedIds: body.orderedIds })
+    return {}
+  }
+
+  // ─── Time Tracking ────────────────────────────────────────
+  @Post(':taskId/time-entries/start')
+  @ApiOperation({ summary: 'Start time tracking for a task' })
+  @ApiParam({ name: 'customerId', type: String })
+  @ApiParam({ name: 'taskId', type: String })
+  @ApiResponse({ status: 201 })
+  async startTimeTracking(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.startTimeTrackingUseCase.execute({ taskId, userId: user.userId })
+    return result.value
+  }
+
+  @Post(':taskId/time-entries/stop')
+  @ApiOperation({ summary: 'Stop active time tracking for a task' })
+  @ApiParam({ name: 'customerId', type: String })
+  @ApiParam({ name: 'taskId', type: String })
+  @ApiResponse({ status: 200 })
+  async stopTimeTracking(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.stopTimeTrackingUseCase.execute({ taskId, userId: user.userId })
+    return result.value
+  }
+
+  @Get(':taskId/time-entries')
+  @ApiOperation({ summary: 'Get time entries for a task' })
+  @ApiParam({ name: 'customerId', type: String })
+  @ApiParam({ name: 'taskId', type: String })
+  @ApiResponse({ status: 200 })
+  async getTimeEntries(
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.getTimeEntriesUseCase.execute(taskId, user.userId)
+    return {
+      entries: result.value.entries.map((e) => ({
+        id: e.id.value,
+        taskId: e.taskId,
+        userId: e.userId,
+        startedAt: e.startedAt,
+        stoppedAt: e.stoppedAt,
+        durationSecs: e.durationSecs,
+        isRunning: e.isRunning,
+      })),
+      activeEntryId: result.value.activeEntryId,
+    }
   }
 }

@@ -43,4 +43,11 @@ export class InMemoryTaskRepository implements ITaskRepository {
   async delete(id: string): Promise<void> {
     this.items = this.items.filter(t => t.id.value !== id)
   }
+
+  async updateBoardPositions(updates: { id: string; boardPosition: number }[]): Promise<void> {
+    for (const { id, boardPosition } of updates) {
+      const task = this.items.find(t => t.id.value === id)
+      if (task) task.update({ boardPosition })
+    }
+  }
 }

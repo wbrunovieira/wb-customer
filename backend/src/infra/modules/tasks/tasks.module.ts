@@ -29,6 +29,10 @@ import { ResolveCommentUseCase } from '@/domain/tasks/application/use-cases/reso
 import { ReactToCommentUseCase } from '@/domain/tasks/application/use-cases/react-to-comment.use-case'
 import { DeleteCommentUseCase } from '@/domain/tasks/application/use-cases/delete-comment.use-case'
 import { AddSubtaskUseCase } from '@/domain/tasks/application/use-cases/add-subtask.use-case'
+import { ReorderTasksUseCase } from '@/domain/tasks/application/use-cases/reorder-tasks.use-case'
+import { StartTimeTrackingUseCase } from '@/domain/tasks/application/use-cases/start-time-tracking.use-case'
+import { StopTimeTrackingUseCase } from '@/domain/tasks/application/use-cases/stop-time-tracking.use-case'
+import { GetTaskTimeEntriesUseCase } from '@/domain/tasks/application/use-cases/get-task-time-entries.use-case'
 import { ProcessRecurringTasksUseCase } from '@/domain/tasks/application/use-cases/process-recurring-tasks.use-case'
 import { RecurringTasksScheduler } from '@/infra/tasks/recurring-tasks.scheduler'
 
@@ -67,6 +71,11 @@ import { RecurringTasksScheduler } from '@/infra/tasks/recurring-tasks.scheduler
     DeleteCommentUseCase,
     // Subtasks
     AddSubtaskUseCase,
+    // Reorder + Time tracking
+    ReorderTasksUseCase,
+    StartTimeTrackingUseCase,
+    StopTimeTrackingUseCase,
+    GetTaskTimeEntriesUseCase,
     // Recurring tasks
     ProcessRecurringTasksUseCase,
     RecurringTasksScheduler,

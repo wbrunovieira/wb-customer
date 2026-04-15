@@ -395,6 +395,7 @@ model Task {
   tags      TaskTagLink[]
   activityLog TaskActivityLog[]
   comments  TaskComment[]
+  timeEntries TimeEntry[]
 
   @@index([customerId])
   @@index([sprintId])
@@ -463,6 +464,21 @@ model TaskTemplate {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("task_templates")
+}
+
+model TimeEntry {
+  id           String    @id @default(uuid())
+  taskId       String    @map("task_id")
+  userId       String    @map("user_id")
+  startedAt    DateTime  @default(now()) @map("started_at")
+  stoppedAt    DateTime? @map("stopped_at")
+  durationSecs Int?      @map("duration_secs")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("time_entries")
 }
 
 model TaskComment {

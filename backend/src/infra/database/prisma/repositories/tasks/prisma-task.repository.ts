@@ -82,4 +82,12 @@ export class PrismaTaskRepository implements ITaskRepository {
   async delete(id: string): Promise<void> {
     await this.prisma.task.delete({ where: { id } })
   }
+
+  async updateBoardPositions(updates: { id: string; boardPosition: number }[]): Promise<void> {
+    await this.prisma.$transaction(
+      updates.map(({ id, boardPosition }) =>
+        this.prisma.task.update({ where: { id }, data: { boardPosition } }),
+      ),
+    )
+  }
 }

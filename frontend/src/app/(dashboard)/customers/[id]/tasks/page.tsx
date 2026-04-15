@@ -6,6 +6,8 @@ import MoveStatusButton from './_components/move-status-button'
 import DeleteTaskButton from './_components/delete-task-button'
 import NewTaskForm from './_components/new-task-form'
 import KanbanBoard from './_components/kanban-board'
+import CalendarView from './_components/calendar-view'
+import GanttView from './_components/gantt-view'
 
 export const metadata = { title: 'Tarefas — WB Customer' }
 
@@ -129,6 +131,8 @@ export default async function CustomerTasksPage({
   }
 
   const isKanban = view === 'kanban'
+  const isCalendar = view === 'calendar'
+  const isGantt = view === 'gantt'
 
   const subTabs = [
     { href: `/customers/${id}/documents`, label: 'Documentos' },
@@ -162,18 +166,26 @@ export default async function CustomerTasksPage({
         <div className="flex items-center gap-2 shrink-0">
           {/* View toggle */}
           <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <Link
-              href={`/customers/${id}/tasks${status ? `?status=${status}` : ''}`}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${!isKanban ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
-            >
-              Lista
-            </Link>
-            <Link
-              href={`/customers/${id}/tasks?view=kanban${status ? `&status=${status}` : ''}`}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${isKanban ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
-            >
-              Kanban
-            </Link>
+            {[
+              { key: undefined, label: 'Lista' },
+              { key: 'kanban',   label: 'Kanban' },
+              { key: 'calendar', label: 'Calendário' },
+              { key: 'gantt',    label: 'Gantt' },
+            ].map(({ key, label }) => {
+              const active = view === key || (!view && !key)
+              const href = key
+                ? `/customers/${id}/tasks?view=${key}${status ? `&status=${status}` : ''}`
+                : `/customers/${id}/tasks${status ? `?status=${status}` : ''}`
+              return (
+                <Link
+                  key={label}
+                  href={href}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${active ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                  {label}
+                </Link>
+              )
+            })}
           </div>
 
           <Link
@@ -268,7 +280,7 @@ export default async function CustomerTasksPage({
       )}
 
       {/* Content */}
-      {boardTasks.length === 0 && !ideas.length ? (
+      {tasks.length === 0 && !ideas.length ? (
         <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white gap-2">
           <p className="text-sm text-slate-400">Nenhuma tarefa encontrada.</p>
           <Link
@@ -278,6 +290,10 @@ export default async function CustomerTasksPage({
             Criar primeira tarefa
           </Link>
         </div>
+      ) : isCalendar ? (
+        <CalendarView tasks={tasks} customerId={id} />
+      ) : isGantt ? (
+        <GanttView tasks={tasks} customerId={id} />
       ) : isKanban ? (
         /* Kanban view with drag and drop */
         <KanbanBoard initialTasks={boardTasks} customerId={id} />

@@ -43,6 +43,7 @@ import { IChecklistItemRepository } from '@/domain/tasks/application/repositorie
 import { ITaskTagRepository } from '@/domain/tasks/application/repositories/i-task-tag.repository'
 import { ITaskActivityLogRepository } from '@/domain/tasks/application/repositories/i-task-activity-log.repository'
 import { ITaskCommentRepository } from '@/domain/tasks/application/repositories/i-task-comment.repository'
+import { ITimeEntryRepository } from '@/domain/tasks/application/repositories/i-time-entry.repository'
 import { IActivityRepository } from '@/domain/activities/application/repositories/i-activity.repository'
 import { PrismaTaskRepository } from './prisma/repositories/tasks/prisma-task.repository'
 import { PrismaSprintRepository } from './prisma/repositories/tasks/prisma-sprint.repository'
@@ -50,6 +51,7 @@ import { PrismaChecklistItemRepository } from './prisma/repositories/tasks/prism
 import { PrismaTaskTagRepository } from './prisma/repositories/tasks/prisma-task-tag.repository'
 import { PrismaTaskActivityLogRepository } from './prisma/repositories/tasks/prisma-task-activity-log.repository'
 import { PrismaTaskCommentRepository } from './prisma/repositories/tasks/prisma-task-comment.repository'
+import { PrismaTimeEntryRepository } from './prisma/repositories/tasks/prisma-time-entry.repository'
 import { PrismaActivityRepository } from './prisma/repositories/activities/prisma-activity.repository'
 import { Env } from '@/env/env'
 
@@ -108,6 +110,7 @@ import { Env } from '@/env/env'
     { provide: ITaskTagRepository, useClass: PrismaTaskTagRepository },
     { provide: ITaskActivityLogRepository, useClass: PrismaTaskActivityLogRepository },
     { provide: ITaskCommentRepository, useClass: PrismaTaskCommentRepository },
+    { provide: ITimeEntryRepository, useClass: PrismaTimeEntryRepository },
     // Activities
     { provide: IActivityRepository, useClass: PrismaActivityRepository },
   ],
@@ -136,6 +139,7 @@ import { Env } from '@/env/env'
     ITaskTagRepository,
     ITaskActivityLogRepository,
     ITaskCommentRepository,
+    ITimeEntryRepository,
     IActivityRepository,
   ],
 })

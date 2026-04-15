@@ -27,4 +27,5 @@ export abstract class ITaskRepository {
   abstract findAll(params: FindAllTasksParams): Promise<PaginatedTasks>
   abstract save(task: Task): Promise<void>
   abstract delete(id: string): Promise<void>
+  abstract updateBoardPositions(updates: { id: string; boardPosition: number }[]): Promise<void>
 }

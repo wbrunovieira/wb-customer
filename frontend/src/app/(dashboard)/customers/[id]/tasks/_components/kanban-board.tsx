@@ -17,10 +17,11 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { moveTaskStatus } from '@/app/actions/tasks'
+import { moveTaskStatus, reorderTasks } from '@/app/actions/tasks'
 import { Task, TaskStatus } from '@/lib/definitions'
 import MoveStatusButton from './move-status-button'
 import DeleteTaskButton from './delete-task-button'
@@ -301,12 +302,32 @@ export default function KanbanBoard({ initialTasks, customerId }: Props) {
       return
     }
 
-    if (finalTask.status === origin) return // no real change
+    const statusChanged = finalTask.status !== origin
 
-    // Persist
-    startTransition(() => {
-      moveTaskStatus(customerId, taskId, finalTask.status)
-    })
+    if (statusChanged) {
+      // Persist status change
+      startTransition(() => {
+        moveTaskStatus(customerId, taskId, finalTask.status)
+      })
+    } else {
+      // Same column — reorder within column
+      const colTasks = tasks.filter((t) => t.status === finalTask.status)
+      const oldIndex = colTasks.findIndex((t) => t.id === taskId)
+      const overId = over.id as string
+      const newIndex = colTasks.findIndex((t) => t.id === overId)
+
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const reordered = arrayMove(colTasks, oldIndex, newIndex)
+        setTasks((prev) => {
+          const others = prev.filter((t) => t.status !== finalTask.status)
+          return [...others, ...reordered]
+        })
+        startTransition(() => {
+          const orderedColumn = arrayMove(colTasks, oldIndex, newIndex)
+          reorderTasks(customerId, orderedColumn.map((t) => t.id))
+        })
+      }
+    }
   }
 
   return (

@@ -9,6 +9,7 @@ import StatusChanger from './_components/status-changer'
 import SubtasksSection from './_components/subtasks-section'
 import CommentsSection from './_components/comments-section'
 import DeleteTaskButton from '../_components/delete-task-button'
+import TimeTracker from './_components/time-tracker'
 
 export const metadata = { title: 'Tarefa — WB Customer' }
 
@@ -87,6 +88,8 @@ export default async function TaskDetailPage({
   let allTags: TaskTag[] = []
   let comments: TaskComment[] = []
   let currentUser: CurrentUser | null = null
+  let activeTimeEntryId: string | null = null
+  let activeEntryStartedAt: string | null = null
 
   try {
     customer = await apiServer.get<Customer>(`/api/v1/customers/${id}`)
@@ -112,6 +115,20 @@ export default async function TaskDetailPage({
     allTags = tagsRes.tags
     comments = commentsRes.comments
     currentUser = userRes
+  } catch {
+    // ignore
+  }
+
+  try {
+    if (currentUser) {
+      const timeEntriesRes = await apiServer.get<{
+        entries: { id: string; startedAt: string; isRunning: boolean }[]
+        activeEntryId: string | null
+      }>(`/api/v1/customers/${id}/tasks/${taskId}/time-entries`)
+      activeTimeEntryId = timeEntriesRes.activeEntryId
+      const activeEntry = timeEntriesRes.entries.find((e) => e.id === activeTimeEntryId)
+      activeEntryStartedAt = activeEntry?.startedAt ?? null
+    }
   } catch {
     // ignore
   }
@@ -278,6 +295,15 @@ export default async function TaskDetailPage({
             confidence={t.confidence}
             effort={t.effort}
             iceScore={t.iceScore}
+          />
+
+          {/* Time Tracker */}
+          <TimeTracker
+            customerId={id}
+            taskId={t.id}
+            trackedSeconds={t.trackedSeconds}
+            isActive={!!activeTimeEntryId}
+            activeStartedAt={activeEntryStartedAt}
           />
 
           {/* Tags */}

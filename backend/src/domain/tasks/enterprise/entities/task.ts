@@ -101,6 +101,11 @@ export class Task extends AggregateRoot<TaskProps> {
     this.props.updatedAt = new Date()
   }
 
+  addTrackedTime(secs: number): void {
+    this.props.trackedSeconds += secs
+    this.props.updatedAt = new Date()
+  }
+
   changeStatus(newStatus: TaskStatus): void {
     const from = this.props.status.value
     this.props.status = newStatus

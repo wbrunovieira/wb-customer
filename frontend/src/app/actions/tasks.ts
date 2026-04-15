@@ -286,3 +286,26 @@ export async function detachTag(customerId: string, taskId: string, tagId: strin
   await apiServer.delete(`/api/v1/customers/${customerId}/tasks/${taskId}/tags/${tagId}`)
   revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
 }
+
+// ─── Reorder ─────────────────────────────────────────────────
+
+export async function reorderTasks(customerId: string, orderedIds: string[]) {
+  await apiServer.patch(`/api/v1/customers/${customerId}/tasks/reorder`, { orderedIds })
+  revalidateTasks(customerId)
+}
+
+// ─── Time Tracking ───────────────────────────────────────────
+
+export async function startTimeTracking(customerId: string, taskId: string) {
+  await apiServer.post(`/api/v1/customers/${customerId}/tasks/${taskId}/time-entries/start`, {})
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+}
+
+export async function stopTimeTracking(customerId: string, taskId: string) {
+  const result = await apiServer.post<{ durationSecs: number | null }>(
+    `/api/v1/customers/${customerId}/tasks/${taskId}/time-entries/stop`,
+    {},
+  )
+  revalidatePath(`/customers/${customerId}/tasks/${taskId}`)
+  return result
+}
