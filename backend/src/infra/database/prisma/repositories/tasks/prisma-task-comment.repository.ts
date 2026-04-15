@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { ITaskCommentRepository } from '@/domain/tasks/application/repositories/i-task-comment.repository'
-import { TaskComment, TaskCommentProps } from '@/domain/tasks/enterprise/entities/task-comment'
+import { TaskComment, TaskCommentProps, CommentAttachmentData, ImageAnnotationData } from '@/domain/tasks/enterprise/entities/task-comment'
 import { PrismaService } from '../../prisma.service'
 import { UniqueEntityID } from '@/core/unique-entity-id'
 
@@ -104,5 +104,36 @@ export class PrismaTaskCommentRepository implements ITaskCommentRepository {
 
   async removeReaction(commentId: string, userId: string, emoji: string): Promise<void> {
     await this.prisma.commentReaction.deleteMany({ where: { commentId, userId, emoji } })
+  }
+
+  async addAttachment(commentId: string, attachment: CommentAttachmentData): Promise<void> {
+    await this.prisma.commentAttachment.create({
+      data: {
+        id: attachment.id,
+        commentId,
+        url: attachment.url,
+        name: attachment.name,
+        mimeType: attachment.mimeType,
+        sizeBytes: attachment.sizeBytes ? BigInt(attachment.sizeBytes) : null,
+      },
+    })
+  }
+
+  async addAnnotation(commentId: string, annotation: ImageAnnotationData): Promise<void> {
+    await this.prisma.imageAnnotation.create({
+      data: {
+        id: annotation.id,
+        commentId,
+        imageUrl: annotation.imageUrl,
+        x: annotation.x,
+        y: annotation.y,
+        number: annotation.number,
+        text: annotation.text,
+      },
+    })
+  }
+
+  async countAnnotations(commentId: string): Promise<number> {
+    return this.prisma.imageAnnotation.count({ where: { commentId } })
   }
 }

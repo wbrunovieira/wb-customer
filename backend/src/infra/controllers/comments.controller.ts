@@ -1,5 +1,12 @@
-import { Controller, Get, Post, Delete, Patch, Param, Body, UseGuards, NotFoundException, HttpCode } from '@nestjs/common'
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import {
+  Controller, Get, Post, Delete, Patch, Param, Body, UseGuards,
+  NotFoundException, HttpCode, UseInterceptors, UploadedFile, BadRequestException,
+} from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import {
+  ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody,
+  ApiResponse, ApiProperty, ApiPropertyOptional, ApiConsumes,
+} from '@nestjs/swagger'
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
@@ -9,6 +16,9 @@ import { ListCommentsUseCase } from '@/domain/tasks/application/use-cases/list-c
 import { ResolveCommentUseCase } from '@/domain/tasks/application/use-cases/resolve-comment.use-case'
 import { ReactToCommentUseCase } from '@/domain/tasks/application/use-cases/react-to-comment.use-case'
 import { DeleteCommentUseCase } from '@/domain/tasks/application/use-cases/delete-comment.use-case'
+import { AddCommentAttachmentUseCase } from '@/domain/tasks/application/use-cases/add-comment-attachment.use-case'
+import { AddImageAnnotationUseCase } from '@/domain/tasks/application/use-cases/add-image-annotation.use-case'
+import { UploadCommentAudioUseCase } from '@/domain/tasks/application/use-cases/upload-comment-audio.use-case'
 import { TaskComment } from '@/domain/tasks/enterprise/entities/task-comment'
 
 class AddCommentDto {
@@ -20,6 +30,13 @@ class AddCommentDto {
 class ReactDto {
   @ApiProperty() emoji!: string
   @ApiProperty() toggle!: boolean
+}
+
+class AddAnnotationDto {
+  @ApiProperty() imageUrl!: string
+  @ApiProperty() x!: number
+  @ApiProperty() y!: number
+  @ApiProperty() text!: string
 }
 
 function toHttp(c: TaskComment): object {
@@ -52,6 +69,9 @@ export class CommentsController {
     private readonly resolveComment: ResolveCommentUseCase,
     private readonly reactToComment: ReactToCommentUseCase,
     private readonly deleteComment: DeleteCommentUseCase,
+    private readonly addAttachment: AddCommentAttachmentUseCase,
+    private readonly addAnnotation: AddImageAnnotationUseCase,
+    private readonly uploadAudio: UploadCommentAudioUseCase,
   ) {}
 
   @Post()
@@ -110,5 +130,69 @@ export class CommentsController {
   async remove(@Param('commentId') commentId: string) {
     const result = await this.deleteComment.execute({ commentId })
     if (result.isLeft()) throw new NotFoundException(result.value.message)
+  }
+
+  // ─── Attachments ─────────────────────────────────────────
+  @Post(':commentId/attachments')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload a file attachment to a comment' })
+  @ApiParam({ name: 'commentId', type: String })
+  @ApiResponse({ status: 201 })
+  async uploadAttachment(
+    @Param('commentId') commentId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Arquivo não enviado')
+    const result = await this.addAttachment.execute({
+      commentId,
+      buffer: file.buffer,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      sizeBytes: file.size,
+    })
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+    return result.value
+  }
+
+  // ─── Image Annotations ───────────────────────────────────
+  @Post(':commentId/annotations')
+  @ApiOperation({ summary: 'Add a point annotation on an image in a comment' })
+  @ApiParam({ name: 'commentId', type: String })
+  @ApiBody({ type: AddAnnotationDto })
+  @ApiResponse({ status: 201 })
+  async addAnnotationToComment(
+    @Param('commentId') commentId: string,
+    @Body() body: AddAnnotationDto,
+  ) {
+    const result = await this.addAnnotation.execute({
+      commentId,
+      imageUrl: body.imageUrl,
+      x: body.x,
+      y: body.y,
+      text: body.text,
+    })
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+    return result.value
+  }
+
+  // ─── Audio Upload ────────────────────────────────────────
+  @Post('audio-upload')
+  @UseInterceptors(FileInterceptor('audio'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload a recorded audio clip; returns audioUrl for use in POST /comments' })
+  @ApiResponse({ status: 201 })
+  async uploadAudioClip(
+    @Param('taskId') taskId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Arquivo de áudio não enviado')
+    const result = await this.uploadAudio.execute({
+      buffer: file.buffer,
+      mimeType: file.mimetype,
+      taskId,
+    })
+    if (result.isLeft()) throw new BadRequestException(result.value.message)
+    return result.value
   }
 }

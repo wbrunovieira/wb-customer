@@ -4,6 +4,7 @@ import { SprintsController } from '@/infra/controllers/sprints.controller'
 import { TaskTagsController } from '@/infra/controllers/task-tags.controller'
 import { AllTasksController } from '@/infra/controllers/all-tasks.controller'
 import { CommentsController } from '@/infra/controllers/comments.controller'
+import { TemplatesController } from '@/infra/controllers/templates.controller'
 import { CreateTaskUseCase } from '@/domain/tasks/application/use-cases/create-task.use-case'
 import { UpdateTaskUseCase } from '@/domain/tasks/application/use-cases/update-task.use-case'
 import { DeleteTaskUseCase } from '@/domain/tasks/application/use-cases/delete-task.use-case'
@@ -29,6 +30,13 @@ import { ResolveCommentUseCase } from '@/domain/tasks/application/use-cases/reso
 import { ReactToCommentUseCase } from '@/domain/tasks/application/use-cases/react-to-comment.use-case'
 import { DeleteCommentUseCase } from '@/domain/tasks/application/use-cases/delete-comment.use-case'
 import { AddSubtaskUseCase } from '@/domain/tasks/application/use-cases/add-subtask.use-case'
+import { CreateTaskTemplateUseCase } from '@/domain/tasks/application/use-cases/create-task-template.use-case'
+import { ListTaskTemplatesUseCase } from '@/domain/tasks/application/use-cases/list-task-templates.use-case'
+import { ApplyTaskTemplateUseCase } from '@/domain/tasks/application/use-cases/apply-task-template.use-case'
+import { CreateTemplateFromTasksUseCase } from '@/domain/tasks/application/use-cases/create-template-from-tasks.use-case'
+import { AddCommentAttachmentUseCase } from '@/domain/tasks/application/use-cases/add-comment-attachment.use-case'
+import { AddImageAnnotationUseCase } from '@/domain/tasks/application/use-cases/add-image-annotation.use-case'
+import { UploadCommentAudioUseCase } from '@/domain/tasks/application/use-cases/upload-comment-audio.use-case'
 import { ReorderTasksUseCase } from '@/domain/tasks/application/use-cases/reorder-tasks.use-case'
 import { StartTimeTrackingUseCase } from '@/domain/tasks/application/use-cases/start-time-tracking.use-case'
 import { StopTimeTrackingUseCase } from '@/domain/tasks/application/use-cases/stop-time-tracking.use-case'
@@ -37,7 +45,7 @@ import { ProcessRecurringTasksUseCase } from '@/domain/tasks/application/use-cas
 import { RecurringTasksScheduler } from '@/infra/tasks/recurring-tasks.scheduler'
 
 @Module({
-  controllers: [TasksController, SprintsController, TaskTagsController, AllTasksController, CommentsController],
+  controllers: [TasksController, SprintsController, TaskTagsController, AllTasksController, CommentsController, TemplatesController],
   providers: [
     // Task use cases
     CreateTaskUseCase,
@@ -71,6 +79,15 @@ import { RecurringTasksScheduler } from '@/infra/tasks/recurring-tasks.scheduler
     DeleteCommentUseCase,
     // Subtasks
     AddSubtaskUseCase,
+    // Templates
+    CreateTaskTemplateUseCase,
+    ListTaskTemplatesUseCase,
+    ApplyTaskTemplateUseCase,
+    CreateTemplateFromTasksUseCase,
+    // Comment attachments + annotations + audio
+    AddCommentAttachmentUseCase,
+    AddImageAnnotationUseCase,
+    UploadCommentAudioUseCase,
     // Reorder + Time tracking
     ReorderTasksUseCase,
     StartTimeTrackingUseCase,

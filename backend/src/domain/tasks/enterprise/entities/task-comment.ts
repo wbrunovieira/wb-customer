@@ -49,10 +49,10 @@ export class TaskComment extends Entity<TaskCommentProps> {
   get deletedAt() { return this.props.deletedAt }
   get createdAt() { return this.props.createdAt }
   get updatedAt() { return this.props.updatedAt }
-  get attachments() { return this.props.attachments ?? [] }
-  get annotations() { return this.props.annotations ?? [] }
-  get reactions() { return this.props.reactions ?? [] }
-  get replies() { return this.props.replies ?? [] }
+  get attachments(): CommentAttachmentData[] { return this.props.attachments ?? [] }
+  get annotations(): ImageAnnotationData[] { return this.props.annotations ?? [] }
+  get reactions(): CommentReactionData[] { return this.props.reactions ?? [] }
+  get replies(): TaskComment[] { return this.props.replies ?? [] }
 
   resolve() {
     this.props.resolved = true
@@ -62,6 +62,25 @@ export class TaskComment extends Entity<TaskCommentProps> {
   softDelete() {
     this.props.deletedAt = new Date()
     this.props.updatedAt = new Date()
+  }
+
+  addAttachment(data: CommentAttachmentData): void {
+    this.props.attachments = [...this.attachments, data]
+    this.props.updatedAt = new Date()
+  }
+
+  addAnnotation(data: ImageAnnotationData): void {
+    this.props.annotations = [...this.annotations, data]
+    this.props.updatedAt = new Date()
+  }
+
+  addReaction(userId: string, emoji: string): void {
+    const exists = this.reactions.some((r) => r.userId === userId && r.emoji === emoji)
+    if (!exists) this.props.reactions = [...this.reactions, { userId, emoji }]
+  }
+
+  removeReaction(userId: string, emoji: string): void {
+    this.props.reactions = this.reactions.filter((r) => !(r.userId === userId && r.emoji === emoji))
   }
 
   static create(props: Omit<TaskCommentProps, 'resolved' | 'deletedAt' | 'createdAt' | 'updatedAt'>): TaskComment {
