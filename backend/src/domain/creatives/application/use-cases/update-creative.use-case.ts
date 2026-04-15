@@ -9,6 +9,7 @@ export interface UpdateCreativeRequest {
   creativeId: string
   title?: string
   caption?: string | null
+  textInCreative?: string | null
   designDescription?: string | null
   objective?: string | null
   status?: string
@@ -30,6 +31,7 @@ export class UpdateCreativeUseCase {
     creative.updateDetails({
       title: req.title,
       caption: req.caption,
+      textInCreative: req.textInCreative,
       designDescription: req.designDescription,
       objective: req.objective !== undefined ? (req.objective as CampaignObjective | null) : undefined,
     })

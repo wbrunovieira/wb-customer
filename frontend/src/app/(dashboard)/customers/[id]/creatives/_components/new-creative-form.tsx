@@ -37,13 +37,14 @@ export default function NewCreativeForm({ customerId }: Props) {
     const title = data.get('title') as string
     const type = data.get('type') as string
     const caption = (data.get('caption') as string) || undefined
+    const textInCreative = (data.get('textInCreative') as string) || undefined
     const designDescription = (data.get('designDescription') as string) || undefined
     const objective = (data.get('objective') as string) || undefined
 
     if (!title || !type) return
 
     startTransition(async () => {
-      const result = await createCreative(customerId, { title, type, caption, designDescription, objective })
+      const result = await createCreative(customerId, { title, type, caption, textInCreative, designDescription, objective })
 
       if (result.message) {
         error(result.message)
@@ -105,9 +106,19 @@ export default function NewCreativeForm({ customerId }: Props) {
           <textarea
             name="caption"
             rows={2}
-            placeholder="Texto do anúncio"
+            placeholder="Texto do anúncio (legenda do post)"
             className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi placeholder:text-lo focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
           />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-lo mb-1">Texto no criativo</label>
+          <input
+            name="textInCreative"
+            placeholder="ex: DESCONTO 30% • Aproveite agora"
+            className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi placeholder:text-lo focus:outline-none focus:ring-2 focus:ring-accent/50"
+          />
+          <p className="mt-1 text-xs text-lo">Headline ou CTA sobreposto visualmente no criativo</p>
         </div>
 
         <div className="sm:col-span-2">

@@ -39,6 +39,7 @@ export default function UpdateCreativeForm({ creative }: Props) {
         title: data.get('title') as string,
         status: data.get('status') as string,
         caption: (data.get('caption') as string) || null,
+        textInCreative: (data.get('textInCreative') as string) || null,
         designDescription: (data.get('designDescription') as string) || null,
         objective: (data.get('objective') as string) || null,
       })
@@ -99,6 +100,17 @@ export default function UpdateCreativeForm({ creative }: Props) {
             defaultValue={creative.caption ?? ''}
             className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
           />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-lo mb-1">Texto no criativo</label>
+          <input
+            name="textInCreative"
+            defaultValue={creative.textInCreative ?? ''}
+            placeholder="ex: DESCONTO 30% • Aproveite agora"
+            className="w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi placeholder:text-lo focus:outline-none focus:ring-2 focus:ring-accent/50"
+          />
+          <p className="mt-1 text-xs text-lo">Headline ou CTA sobreposto visualmente no criativo</p>
         </div>
 
         <div className="sm:col-span-2">

@@ -154,6 +154,13 @@ export default async function CreativeDetailPage({ params }: Props) {
                 )}
               </div>
 
+              {creative.textInCreative && (
+                <div className="rounded-lg border border-border bg-elevated px-3 py-2">
+                  <p className="text-xs font-medium text-lo mb-0.5">Texto no criativo</p>
+                  <p className="text-sm text-hi font-medium">{creative.textInCreative}</p>
+                </div>
+              )}
+
               {creative.mimeType && (
                 <p className="text-xs text-lo">{creative.mimeType}</p>
               )}

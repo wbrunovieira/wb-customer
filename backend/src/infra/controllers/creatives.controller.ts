@@ -32,6 +32,7 @@ import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
 import { CreateCreativeUseCase } from '@/domain/creatives/application/use-cases/create-creative.use-case'
+import { GetCreativePerformanceSummaryUseCase } from '@/domain/creatives/application/use-cases/get-creative-performance-summary.use-case'
 import { UploadCreativeFileUseCase } from '@/domain/creatives/application/use-cases/upload-creative-file.use-case'
 import { GetCreativeUseCase } from '@/domain/creatives/application/use-cases/get-creative.use-case'
 import { ListCreativesUseCase } from '@/domain/creatives/application/use-cases/list-creatives.use-case'
@@ -47,6 +48,7 @@ class CreateCreativeDto {
   @ApiProperty({ example: 'Anúncio de lançamento' }) title!: string
   @ApiProperty({ enum: ['image', 'video', 'carousel'] }) type!: string
   @ApiPropertyOptional({ example: 'Conheça nosso produto' }) caption?: string
+  @ApiPropertyOptional({ example: 'DESCONTO 30%', description: 'Texto sobreposto visualmente no criativo (headline/CTA)' }) textInCreative?: string
   @ApiPropertyOptional({ example: 'Fundo branco, produto centralizado' }) designDescription?: string
   @ApiPropertyOptional({ enum: ['awareness', 'traffic', 'engagement', 'leads', 'sales', 'retargeting'] }) objective?: string
 }
@@ -54,6 +56,7 @@ class CreateCreativeDto {
 class UpdateCreativeDto {
   @ApiPropertyOptional() title?: string
   @ApiPropertyOptional() caption?: string | null
+  @ApiPropertyOptional({ description: 'Texto sobreposto visualmente no criativo' }) textInCreative?: string | null
   @ApiPropertyOptional() designDescription?: string | null
   @ApiPropertyOptional({ enum: ['awareness', 'traffic', 'engagement', 'leads', 'sales', 'retargeting'] }) objective?: string | null
   @ApiPropertyOptional({ enum: ['draft', 'active', 'paused', 'archived'] }) status?: string
@@ -83,6 +86,7 @@ function toHttp(c: Creative) {
     customerId: c.customerId,
     title: c.title,
     caption: c.caption,
+    textInCreative: c.textInCreative,
     designDescription: c.designDescription,
     type: c.type,
     objective: c.objective,
@@ -113,6 +117,7 @@ export class CreativesController {
     private readonly updateCreative: UpdateCreativeUseCase,
     private readonly deleteCreative: DeleteCreativeUseCase,
     private readonly addPerformance: AddCreativePerformanceUseCase,
+    private readonly getPerformanceSummary: GetCreativePerformanceSummaryUseCase,
     private readonly performanceRepo: ICreativePerformanceRepository,
   ) {}
 
@@ -135,6 +140,7 @@ export class CreativesController {
       title: body.title,
       type: body.type,
       caption: body.caption,
+      textInCreative: body.textInCreative,
       designDescription: body.designDescription,
       objective: body.objective,
       createdByUserId: user.userId,
@@ -244,7 +250,16 @@ export class CreativesController {
     @Param('creativeId') creativeId: string,
     @Body() body: UpdateCreativeDto,
   ) {
-    const result = await this.updateCreative.execute({ customerId, creativeId, ...body })
+    const result = await this.updateCreative.execute({
+      customerId,
+      creativeId,
+      title: body.title,
+      caption: body.caption,
+      textInCreative: body.textInCreative,
+      designDescription: body.designDescription,
+      objective: body.objective,
+      status: body.status,
+    })
     if (result.isLeft()) throw new NotFoundException(result.value.message)
   }
 
@@ -300,6 +315,21 @@ export class CreativesController {
 
     if (result.isLeft()) throw new NotFoundException(result.value.message)
     return { performanceId: result.value.performanceId }
+  }
+
+  @Get(':creativeId/performances/summary')
+  @ApiOperation({ summary: 'Get aggregated performance summary for a creative' })
+  @ApiParam({ name: 'customerId' })
+  @ApiParam({ name: 'creativeId' })
+  @ApiResponse({ status: 200, description: 'Aggregated performance summary' })
+  @ApiResponse({ status: 404, description: 'Creative not found' })
+  async getPerformanceSummaryRoute(
+    @Param('customerId') customerId: string,
+    @Param('creativeId') creativeId: string,
+  ) {
+    const result = await this.getPerformanceSummary.execute({ customerId, creativeId })
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+    return result.value.summary
   }
 
   @Get(':creativeId/performances')

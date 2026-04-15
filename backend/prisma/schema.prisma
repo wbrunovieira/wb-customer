@@ -589,6 +589,7 @@ model Creative {
   customerId        String            @map("customer_id")
   title             String
   caption           String?
+  textInCreative    String?           @map("text_in_creative")
   designDescription String?           @map("design_description")
   type              CreativeType
   objective         CampaignObjective?

@@ -18,6 +18,7 @@ export async function createCreative(
     title: string
     type: string
     caption?: string
+    textInCreative?: string
     designDescription?: string
     objective?: string
   },
@@ -57,6 +58,7 @@ export async function updateCreative(
   data: {
     title?: string
     caption?: string | null
+    textInCreative?: string | null
     designDescription?: string | null
     objective?: string | null
     status?: string

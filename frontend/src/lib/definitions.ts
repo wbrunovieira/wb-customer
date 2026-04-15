@@ -378,6 +378,7 @@ export type Creative = {
   customerId: string
   title: string
   caption: string | null
+  textInCreative: string | null
   designDescription: string | null
   type: CreativeType
   objective: CampaignObjective | null

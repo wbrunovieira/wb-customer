@@ -9,6 +9,7 @@ export interface CreateCreativeRequest {
   customerId: string
   title: string
   caption?: string
+  textInCreative?: string
   designDescription?: string
   type: string
   objective?: string
@@ -46,6 +47,7 @@ export class CreateCreativeUseCase {
       customerId: req.customerId,
       title: req.title,
       caption: req.caption ?? null,
+      textInCreative: req.textInCreative ?? null,
       designDescription: req.designDescription ?? null,
       type: req.type as CreativeType,
       objective: (req.objective as CampaignObjective) ?? null,

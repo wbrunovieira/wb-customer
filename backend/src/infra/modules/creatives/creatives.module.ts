@@ -8,6 +8,7 @@ import { ListCreativesUseCase } from '@/domain/creatives/application/use-cases/l
 import { UpdateCreativeUseCase } from '@/domain/creatives/application/use-cases/update-creative.use-case'
 import { DeleteCreativeUseCase } from '@/domain/creatives/application/use-cases/delete-creative.use-case'
 import { AddCreativePerformanceUseCase } from '@/domain/creatives/application/use-cases/add-creative-performance.use-case'
+import { GetCreativePerformanceSummaryUseCase } from '@/domain/creatives/application/use-cases/get-creative-performance-summary.use-case'
 import { CreateCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/create-creative-strategy.use-case'
 import { UpdateCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/update-creative-strategy.use-case'
 import { DeleteCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/delete-creative-strategy.use-case'
@@ -34,6 +35,7 @@ import { ICustomerRepository } from '@/domain/customers/application/repositories
     UpdateCreativeUseCase,
     DeleteCreativeUseCase,
     AddCreativePerformanceUseCase,
+    GetCreativePerformanceSummaryUseCase,
     CreateCreativeStrategyUseCase,
     UpdateCreativeStrategyUseCase,
     DeleteCreativeStrategyUseCase,

@@ -19,6 +19,7 @@ CREATE TABLE "creatives" (
     "customer_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "caption" TEXT,
+    "text_in_creative" TEXT,
     "design_description" TEXT,
     "type" "CreativeType" NOT NULL,
     "objective" "CampaignObjective",

@@ -26,6 +26,7 @@ export interface CreativeProps {
   customerId: string
   title: string
   caption?: string | null
+  textInCreative?: string | null
   designDescription?: string | null
   type: CreativeType
   objective?: CampaignObjective | null
@@ -72,6 +73,7 @@ export class Creative extends AggregateRoot<CreativeProps> {
   get customerId(): string { return this.props.customerId }
   get title(): string { return this.props.title }
   get caption(): string | null { return this.props.caption ?? null }
+  get textInCreative(): string | null { return this.props.textInCreative ?? null }
   get designDescription(): string | null { return this.props.designDescription ?? null }
   get type(): CreativeType { return this.props.type }
   get objective(): CampaignObjective | null { return this.props.objective ?? null }
@@ -92,11 +94,13 @@ export class Creative extends AggregateRoot<CreativeProps> {
   updateDetails(details: {
     title?: string
     caption?: string | null
+    textInCreative?: string | null
     designDescription?: string | null
     objective?: CampaignObjective | null
   }): void {
     if (details.title !== undefined) this.props.title = details.title
     if (details.caption !== undefined) this.props.caption = details.caption
+    if (details.textInCreative !== undefined) this.props.textInCreative = details.textInCreative
     if (details.designDescription !== undefined) this.props.designDescription = details.designDescription
     if (details.objective !== undefined) this.props.objective = details.objective
     this.props.updatedAt = new Date()
