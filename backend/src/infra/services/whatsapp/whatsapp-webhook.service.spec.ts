@@ -59,6 +59,139 @@ beforeEach(() => {
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
+describe('WhatsAppWebhookService.recordSentMessage', () => {
+  const REMOTE_JID = '5511999998888@s.whatsapp.net'
+
+  describe('new session (no open activity within 2h)', () => {
+    beforeEach(() => {
+      mockActivityFindFirst.mockResolvedValueOnce(null)
+      mockActivityCreate.mockResolvedValueOnce({ id: 'act-sent-new' })
+      mockWhatsAppMessageCreate.mockResolvedValueOnce({ id: 'wm-sent' })
+    })
+
+    it('should create a new whatsapp activity', async () => {
+      await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-1',
+        text: 'Olá',
+        createdByUserId: 'agent-1',
+      })
+
+      expect(mockActivityCreate).toHaveBeenCalledOnce()
+      expect(mockActivityCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customerId: 'cust-1',
+            type: 'whatsapp',
+            status: 'open',
+          }),
+        }),
+      )
+    })
+
+    it('should create WhatsAppMessage with fromMe=true and senderName="Você"', async () => {
+      await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-1',
+        text: 'Olá',
+        createdByUserId: 'agent-1',
+      })
+
+      expect(mockWhatsAppMessageCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            messageId: 'msg-sent-1',
+            remoteJid: REMOTE_JID,
+            fromMe: true,
+            senderName: 'Você',
+            text: 'Olá',
+          }),
+        }),
+      )
+    })
+
+    it('should return the new activityId', async () => {
+      const result = await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-1',
+        text: 'Olá',
+        createdByUserId: 'agent-1',
+      })
+
+      expect(result).toEqual({ activityId: 'act-sent-new' })
+    })
+
+    it('should push SSE broadcast for sent message', async () => {
+      await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-1',
+        text: 'Olá',
+        createdByUserId: 'agent-1',
+      })
+
+      expect(mockNotifications.pushBroadcast).toHaveBeenCalledOnce()
+      expect(mockNotifications.pushBroadcast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'activity.whatsapp',
+          meta: expect.objectContaining({ customerId: 'cust-1' }),
+        }),
+      )
+    })
+  })
+
+  describe('existing session (open activity within 2h)', () => {
+    beforeEach(() => {
+      mockActivityFindFirst.mockResolvedValueOnce({ id: 'act-open', description: 'linha anterior' })
+      mockActivityUpdate.mockResolvedValueOnce({})
+      mockWhatsAppMessageCreate.mockResolvedValueOnce({ id: 'wm-sent-2' })
+    })
+
+    it('should NOT create a new activity, should update existing', async () => {
+      await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-2',
+        text: 'Resposta',
+        createdByUserId: 'agent-1',
+      })
+
+      expect(mockActivityCreate).not.toHaveBeenCalled()
+      expect(mockActivityUpdate).toHaveBeenCalledOnce()
+    })
+
+    it('should append the sent message line to existing description', async () => {
+      await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-2',
+        text: 'Resposta',
+        createdByUserId: 'agent-1',
+      })
+
+      const updateData = mockActivityUpdate.mock.calls[0][0] as { data: { description: string } }
+      expect(updateData.data.description).toContain('linha anterior')
+      expect(updateData.data.description).toContain('Você')
+      expect(updateData.data.description).toContain('Resposta')
+    })
+
+    it('should return the existing activityId', async () => {
+      const result = await sut.recordSentMessage({
+        customerId: 'cust-1',
+        remoteJid: REMOTE_JID,
+        messageId: 'msg-sent-2',
+        text: 'Resposta',
+        createdByUserId: 'agent-1',
+      })
+
+      expect(result).toEqual({ activityId: 'act-open' })
+    })
+  })
+})
+
 describe('WhatsAppWebhookService.process', () => {
   describe('early returns (no side effects)', () => {
     it('should return early for non-upsert events', async () => {

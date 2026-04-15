@@ -160,6 +160,86 @@ export class WhatsAppWebhookService {
     }
   }
 
+  /**
+   * Records a message sent via the CRM (fromMe=true) into the activity timeline.
+   * Reuses the same 2h session-window logic as the inbound webhook.
+   */
+  async recordSentMessage(params: {
+    customerId: string
+    remoteJid: string
+    messageId: string
+    text: string
+    createdByUserId: string
+  }): Promise<{ activityId: string }> {
+    const { customerId, remoteJid, messageId, text, createdByUserId } = params
+    const senderName = 'Você'
+    const timestamp = new Date()
+    const line = this.buildDescriptionLine(senderName, text, null, timestamp)
+
+    // Session grouping — find open activity within 2h
+    const since = new Date(Date.now() - SESSION_WINDOW_MS)
+    const openActivity = await this.prisma.activity.findFirst({
+      where: {
+        customerId,
+        type: 'whatsapp',
+        deletedAt: null,
+        createdAt: { gte: since },
+        whatsappMessages: { some: { remoteJid } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    let activityId: string
+
+    if (openActivity) {
+      activityId = openActivity.id
+      await this.prisma.activity.update({
+        where: { id: activityId },
+        data: {
+          description: openActivity.description
+            ? `${openActivity.description}\n${line}`
+            : line,
+          updatedAt: new Date(),
+        },
+      })
+    } else {
+      const phone = remoteJid.split('@')[0]
+      const created = await this.prisma.activity.create({
+        data: {
+          customerId,
+          type: 'whatsapp',
+          status: 'open',
+          subject: `WhatsApp — ${phone}`,
+          description: line,
+          createdByUserId,
+        },
+      })
+      activityId = created.id
+    }
+
+    await this.prisma.whatsAppMessage.create({
+      data: {
+        activityId,
+        messageId,
+        remoteJid,
+        fromMe: true,
+        senderName,
+        text,
+        messageType: 'conversation',
+        timestamp,
+      },
+    })
+
+    this.notifications.pushBroadcast({
+      type: 'activity.whatsapp',
+      title: 'WhatsApp enviado',
+      body: text,
+      meta: { customerId, activityId, remoteJid },
+    })
+
+    return { activityId }
+  }
+
   private extractText(payload: EvolutionWebhookPayload): string | null {
     const msg = payload.message
     if (!msg) return null

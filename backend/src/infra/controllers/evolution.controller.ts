@@ -29,6 +29,7 @@ import { EvolutionApiClient } from '@/infra/services/whatsapp/evolution-api.clie
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
+import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
 
 class SendWhatsAppDto {
   @ApiProperty({ example: '5511999998888', description: 'Phone number (digits only or E.164)' })
@@ -103,10 +104,24 @@ export class EvolutionController {
   @ApiResponse({ status: 201, description: 'Message sent' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async send(
-    @Param('customerId') _customerId: string,
+    @Param('customerId') customerId: string,
     @Body() body: SendWhatsAppDto,
+    @CurrentUser() user: { userId: string },
   ) {
     const result = await this.evolutionClient.sendText(body.to, body.text)
-    return { ok: !!result, messageId: result?.messageId }
+
+    if (!result) {
+      return { ok: false, messageId: undefined }
+    }
+
+    await this.webhookService.recordSentMessage({
+      customerId,
+      remoteJid: `${body.to}@s.whatsapp.net`,
+      messageId: result.messageId,
+      text: body.text,
+      createdByUserId: user.userId,
+    })
+
+    return { ok: true, messageId: result.messageId }
   }
 }
