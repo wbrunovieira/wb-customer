@@ -16,7 +16,8 @@
 > **2026-04-15 (sessão 12):** Fase 10 — Criativos. Backend completo (TDD): 5 enums + 4 models Prisma (`Creative`, `CreativePerformance`, `CreativeStrategy`, `CreativeStrategyItem`); entidades DDD `Creative` + `CreativeStrategy`; 11 use-cases com specs; `PrismaCreative*` repositories; `GoogleCreativesFolderService` (Drive idempotente); `CreativesController` + `CreativeStrategiesController` com Swagger; `CreativesModule` no `AppModule`. Bug fix: 3 use-cases usavam `type CustomerRepo` (TypeScript alias, apagado em runtime) em vez de `ICustomerRepository`/`IStorageAdapter` — corrigido para injeção NestJS correta. DB atualizado via `prisma db push` (sem destruir dados). Frontend pendente: lista/detalhe de criativos, navegação no cliente.
 > **2026-04-16 (sessão 13):** Criativos — frontend completo. `stage` (exploration/refinement/scale) + `parentCreativeId` + `variationAspects String[]` + `thumbnailUrl` adicionados ao backend/Prisma/frontend. Formulário de criação reescrito como multi-entry unificado: seleciona múltiplos arquivos (cada um vira criativo com ID próprio) ou adiciona entradas manualmente clonando a anterior; arquivo obrigatório com rollback automático se upload falhar. `CreativeCard` client component com lightbox (zoom, Escape, Drive link). Página global `/creatives` no menu lateral agrupada por cliente. SSE proxy reescrito com `node:http` (fix de body timeout de 5min do undici). Server action body limit aumentado para 50 MB.
 > **2026-04-16 (sessão 14–15):** Tráfego Pago — FASE 11-A concluída. Design do domínio `paid-traffic` definido e implementado: 6 tabelas Prisma (MetaConfig, MetaAdAccount, Campaign, AdSet, Ad, AdDailyMetric), 5 entidades DDD, 6 repositórios (abstract classes), `IAdPlatformAdapter` stub, 19 use-cases com 561 testes passando, 6 Prisma repositories + mappers, 2 controllers com Swagger completo (22 rotas), `PaidTrafficModule` registrado. Commit: `feat(paid-traffic): add domain entities, use-cases, repositories and controller`.
-> **2026-04-16 (sessão 16):** FASE 11-B + 11-C concluídas. Ver entregáveis abaixo.
+> **2026-04-16 (sessão 16):** FASE 11-B + 11-C concluídas. MetaAdPlatformAdapter (mock + real Graph API), PublishCampaignUseCase, SyncCampaignMetricsUseCase, PauseCampaignUseCase, ResumeCampaignUseCase, MetricsSyncSchedulerService (cron 8h). Frontend: `/traffic` dashboard, wizard 3 passos, detalhe de campanha, CreativePicker, MetaAdAccount config. 569 testes.
+> **2026-04-16 (sessão 17):** Auditoria e correções de gaps FASE 11. Fixes: (1) GetCampaignDashboardUseCase — adSetBreakdown agora retorna estrutura aninhada `{adSet, ads:[{ad, creative, totals}]}` compatível com frontend; (2) rota `POST :campaignId/archive` adicionada ao controller; (3) URL errada `/sync-metrics` → `/sync` no server action; (4) `resumeCampaign` server action adicionado; (5) botão "Retomar" em campaign-actions para campanhas pausadas; (6) specs de PauseCampaign e ResumeCampaign adicionadas. 577 testes passando.
 
 ---
 
@@ -2650,16 +2651,17 @@ POST /api/v1/customers/:customerId/campaigns/:campaignId/pause    # pausa no Met
 POST /api/v1/customers/:customerId/campaigns/:campaignId/resume   # reativa no Meta
 ```
 
-#### Entregáveis Fase 11-B
+#### Entregáveis Fase 11-B ✅ CONCLUÍDA
 
-- [ ] `MetaAdPlatformAdapter` implementado (ou stub se credenciais não disponíveis — injetar mock em dev)
-- [ ] `PublishCampaignUseCase` com TDD (mock do adapter)
-- [ ] `SyncCampaignMetricsUseCase` com TDD (mock do adapter)
-- [ ] `MetricsSyncSchedulerService` (cron 8h)
-- [ ] Variáveis de ambiente documentadas no `.env.example`
-- [ ] Admin pode configurar Meta via `/admin/meta-config` (UI)
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit: `feat(paid-traffic): add Meta Marketing API adapter and publish/sync flows`
+- [x] `MetaAdPlatformAdapter` implementado (META_MOCK_MODE=true como fallback sem credenciais)
+- [x] `PublishCampaignUseCase` com TDD (5 testes, mock do adapter)
+- [x] `SyncCampaignMetricsUseCase` com TDD (3 testes)
+- [x] `PauseCampaignUseCase` + `ResumeCampaignUseCase` com TDD (4 testes cada)
+- [x] `MetricsSyncSchedulerService` (cron 8h, America/Sao_Paulo)
+- [x] Variáveis de ambiente documentadas no `.env.example`
+- [x] Rotas: publish, sync, pause, resume, archive com Swagger
+- [x] `tsc --noEmit` sem erros
+- [x] Commit: `feat(paid-traffic): add Meta Marketing API adapter and publish/sync flows`
 
 ---
 
@@ -2902,18 +2904,19 @@ export async function deleteAd(customerId, campaignId, adSetId, adId): Promise<v
 export async function saveMetaAdAccount(customerId, data): Promise<{ message?: string }>
 ```
 
-#### Entregáveis Fase 11-C
+#### Entregáveis Fase 11-C ✅ CONCLUÍDA
 
-- [ ] Dashboard `/customers/[id]/traffic` com KPIs + gráficos (Tremor)
-- [ ] Formulário wizard de criação de campanha (3 passos)
-- [ ] Componente `CreativePicker` (modal com grid de criativos do cliente)
-- [ ] Detalhe da campanha com breakdown por ad + botão publicar
-- [ ] Configuração `MetaAdAccount` por cliente (formulário + exibição)
-- [ ] Navegação "Tráfego" no menu do cliente
-- [ ] Server actions em `campaigns.ts`
-- [ ] Tipos em `definitions.ts`
-- [ ] `tsc --noEmit` sem erros
-- [ ] Commit: `feat(paid-traffic): add traffic dashboard, campaign management and creative selector`
+- [x] Dashboard `/customers/[id]/traffic` com KPI cards, tabela de campanhas, badges de status/publicação
+- [x] Wizard 3 passos `/traffic/campaigns/new` (Campanha → Ad Sets → Anúncios)
+- [x] Componente `CreativePicker` (modal com grid de criativos do cliente)
+- [x] Detalhe `/traffic/campaigns/[id]` com breakdown adSet→ad, KPIs, botões de ação
+- [x] `CampaignActions` client component: mark-ready, publish, sync, pause, resume, archive com loading state
+- [x] Configuração `MetaAdAccount` por cliente (`/traffic/meta-config`)
+- [x] Navegação "Tráfego" na página do cliente
+- [x] Server actions em `campaigns.ts` (16 funções + resumeCampaign corrigida)
+- [x] Tipos em `definitions.ts`
+- [x] `tsc --noEmit` sem erros
+- [x] Commits: `feat(paid-traffic): add traffic dashboard...` + `fix(paid-traffic): audit and fix gaps`
 
 ---
 

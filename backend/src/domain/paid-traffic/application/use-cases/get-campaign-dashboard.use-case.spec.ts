@@ -75,7 +75,7 @@ describe('GetCampaignDashboardUseCase', () => {
       expect(result.value.totals.spent).toBe(75)
       expect(result.value.dailySeries).toHaveLength(2)
       expect(result.value.adSetBreakdown).toHaveLength(1)
-      expect(result.value.adSetBreakdown[0].adSetName).toBe(adSet.name)
+      expect(result.value.adSetBreakdown[0].adSet.name).toBe(adSet.name)
     }
   })
 

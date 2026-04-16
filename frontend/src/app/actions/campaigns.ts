@@ -126,7 +126,7 @@ export async function syncCampaignMetrics(
 ): Promise<{ message?: string }> {
   try {
     await apiServer.post(
-      `/api/v1/customers/${customerId}/campaigns/${campaignId}/sync-metrics`,
+      `/api/v1/customers/${customerId}/campaigns/${campaignId}/sync`,
       {},
     )
     revalidateCampaign(customerId, campaignId)
@@ -143,6 +143,22 @@ export async function archiveCampaign(
   try {
     await apiServer.post(
       `/api/v1/customers/${customerId}/campaigns/${campaignId}/archive`,
+      {},
+    )
+    revalidateCampaign(customerId, campaignId)
+    return {}
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
+export async function resumeCampaign(
+  customerId: string,
+  campaignId: string,
+): Promise<{ message?: string }> {
+  try {
+    await apiServer.post(
+      `/api/v1/customers/${customerId}/campaigns/${campaignId}/resume`,
       {},
     )
     revalidateCampaign(customerId, campaignId)

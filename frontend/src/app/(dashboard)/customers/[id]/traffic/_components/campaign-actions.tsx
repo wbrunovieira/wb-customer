@@ -8,6 +8,7 @@ import {
   syncCampaignMetrics,
   archiveCampaign,
   pauseCampaign,
+  resumeCampaign,
 } from '@/app/actions/campaigns'
 import { CampaignPublishStatus, TrafficCampaignStatus } from '@/lib/definitions'
 
@@ -125,6 +126,21 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
                 </svg>
               )}
               Pausar
+            </button>
+          )}
+          {status === 'paused' && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => handle(() => resumeCampaign(customerId, campaignId))}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated disabled:opacity-50"
+            >
+              {isPending ? <Spinner /> : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              )}
+              Retomar
             </button>
           )}
         </>

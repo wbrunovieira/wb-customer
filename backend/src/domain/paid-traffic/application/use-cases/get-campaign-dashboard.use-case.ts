@@ -5,6 +5,8 @@ import { IAdSetRepository } from '../repositories/i-ad-set.repository'
 import { IAdRepository } from '../repositories/i-ad.repository'
 import { IAdDailyMetricRepository, AdDailyMetricData } from '../repositories/i-ad-daily-metric.repository'
 import { Campaign } from '../../enterprise/entities/campaign'
+import { AdSet } from '../../enterprise/entities/ad-set'
+import { Ad } from '../../enterprise/entities/ad'
 
 export interface GetCampaignDashboardRequest {
   campaignId: string
@@ -33,13 +35,25 @@ export interface DailySeriesEntry {
   conversions: number
 }
 
-export interface AdSetBreakdownEntry {
-  adSetId: string
-  adSetName: string
+export interface AdMetricTotals {
   impressions: number
   clicks: number
   spent: number
   conversions: number
+  ctr: number | null
+  cpc: number | null
+  roas: number | null
+}
+
+export interface AdBreakdownEntry {
+  ad: Ad
+  creativeId: string | null
+  totals: AdMetricTotals
+}
+
+export interface AdSetBreakdownEntry {
+  adSet: AdSet
+  ads: AdBreakdownEntry[]
 }
 
 export interface GetCampaignDashboardResponse {
@@ -139,18 +153,30 @@ export class GetCampaignDashboardUseCase {
 
     for (const adSet of adSets) {
       const ads = await this.adRepo.findByAdSetId(adSet.id.value)
-      const adIds = new Set(ads.map((a) => a.id.value))
 
-      const adSetMetrics = metrics.filter((m) => adIds.has(m.adId))
+      const adEntries: AdBreakdownEntry[] = ads.map((ad) => {
+        const adMetrics = metrics.filter((m) => m.adId === ad.id.value)
+        const impressions = adMetrics.reduce((s, m) => s + m.impressions, 0)
+        const clicks = adMetrics.reduce((s, m) => s + m.clicks, 0)
+        const spent = adMetrics.reduce((s, m) => s + m.spent, 0)
+        const conversions = adMetrics.reduce((s, m) => s + m.conversions, 0)
 
-      breakdown.push({
-        adSetId: adSet.id.value,
-        adSetName: adSet.name,
-        impressions: adSetMetrics.reduce((s, m) => s + m.impressions, 0),
-        clicks: adSetMetrics.reduce((s, m) => s + m.clicks, 0),
-        spent: adSetMetrics.reduce((s, m) => s + m.spent, 0),
-        conversions: adSetMetrics.reduce((s, m) => s + m.conversions, 0),
+        return {
+          ad,
+          creativeId: ad.creativeId,
+          totals: {
+            impressions,
+            clicks,
+            spent,
+            conversions,
+            ctr: impressions > 0 ? (clicks / impressions) * 100 : null,
+            cpc: clicks > 0 ? spent / clicks : null,
+            roas: spent > 0 ? conversions / spent : null,
+          },
+        }
       })
+
+      breakdown.push({ adSet, ads: adEntries })
     }
 
     return breakdown

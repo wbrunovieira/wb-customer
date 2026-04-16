@@ -36,6 +36,7 @@ import { ListCustomerCampaignsUseCase } from '@/domain/paid-traffic/application/
 import { GetCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/get-campaign.use-case'
 import { MarkCampaignReadyUseCase } from '@/domain/paid-traffic/application/use-cases/mark-campaign-ready.use-case'
 import { DeleteCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/delete-campaign.use-case'
+import { ArchiveCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/archive-campaign.use-case'
 import { CreateAdSetUseCase } from '@/domain/paid-traffic/application/use-cases/create-ad-set.use-case'
 import { UpdateAdSetUseCase } from '@/domain/paid-traffic/application/use-cases/update-ad-set.use-case'
 import { DeleteAdSetUseCase } from '@/domain/paid-traffic/application/use-cases/delete-ad-set.use-case'
@@ -304,6 +305,7 @@ export class CampaignsController {
     private readonly listCampaigns: ListCustomerCampaignsUseCase,
     private readonly getCampaign: GetCampaignUseCase,
     private readonly markReady: MarkCampaignReadyUseCase,
+    private readonly archiveCampaign: ArchiveCampaignUseCase,
     private readonly deleteCampaign: DeleteCampaignUseCase,
     private readonly createAdSet: CreateAdSetUseCase,
     private readonly updateAdSet: UpdateAdSetUseCase,
@@ -650,8 +652,31 @@ export class CampaignsController {
       campaign: campaignToHttp(result.value.campaign),
       totals: result.value.totals,
       dailySeries: result.value.dailySeries,
-      adSetBreakdown: result.value.adSetBreakdown,
+      adSetBreakdown: result.value.adSetBreakdown.map((entry) => ({
+        adSet: adSetToHttp(entry.adSet),
+        ads: entry.ads.map((adEntry) => ({
+          ad: adToHttp(adEntry.ad),
+          creative: null,
+          totals: adEntry.totals,
+        })),
+      })),
     }
+  }
+
+  // ── Archive ─────────────────────────────────────────────────────────────────
+
+  @Post(':campaignId/archive')
+  @ApiOperation({ summary: 'Archive a campaign' })
+  @ApiParam({ name: 'customerId' })
+  @ApiParam({ name: 'campaignId' })
+  @ApiResponse({ status: 201, description: 'Campaign archived' })
+  @ApiResponse({ status: 404, description: 'Campaign not found' })
+  async archiveCampaignRoute(
+    @Param('campaignId') campaignId: string,
+  ) {
+    const result = await this.archiveCampaign.execute({ campaignId })
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+    return { success: true }
   }
 
   // ── Publish / Sync / Pause / Resume ────────────────────────────────────────
