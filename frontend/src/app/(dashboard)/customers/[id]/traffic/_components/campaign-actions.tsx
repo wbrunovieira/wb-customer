@@ -11,31 +11,7 @@ import {
   resumeCampaign,
 } from '@/app/actions/campaigns'
 import { CampaignPublishStatus, TrafficCampaignStatus } from '@/lib/definitions'
-
-function Spinner() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="animate-spin"
-    >
-      <line x1="12" y1="2" x2="12" y2="6" />
-      <line x1="12" y1="18" x2="12" y2="22" />
-      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
-      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-      <line x1="2" y1="12" x2="6" y2="12" />
-      <line x1="18" y1="12" x2="22" y2="12" />
-      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
-      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-    </svg>
-  )
-}
+import LoadingDots from '@/components/ui/loading-dots'
 
 interface Props {
   customerId: string
@@ -69,7 +45,7 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
           onClick={() => handle(() => markCampaignReady(customerId, campaignId))}
           className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated disabled:opacity-50"
         >
-          {isPending ? <Spinner /> : (
+          {isPending ? <LoadingDots /> : (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -85,7 +61,7 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
           onClick={() => handle(() => publishCampaign(customerId, campaignId))}
           className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {isPending ? <Spinner /> : (
+          {isPending ? <LoadingDots /> : (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 2L11 13" />
               <path d="M22 2L15 22 11 13 2 9l20-7z" />
@@ -103,7 +79,7 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
             onClick={() => handle(() => syncCampaignMetrics(customerId, campaignId))}
             className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated disabled:opacity-50"
           >
-            {isPending ? <Spinner /> : (
+            {isPending ? <LoadingDots /> : (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10" />
                 <polyline points="1 20 1 14 7 14" />
@@ -119,7 +95,7 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
               onClick={() => handle(() => pauseCampaign(customerId, campaignId))}
               className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated disabled:opacity-50"
             >
-              {isPending ? <Spinner /> : (
+              {isPending ? <LoadingDots /> : (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="6" y="4" width="4" height="16" />
                   <rect x="14" y="4" width="4" height="16" />
@@ -135,7 +111,7 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
               onClick={() => handle(() => resumeCampaign(customerId, campaignId))}
               className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated disabled:opacity-50"
             >
-              {isPending ? <Spinner /> : (
+              {isPending ? <LoadingDots /> : (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
@@ -153,7 +129,7 @@ export default function CampaignActions({ customerId, campaignId, publishStatus,
           onClick={() => handle(() => archiveCampaign(customerId, campaignId))}
           className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-lo transition-colors hover:text-hi hover:bg-elevated disabled:opacity-50"
         >
-          {isPending ? <Spinner /> : (
+          {isPending ? <LoadingDots /> : (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="21 8 21 21 3 21 3 8" />
               <rect x="1" y="3" width="22" height="5" />

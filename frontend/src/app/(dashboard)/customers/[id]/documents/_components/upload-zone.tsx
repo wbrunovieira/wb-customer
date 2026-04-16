@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from 'react'
 import { uploadDocument } from '@/app/actions/documents'
 import { DocumentFormState } from '@/lib/definitions'
+import LoadingDots from '@/components/ui/loading-dots'
 
 type Props = {
   customerId: string
@@ -183,9 +184,7 @@ export default function UploadZone({ customerId }: Props) {
       >
         {pending ? (
           <>
-            <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-            </svg>
+            <LoadingDots />
             Enviando...
           </>
         ) : (

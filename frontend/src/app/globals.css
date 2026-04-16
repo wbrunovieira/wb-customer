@@ -137,6 +137,11 @@ input, textarea, select { color-scheme: dark; }
 }
 .btn-brand:disabled { opacity: 0.45; cursor: not-allowed; }
 
+@keyframes wb-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0);    opacity: 0.35; }
+  40%            { transform: translateY(-4px); opacity: 1;    }
+}
+
 /* Card com borda de gradiente sutil */
 .card-glow {
   position: relative;

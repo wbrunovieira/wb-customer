@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import { scheduleMeeting } from '@/app/actions/meetings'
 import { CustomerListItem, MeetingFormState, MeetingType } from '@/lib/definitions'
+import LoadingDots from '@/components/ui/loading-dots'
 
 type Props = {
   customers: CustomerListItem[]
@@ -224,9 +225,7 @@ export default function ScheduleMeetingForm({ customers, meetingTypes, preselect
         >
           {pending ? (
             <>
-              <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
+              <LoadingDots />
               Agendando...
             </>
           ) : (

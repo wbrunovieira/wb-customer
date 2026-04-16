@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Creative, CreativeType, CreativeStage, PaginatedResponse } from '@/lib/definitions'
+import LoadingDots from '@/components/ui/loading-dots'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3003'
 
@@ -137,12 +138,7 @@ export default function CreativePicker({ customerId, value, onChange, selectedCr
             <div className="flex-1 overflow-y-auto p-5">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-accent">
-                    <line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" />
-                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" /><line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-                    <line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" />
-                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" /><line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-                  </svg>
+                  <LoadingDots className="scale-150 text-accent" />
                 </div>
               ) : creatives.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-2">
