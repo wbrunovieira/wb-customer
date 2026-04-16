@@ -15,6 +15,7 @@ export interface PaginatedCampaigns {
 export abstract class ICampaignRepository {
   abstract findById(id: string): Promise<Campaign | null>
   abstract findByCustomerId(customerId: string, params?: FindManyCampaignsParams): Promise<PaginatedCampaigns>
+  abstract findAllPublished(): Promise<Campaign[]>
   abstract save(campaign: Campaign): Promise<void>
   abstract delete(id: string): Promise<void>
 }

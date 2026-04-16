@@ -22,6 +22,10 @@ import { UpdateAdUseCase } from '@/domain/paid-traffic/application/use-cases/upd
 import { DeleteAdUseCase } from '@/domain/paid-traffic/application/use-cases/delete-ad.use-case'
 import { RecordAdDailyMetricsUseCase } from '@/domain/paid-traffic/application/use-cases/record-ad-daily-metrics.use-case'
 import { GetCampaignDashboardUseCase } from '@/domain/paid-traffic/application/use-cases/get-campaign-dashboard.use-case'
+import { PublishCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/publish-campaign.use-case'
+import { SyncCampaignMetricsUseCase } from '@/domain/paid-traffic/application/use-cases/sync-campaign-metrics.use-case'
+import { PauseCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/pause-campaign.use-case'
+import { ResumeCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/resume-campaign.use-case'
 
 // Repository interfaces
 import { IMetaConfigRepository } from '@/domain/paid-traffic/application/repositories/i-meta-config.repository'
@@ -31,6 +35,10 @@ import { IAdSetRepository } from '@/domain/paid-traffic/application/repositories
 import { IAdRepository } from '@/domain/paid-traffic/application/repositories/i-ad.repository'
 import { IAdDailyMetricRepository } from '@/domain/paid-traffic/application/repositories/i-ad-daily-metric.repository'
 
+// Adapter interface and implementation
+import { IAdPlatformAdapter } from '@/domain/paid-traffic/application/services/i-ad-platform.adapter'
+import { MetaAdPlatformAdapter } from '@/infra/adapters/ad-platform/meta-ad-platform.adapter'
+
 // Prisma repositories
 import { PrismaMetaConfigRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-meta-config.repository'
 import { PrismaMetaAdAccountRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-meta-ad-account.repository'
@@ -38,6 +46,9 @@ import { PrismaCampaignRepository } from '@/infra/database/prisma/repositories/p
 import { PrismaAdSetRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-ad-set.repository'
 import { PrismaAdRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-ad.repository'
 import { PrismaAdDailyMetricRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-ad-daily-metric.repository'
+
+// Schedulers
+import { MetricsSyncSchedulerService } from '@/infra/scheduled/metrics-sync-scheduler.service'
 
 @Module({
   controllers: [MetaConfigController, MetaAdAccountController, CampaignsController],
@@ -62,6 +73,16 @@ import { PrismaAdDailyMetricRepository } from '@/infra/database/prisma/repositor
     DeleteAdUseCase,
     RecordAdDailyMetricsUseCase,
     GetCampaignDashboardUseCase,
+    PublishCampaignUseCase,
+    SyncCampaignMetricsUseCase,
+    PauseCampaignUseCase,
+    ResumeCampaignUseCase,
+
+    // Schedulers
+    MetricsSyncSchedulerService,
+
+    // Adapter binding
+    { provide: IAdPlatformAdapter, useClass: MetaAdPlatformAdapter },
 
     // Repository bindings
     { provide: IMetaConfigRepository, useClass: PrismaMetaConfigRepository },

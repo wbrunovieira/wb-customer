@@ -1,6 +1,6 @@
 # WB Customer — Plano de Implementação
 
-> **Última revisão:** 2026-04-15 (sessão 11–12)
+> **Última revisão:** 2026-04-16 (sessão 15–16)
 > Decisões arquiteturais registradas após sessão de refinamento.  
 > **2026-04-13 (portal):** decisões do portal do cliente registradas.  
 > **2026-04-14 (sessão 1):** Backend fases 1–5 concluídas. Frontend fases 1–2 concluídas. CustomerStatus `lead` removido. Fase 3 Frontend concluída. Google Drive + OAuth2 ativos.  
@@ -14,6 +14,9 @@
 > **2026-04-15 (sessão 10):** Fase 7 — frontend das pendências concluído. `/task-templates` (página global): listar, criar do zero com rows de tarefas, excluir, aplicar a qualquer cliente via modal. `TemplatesSection` na página de tarefas do cliente: aplicar template com um clique + criar template via multi-select das tarefas existentes. `CommentsSection` reescrita: botão 📎 de anexo de arquivo + gravador de áudio ao vivo com `MediaRecorder` e timer. `ImageAnnotationViewer`: imagem com pins numerados sobrepostos, modo crosshair para clicar e anotar. Link "Templates" no sidebar. Fase 7 totalmente concluída.
 > **2026-04-15 (sessão 11):** Fase 9 — Comunicações. Backend: `WhatsAppWebhookService.recordSentMessage()` (TDD, 8 testes) — grava mensagens enviadas como activities, reaproveita janela de sessão de 2h. `EvolutionController.send()` atualizado para chamar `recordSentMessage` e aceitar `@CurrentUser()`. 9 testes de controller adicionados.
 > **2026-04-15 (sessão 12):** Fase 10 — Criativos. Backend completo (TDD): 5 enums + 4 models Prisma (`Creative`, `CreativePerformance`, `CreativeStrategy`, `CreativeStrategyItem`); entidades DDD `Creative` + `CreativeStrategy`; 11 use-cases com specs; `PrismaCreative*` repositories; `GoogleCreativesFolderService` (Drive idempotente); `CreativesController` + `CreativeStrategiesController` com Swagger; `CreativesModule` no `AppModule`. Bug fix: 3 use-cases usavam `type CustomerRepo` (TypeScript alias, apagado em runtime) em vez de `ICustomerRepository`/`IStorageAdapter` — corrigido para injeção NestJS correta. DB atualizado via `prisma db push` (sem destruir dados). Frontend pendente: lista/detalhe de criativos, navegação no cliente.
+> **2026-04-16 (sessão 13):** Criativos — frontend completo. `stage` (exploration/refinement/scale) + `parentCreativeId` + `variationAspects String[]` + `thumbnailUrl` adicionados ao backend/Prisma/frontend. Formulário de criação reescrito como multi-entry unificado: seleciona múltiplos arquivos (cada um vira criativo com ID próprio) ou adiciona entradas manualmente clonando a anterior; arquivo obrigatório com rollback automático se upload falhar. `CreativeCard` client component com lightbox (zoom, Escape, Drive link). Página global `/creatives` no menu lateral agrupada por cliente. SSE proxy reescrito com `node:http` (fix de body timeout de 5min do undici). Server action body limit aumentado para 50 MB.
+> **2026-04-16 (sessão 14–15):** Tráfego Pago — FASE 11-A concluída. Design do domínio `paid-traffic` definido e implementado: 6 tabelas Prisma (MetaConfig, MetaAdAccount, Campaign, AdSet, Ad, AdDailyMetric), 5 entidades DDD, 6 repositórios (abstract classes), `IAdPlatformAdapter` stub, 19 use-cases com 561 testes passando, 6 Prisma repositories + mappers, 2 controllers com Swagger completo (22 rotas), `PaidTrafficModule` registrado. Commit: `feat(paid-traffic): add domain entities, use-cases, repositories and controller`.
+> **2026-04-16 (sessão 16):** FASE 11-B + 11-C concluídas. Ver entregáveis abaixo.
 
 ---
 
@@ -2091,117 +2094,840 @@ GET    /api/v1/customers/:id/creatives/:creativeId/performance
 
 ---
 
-## FASE 10 — Tráfego Pago
+## FASE 11 — Tráfego Pago
 
-### Visão geral
+> **Renumeração:** Era FASE 10. CRM passa a ser FASE 12.
 
-Domínio `paid-traffic`. Gestão de campanhas de Meta Ads vinculadas à conta BM do admin. Registra dados diários de performance por campanha e por criativo. Integração com Meta Marketing API fornece dados de cada criativo na fase de exploração.
+### Visão Geral
 
-### Modelo Prisma (additions)
+Domínio `paid-traffic`. Gestão completa de campanhas de Meta Ads a partir do próprio sistema: criação de campanhas/ad sets/anúncios, seleção de criativos já cadastrados, publicação direta na Meta Marketing API, e sincronização automática diária de métricas por anúncio. Dashboard completo por cliente.
+
+**Decisões arquiteturais desta fase:**
+- Admin tem 1 Business Manager (BM) Meta e gerencia vários clientes, cada um com seu próprio Ad Account (`act_XXXXX`) dentro ou associado ao BM do admin
+- Autenticação via **System User permanente** (token que não expira, criado no BM do admin) — ideal para automações server-side; armazenado criptografado no banco
+- Hierarquia real Meta mapeada: `Campaign → AdSet → Ad → Creative`
+- Fluxo de publicação em 2 etapas: `draft → pronto_para_publicar → (botão Publicar) → ativo no Meta`
+- Métricas sincronizadas por **anúncio individualmente** (nível `ad`) via cron diário às 8h
+- Abstração `IAdPlatformAdapter` garante extensibilidade para Google Ads, TikTok Ads etc. no futuro
+- Pixel por cliente: armazenado no `MetaAdAccount` e usado nas campanhas de conversão
+
+---
+
+### FASE 11-A — Backend: Domínio, Entidades, Repositórios, Controller
+
+**Commit:** `feat(paid-traffic): add domain entities, use-cases, repositories and controller`
+
+#### Novos modelos Prisma
 
 ```prisma
+// ─────────────────────────────────────────
+// PAID TRAFFIC
+// ─────────────────────────────────────────
+
+// Config global do admin para a plataforma Meta
+// Singleton — sempre 1 registro com id = "meta-config-singleton"
+model MetaConfig {
+  id              String   @id @default("meta-config-singleton")
+  appId           String                    // Meta App ID
+  appSecret       String                    // Meta App Secret (criptografado)
+  systemUserToken String                    // System User permanent token (criptografado)
+  bmId            String                    // Business Manager ID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("meta_config")
+}
+
+// Config por cliente: qual ad account, página e pixel usam
+model MetaAdAccount {
+  id                 String   @id @default(uuid())
+  customerId         String   @unique
+  adAccountId        String                  // "act_XXXXX"
+  pageId             String?                 // Facebook Page ID (obrigatório para criar ads)
+  pixelId            String?                 // Meta Pixel ID (para campanhas de conversão)
+  instagramActorId   String?                 // Instagram account ID (para placement IG)
+  accountName        String?                 // nome legível do ad account
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("meta_ad_accounts")
+}
+
+enum CampaignObjective {
+  CONVERSIONS          // campanha de conversão (requer pixel)
+  LINK_CLICKS          // tráfego para URL
+  REACH                // alcance máximo
+  BRAND_AWARENESS      // reconhecimento de marca
+  LEAD_GENERATION      // formulário de leads nativo Meta
+  VIDEO_VIEWS          // visualizações de vídeo
+  POST_ENGAGEMENT      // engajamento em post
+}
+
+enum CampaignPublishStatus {
+  draft                // criado localmente, não enviado ao Meta
+  ready_to_publish     // marcado como pronto, aguardando aprovação/publicação
+  publishing           // em processo de envio para o Meta
+  published            // ativo no Meta (metaCampaignId preenchido)
+  publish_failed       // tentativa de publicação falhou (ver publishError)
+}
+
 enum CampaignStatus {
   active
   paused
   archived
 }
 
-model PaidTrafficCampaign {
-  id             String         @id @default(uuid())
-  customerId     String
-  name           String
-  status         CampaignStatus @default(active)
-  objective      String?        // "CONVERSIONS" | "BRAND_AWARENESS" | etc.
-  plannedBudget  Float?
-  spentBudget    Float          @default(0)
-  startAt        DateTime?
-  endAt          DateTime?
-  metaCampaignId String?        // ID da campanha no Meta BM
-  metaAdSetId    String?        // conjunto de anúncios
-  notes          String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+// Campanha de tráfego pago
+model Campaign {
+  id              String                @id @default(uuid())
+  customerId      String
+  name            String
+  objective       CampaignObjective
+  status          CampaignStatus        @default(active)
+  publishStatus   CampaignPublishStatus @default(draft)
+  plannedBudget   Float?                // orçamento previsto (R$)
+  dailyBudget     Float?                // orçamento diário (R$) — usado no Meta
+  startAt         DateTime?
+  endAt           DateTime?
+  notes           String?
+  metaCampaignId  String?               // preenchido após publicação no Meta
+  publishError    String?               // mensagem de erro da última tentativa
+  createdByUserId String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
-  customer      Customer               @relation(fields: [customerId], references: [id])
-  dailyMetrics  CampaignDailyMetric[]
-  creativeLinks CampaignCreativeLink[]
-  leads         Lead[]                 // leads vindos desta campanha (Fase 11)
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  adSets       AdSet[]
+  leads        CrmLeadSnapshot[] // leads oriundos desta campanha (Fase 12)
 
   @@index([customerId])
-  @@map("paid_traffic_campaigns")
+  @@map("campaigns")
 }
 
-model CampaignDailyMetric {
+// Conjunto de anúncios (AdSet)
+// Define orçamento, público-alvo, posicionamento e cronograma
+model AdSet {
+  id              String         @id @default(uuid())
+  campaignId      String
+  name            String
+  status          CampaignStatus @default(active)
+  publishStatus   CampaignPublishStatus @default(draft)
+  dailyBudget     Float?         // orçamento diário deste adset (R$)
+  totalBudget     Float?         // orçamento total (R$) — alternativa ao diário
+  startAt         DateTime?
+  endAt           DateTime?
+  targeting       Json?          // JSON livre com parâmetros de targeting do Meta
+                                 // Ex: {"age_min":25,"age_max":45,"interests":[{"id":"6003107902433","name":"Marketing"}]}
+  optimizationGoal String?       // "CONVERSIONS" | "LINK_CLICKS" | "REACH" | etc.
+  billingEvent    String?        // "IMPRESSIONS" | "LINK_CLICKS"
+  metaAdSetId     String?        // preenchido após publicação no Meta
+  publishError    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads      Ad[]
+
+  @@index([campaignId])
+  @@map("ad_sets")
+}
+
+enum AdCallToAction {
+  LEARN_MORE
+  SHOP_NOW
+  SIGN_UP
+  CONTACT_US
+  BOOK_NOW
+  DOWNLOAD
+  GET_QUOTE
+  SUBSCRIBE
+  WATCH_MORE
+  NO_BUTTON
+}
+
+// Anúncio individual — vinculado a um Creative do sistema
+model Ad {
+  id              String         @id @default(uuid())
+  adSetId         String
+  creativeId      String?        // Creative do sistema (imagem/vídeo já no Drive)
+  name            String
+  status          CampaignStatus @default(active)
+  publishStatus   CampaignPublishStatus @default(draft)
+  primaryText     String?        // texto principal do anúncio (até ~500 chars)
+  headline        String?        // título do anúncio (até ~40 chars)
+  description     String?        // descrição (até ~30 chars)
+  callToAction    AdCallToAction @default(LEARN_MORE)
+  destinationUrl  String?        // URL de destino (landing page)
+  metaAdId        String?        // preenchido após publicação no Meta
+  metaCreativeId  String?        // ID do AdCreative no Meta (gerado na publicação)
+  publishError    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  adSet        AdSet          @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  creative     Creative?      @relation(fields: [creativeId], references: [id])
+  dailyMetrics AdDailyMetric[]
+
+  @@index([adSetId])
+  @@index([creativeId])
+  @@map("ads")
+}
+
+// Métricas por anúncio por dia (sincronizadas da Meta Marketing API)
+// Granularidade: nível "ad" da API de Insights do Meta
+model AdDailyMetric {
   id          String   @id @default(uuid())
-  campaignId  String
+  adId        String
+  campaignId  String   // desnormalizado para facilitar agregações por campanha
   date        DateTime @db.Date
   impressions Int      @default(0)
-  clicks      Int      @default(0)
-  spent       Float    @default(0)
-  conversions Int      @default(0)
-  reach       Int?
-  cpc         Float?
-  cpm         Float?
+  clicks      Int      @default(0)    // link clicks
+  reach       Int      @default(0)
+  spent       Float    @default(0)    // valor gasto (R$)
+  conversions Int      @default(0)    // purchases / leads / etc. dependendo do objetivo
+  results     Int      @default(0)    // "results" do Meta (varia por objetivo)
+  ctr         Float?                  // click-through rate (%)
+  cpc         Float?                  // custo por clique (R$)
+  cpm         Float?                  // custo por mil impressões (R$)
+  cpp         Float?                  // custo por resultado
+  roas        Float?                  // return on ad spend (receita / gasto)
+  frequency   Float?                  // média de vezes que cada pessoa viu o anúncio
 
-  campaign PaidTrafficCampaign @relation(fields: [campaignId], references: [id])
+  ad       Ad      @relation(fields: [adId], references: [id], onDelete: Cascade)
 
-  @@unique([campaignId, date])
+  @@unique([adId, date])
+  @@index([adId])
   @@index([campaignId])
-  @@map("campaign_daily_metrics")
-}
-
-model CampaignCreativeLink {
-  campaignId String
-  creativeId String
-  phase      ExplorationPhase
-
-  campaign PaidTrafficCampaign @relation(fields: [campaignId], references: [id])
-  creative Creative             @relation(fields: [creativeId], references: [id])
-
-  @@id([campaignId, creativeId])
-  @@map("campaign_creative_links")
+  @@index([date])
+  @@map("ad_daily_metrics")
 }
 ```
 
-### Casos de Uso
+> **Obs.:** Adicionar ao modelo `Creative` existente a relação reversa: `ads Ad[]`
+> **Obs.:** Adicionar ao modelo `Customer` existente: `campaigns Campaign[]`, `metaAdAccount MetaAdAccount?`
 
-- `CreateCampaignUseCase`
-- `UpdateCampaignUseCase`
-- `ArchiveCampaignUseCase`
-- `ListCustomerCampaignsUseCase` — filtros (status, dateRange)
-- `RecordCampaignDailyMetricsUseCase` — registra dados do dia
-- `LinkCreativeToCampaignUseCase`
-- `GetCampaignPerformanceSummaryUseCase` — retorna totais + série histórica
-
-**Integração Meta (futura — detalhes na hora):**
-- `SyncMetaCampaignMetricsUseCase` — importa dados via Meta Marketing API
-
-### Endpoints
+#### Estrutura de pastas backend
 
 ```
-POST   /api/v1/customers/:id/campaigns
-GET    /api/v1/customers/:id/campaigns       # ?status=active|paused|archived
-GET    /api/v1/customers/:id/campaigns/:campaignId
-PATCH  /api/v1/customers/:id/campaigns/:campaignId
-DELETE /api/v1/customers/:id/campaigns/:campaignId
+src/domain/paid-traffic/
+  enterprise/
+    entities/
+      campaign.ts
+      ad-set.ts
+      ad.ts
+      ad-daily-metric.ts
+      meta-config.ts
+      meta-ad-account.ts
+    value-objects/
+      campaign-objective.vo.ts
+      campaign-publish-status.vo.ts
+      campaign-status.vo.ts
+  application/
+    repositories/
+      i-campaign.repository.ts
+      i-ad-set.repository.ts
+      i-ad.repository.ts
+      i-ad-daily-metric.repository.ts
+      i-meta-config.repository.ts
+      i-meta-ad-account.repository.ts
+    services/
+      i-ad-platform.adapter.ts        ← interface abstrata para Meta/Google/TikTok
+    use-cases/
+      # MetaConfig
+      save-meta-config.use-case.ts
+      get-meta-config.use-case.ts
+      # MetaAdAccount
+      save-meta-ad-account.use-case.ts
+      get-meta-ad-account.use-case.ts
+      # Campaign
+      create-campaign.use-case.ts
+      update-campaign.use-case.ts
+      mark-campaign-ready.use-case.ts  ← muda publishStatus para ready_to_publish
+      archive-campaign.use-case.ts
+      list-customer-campaigns.use-case.ts
+      get-campaign.use-case.ts
+      delete-campaign.use-case.ts
+      # AdSet
+      create-ad-set.use-case.ts
+      update-ad-set.use-case.ts
+      delete-ad-set.use-case.ts
+      # Ad
+      create-ad.use-case.ts
+      update-ad.use-case.ts
+      delete-ad.use-case.ts
+      # Metrics (manual input — sem Meta API ainda)
+      record-ad-daily-metrics.use-case.ts
+      get-campaign-dashboard.use-case.ts  ← agrega métricas para o dashboard
 
-POST   /api/v1/customers/:id/campaigns/:campaignId/metrics
-GET    /api/v1/customers/:id/campaigns/:campaignId/metrics    # ?from=&to=
-
-POST   /api/v1/customers/:id/campaigns/:campaignId/creatives/:creativeId
-DELETE /api/v1/customers/:id/campaigns/:campaignId/creatives/:creativeId
+src/infra/
+  database/prisma/
+    repositories/paid-traffic/
+      prisma-campaign.repository.ts
+      prisma-ad-set.repository.ts
+      prisma-ad.repository.ts
+      prisma-ad-daily-metric.repository.ts
+      prisma-meta-config.repository.ts
+      prisma-meta-ad-account.repository.ts
+    mappers/paid-traffic/
+      campaign.mapper.ts
+      ad-set.mapper.ts
+      ad.mapper.ts
+      meta-config.mapper.ts
+      meta-ad-account.mapper.ts
+  adapters/
+    ad-platform/
+      meta-ad-platform.adapter.ts    ← implementação concreta (Fase 11-B)
+  controllers/
+    paid-traffic.controller.ts
+    meta-config.controller.ts
+  paid-traffic.module.ts
 ```
 
-### Entregáveis Fase 10
+#### Interface `IAdPlatformAdapter`
 
-- [ ] Migrations (`paid_traffic_campaigns`, `campaign_daily_metrics`, `campaign_creative_links`)
-- [ ] Domínio `paid-traffic` com TDD
-- [ ] Frontend: lista de campanhas por cliente com status ativo/inativo
-- [ ] Dashboard de métricas diárias (gráfico de linha: gasto, cliques, conversões)
-- [ ] Vinculação campanha ↔ criativos (fase exploração/lapidação)
-- [ ] Orçamento previsto vs gasto
+```typescript
+// src/domain/paid-traffic/application/services/i-ad-platform.adapter.ts
+
+export interface CreateMetaCampaignParams {
+  adAccountId: string
+  name: string
+  objective: string        // Meta campaign objective string
+  status: 'ACTIVE' | 'PAUSED'
+  specialAdCategories?: string[]
+}
+
+export interface CreateMetaAdSetParams {
+  adAccountId: string
+  campaignId: string       // metaCampaignId
+  name: string
+  status: 'ACTIVE' | 'PAUSED'
+  dailyBudget?: number     // em centavos (Meta usa centavos)
+  lifetimeBudget?: number
+  startTime?: string       // ISO 8601
+  endTime?: string
+  targeting: Record<string, unknown>
+  optimizationGoal: string
+  billingEvent: string
+}
+
+export interface CreateMetaAdParams {
+  adAccountId: string
+  adSetId: string          // metaAdSetId
+  name: string
+  status: 'ACTIVE' | 'PAUSED'
+  // creative params
+  pageId: string
+  imageUrl?: string        // URL pública da imagem (ou usar uploadedImageHash)
+  videoId?: string         // Meta video ID (se vídeo foi uploadado antes)
+  primaryText: string
+  headline?: string
+  description?: string
+  callToAction: string
+  link: string             // URL de destino
+}
+
+export interface SyncMetricsParams {
+  adAccountId: string
+  adIds: string[]          // metaAdIds
+  dateRange: { since: string; until: string }  // YYYY-MM-DD
+}
+
+export interface AdMetricsResult {
+  metaAdId: string
+  date: string
+  impressions: number
+  clicks: number
+  reach: number
+  spend: number
+  conversions: number
+  results: number
+  ctr: number | null
+  cpc: number | null
+  cpm: number | null
+  cpp: number | null
+  roas: number | null
+  frequency: number | null
+}
+
+export abstract class IAdPlatformAdapter {
+  abstract createCampaign(params: CreateMetaCampaignParams): Promise<{ externalId: string }>
+  abstract createAdSet(params: CreateMetaAdSetParams): Promise<{ externalId: string }>
+  abstract uploadImage(adAccountId: string, imageBuffer: Buffer, filename: string): Promise<{ imageHash: string; url: string }>
+  abstract createAd(params: CreateMetaAdParams): Promise<{ externalId: string; creativeId: string }>
+  abstract pauseCampaign(adAccountId: string, metaCampaignId: string): Promise<void>
+  abstract resumeCampaign(adAccountId: string, metaCampaignId: string): Promise<void>
+  abstract syncMetrics(params: SyncMetricsParams): Promise<AdMetricsResult[]>
+}
+```
+
+#### Casos de Uso — detalhes importantes
+
+**`GetCampaignDashboardUseCase`** — retorna:
+```typescript
+interface CampaignDashboardResponse {
+  campaign: CampaignSummary
+  totals: {
+    impressions: number
+    clicks: number
+    reach: number
+    spent: number
+    conversions: number
+    ctr: number | null
+    cpc: number | null
+    roas: number | null
+  }
+  dailySeries: Array<{        // últimos N dias (padrão: 30)
+    date: string              // YYYY-MM-DD
+    impressions: number
+    clicks: number
+    spent: number
+    conversions: number
+  }>
+  adSetBreakdown: Array<{
+    adSet: AdSetSummary
+    ads: Array<{
+      ad: AdSummary
+      creative: CreativeSummary | null
+      totals: MetricTotals
+    }>
+  }>
+}
+```
+
+#### Endpoints Fase 11-A
+
+```
+# Meta Config (admin)
+POST   /api/v1/admin/meta-config
+GET    /api/v1/admin/meta-config
+PATCH  /api/v1/admin/meta-config
+
+# Meta Ad Account por cliente
+POST   /api/v1/customers/:customerId/meta-account
+GET    /api/v1/customers/:customerId/meta-account
+PATCH  /api/v1/customers/:customerId/meta-account
+
+# Campaigns
+POST   /api/v1/customers/:customerId/campaigns
+GET    /api/v1/customers/:customerId/campaigns          # ?status=&publishStatus=&objective=
+GET    /api/v1/customers/:customerId/campaigns/:campaignId
+PATCH  /api/v1/customers/:customerId/campaigns/:campaignId
+POST   /api/v1/customers/:customerId/campaigns/:campaignId/mark-ready   # draft → ready_to_publish
+DELETE /api/v1/customers/:customerId/campaigns/:campaignId
+
+# AdSets
+POST   /api/v1/customers/:customerId/campaigns/:campaignId/ad-sets
+PATCH  /api/v1/customers/:customerId/campaigns/:campaignId/ad-sets/:adSetId
+DELETE /api/v1/customers/:customerId/campaigns/:campaignId/ad-sets/:adSetId
+
+# Ads (dentro de AdSet)
+POST   /api/v1/customers/:customerId/campaigns/:campaignId/ad-sets/:adSetId/ads
+PATCH  /api/v1/customers/:customerId/campaigns/:campaignId/ad-sets/:adSetId/ads/:adId
+DELETE /api/v1/customers/:customerId/campaigns/:campaignId/ad-sets/:adSetId/ads/:adId
+
+# Metrics (manual input para quando não tiver Meta API configurada)
+POST   /api/v1/customers/:customerId/campaigns/:campaignId/metrics      # registra métricas manualmente por data
+GET    /api/v1/customers/:customerId/campaigns/:campaignId/dashboard    # dashboard agregado
+```
+
+#### Testes Fase 11-A
+
+Todos os use-cases com in-memory repositories seguindo o padrão TDD do projeto:
+- `create-campaign.use-case.spec.ts`
+- `update-campaign.use-case.spec.ts`
+- `mark-campaign-ready.use-case.spec.ts`
+- `create-ad-set.use-case.spec.ts`
+- `create-ad.use-case.spec.ts`
+- `record-ad-daily-metrics.use-case.spec.ts`
+- `get-campaign-dashboard.use-case.spec.ts`
+- E2E: `test/e2e/paid-traffic/campaigns.e2e-spec.ts`
+
+#### Entregáveis Fase 11-A ✅ CONCLUÍDA
+
+- [x] Migration Prisma com todos os novos modelos
+- [x] Entidades de domínio com TDD
+- [x] Todos os use-cases com specs (19 use-cases, 561 testes)
+- [x] Repositórios Prisma + mappers
+- [x] `PaidTrafficModule` registrado no `AppModule`
+- [x] Controller com Swagger completo (22 rotas)
+- [x] `tsc --noEmit` sem erros
+- [x] Commit: `feat(paid-traffic): add domain entities, use-cases, repositories and controller`
+
+---
+
+### FASE 11-B — Backend: Integração Meta Marketing API
+
+**Commit:** `feat(paid-traffic): add Meta Marketing API adapter and publish/sync flows`
+
+> **Pré-requisito para esta fase:** Admin precisa ter criado um Meta App e configurado as credenciais. Passos:
+> 1. Acesse [developers.facebook.com](https://developers.facebook.com) → Create App → Business
+> 2. Adicionar produto "Marketing API"
+> 3. Copiar App ID e App Secret para `META_APP_ID` e `META_APP_SECRET` no `.env`
+> 4. No Business Manager → System Users → criar System User (Admin level) → gerar token com permissões: `ads_management`, `ads_read`, `business_management`, `pages_read_engagement`, `pages_manage_ads`
+> 5. Copiar token para `META_SYSTEM_USER_TOKEN` no `.env`
+> 6. Configurar via `POST /api/v1/admin/meta-config` (token é criptografado antes de salvar)
+
+#### Variáveis de ambiente novas
+
+```env
+# Meta Marketing API
+META_APP_ID=<app id do meta>
+META_APP_SECRET=<app secret do meta>
+META_SYSTEM_USER_TOKEN=<system user permanent token>
+META_API_VERSION=v21.0                # versão atual da Graph API
+META_ENCRYPTION_KEY=<32 chars random> # para criptografar tokens no banco
+```
+
+#### `MetaAdPlatformAdapter` — implementação
+
+```typescript
+// src/infra/adapters/ad-platform/meta-ad-platform.adapter.ts
+// Usa o pacote 'facebook-nodejs-business-sdk' ou chamadas HTTP diretas via fetch
+
+// Base URL: https://graph.facebook.com/{META_API_VERSION}/
+
+// createCampaign → POST /{adAccountId}/campaigns
+// createAdSet    → POST /{adAccountId}/adsets
+// uploadImage    → POST /{adAccountId}/adimages (multipart/form-data)
+// createAdCreative → POST /{adAccountId}/adcreatives
+// createAd       → POST /{adAccountId}/ads
+// syncMetrics    → GET /{adId}/insights?fields=impressions,clicks,reach,spend,...&time_range={...}
+//                  ou batch: POST /  com array de requests
+```
+
+#### Novo use-case: `PublishCampaignUseCase`
+
+Fluxo completo de publicação:
+1. Valida que `publishStatus === ready_to_publish`
+2. Busca `MetaAdAccount` do cliente (lança erro se não configurado)
+3. Chama `IAdPlatformAdapter.createCampaign` → guarda `metaCampaignId`
+4. Para cada `AdSet`:
+   - Chama `createAdSet` → guarda `metaAdSetId`
+   - Para cada `Ad`:
+     - Se criativo é imagem: faz upload da imagem para o Meta → obtém `imageHash`
+     - Chama `createAd` → guarda `metaAdId` + `metaCreativeId`
+5. Atualiza `campaign.publishStatus = published`
+6. Salva tudo via repositórios
+7. Em caso de erro parcial: registra `publishError`, status = `publish_failed`
+
+```
+POST /api/v1/customers/:customerId/campaigns/:campaignId/publish
+```
+
+#### Novo use-case: `SyncCampaignMetricsUseCase`
+
+1. Busca todas as campanhas `published` com `metaCampaignId` preenchido
+2. Para cada campanha, busca todos os ads com `metaAdId` preenchido
+3. Chama `IAdPlatformAdapter.syncMetrics` para o dia anterior (ou range especificado)
+4. Faz upsert em `AdDailyMetric` para cada ad + data
+5. Pode ser chamado manualmente (`POST .../sync`) ou pelo cron
+
+```
+POST /api/v1/customers/:customerId/campaigns/:campaignId/sync  # manual trigger
+```
+
+#### `MetricsSyncSchedulerService` — cron diário
+
+```typescript
+// Roda todo dia às 08:00 (horário de Brasília)
+@Cron('0 8 * * *', { timeZone: 'America/Sao_Paulo' })
+async syncAllCampaigns() {
+  // busca todas as campanhas publicadas de todos os clientes
+  // executa SyncCampaignMetricsUseCase para cada uma
+  // loga erros mas não para o processo
+}
+```
+
+#### Endpoint adicional
+
+```
+POST /api/v1/customers/:customerId/campaigns/:campaignId/publish  # publica no Meta
+POST /api/v1/customers/:customerId/campaigns/:campaignId/sync     # força sync manual
+POST /api/v1/customers/:customerId/campaigns/:campaignId/pause    # pausa no Meta
+POST /api/v1/customers/:customerId/campaigns/:campaignId/resume   # reativa no Meta
+```
+
+#### Entregáveis Fase 11-B
+
+- [ ] `MetaAdPlatformAdapter` implementado (ou stub se credenciais não disponíveis — injetar mock em dev)
+- [ ] `PublishCampaignUseCase` com TDD (mock do adapter)
+- [ ] `SyncCampaignMetricsUseCase` com TDD (mock do adapter)
+- [ ] `MetricsSyncSchedulerService` (cron 8h)
+- [ ] Variáveis de ambiente documentadas no `.env.example`
+- [ ] Admin pode configurar Meta via `/admin/meta-config` (UI)
 - [ ] `tsc --noEmit` sem erros
-- [ ] Commit + push GitHub
+- [ ] Commit: `feat(paid-traffic): add Meta Marketing API adapter and publish/sync flows`
+
+---
+
+### FASE 11-C — Frontend: Dashboard e Gestão de Campanhas
+
+**Commit:** `feat(paid-traffic): add traffic dashboard, campaign management and creative selector`
+
+#### Páginas
+
+```
+/customers/[id]/traffic                           ← dashboard geral do cliente
+/customers/[id]/traffic/campaigns/new             ← criar campanha + ad sets + ads
+/customers/[id]/traffic/campaigns/[campaignId]    ← detalhe com métricas, ads e botão publicar
+```
+
+#### `/customers/[id]/traffic` — Dashboard
+
+Seções:
+1. **KPI cards** (Tremor `Metric`): Gasto Total, Impressões, Cliques, Conversões, CTR médio, ROAS — período selecionável (7d / 30d / 90d / personalizado)
+2. **Gráfico de linha** (Tremor `LineChart`): Gasto vs. Conversões por dia
+3. **Gráfico de barras** (Tremor `BarChart`): Cliques por campanha
+4. **Tabela de campanhas**: nome, objetivo, status (badge colorido), publishStatus, orçamento previsto vs. gasto, conversões, botão "Ver detalhes"
+5. **Botão "Nova Campanha"** → `/customers/[id]/traffic/campaigns/new`
+
+#### `/customers/[id]/traffic/campaigns/new` — Criar Campanha
+
+Formulário em etapas (wizard com 3 passos):
+
+**Passo 1 — Campanha:**
+- Nome
+- Objetivo (select com labels em PT: Conversões, Tráfego, Alcance, etc.)
+- Orçamento diário / orçamento planejado total
+- Datas de início e fim (opcionais)
+- Notas
+
+**Passo 2 — Ad Sets:**
+- Botão "Adicionar Ad Set" (pode ter múltiplos)
+- Por Ad Set: nome, orçamento diário próprio (opcional — herda da campanha), targeting (textarea JSON por enquanto — evoluir para UI no futuro), datas
+
+**Passo 3 — Anúncios:**
+- Por Ad Set → lista de anúncios
+- Por anúncio:
+  - **Seletor de criativo** (componente `CreativePicker`): grid com thumbnails dos criativos cadastrados do cliente, filtros por tipo/etapa, seleção por clique
+  - Texto principal (textarea)
+  - Headline, Descrição
+  - CTA (select)
+  - URL de destino
+
+Ao finalizar → cria campanha como `draft` → redireciona para detalhe.
+
+#### `CreativePicker` — componente reutilizável
+
+```typescript
+// Abre um modal/painel lateral
+// Busca criativos do cliente via API
+// Mostra grid de thumbnails com: título, tipo, etapa, status
+// Seleção: clique no card → confirmar seleção
+// Props: customerId, value (creativeId | null), onChange
+```
+
+#### `/customers/[id]/traffic/campaigns/[campaignId]` — Detalhe da Campanha
+
+Seções:
+1. **Header**: nome da campanha, status badge, publishStatus badge, botões de ação:
+   - Se `draft`: "Marcar como Pronto" → muda para `ready_to_publish`
+   - Se `ready_to_publish`: botão destacado **"Publicar no Meta"** → chama publish endpoint → feedback de progresso
+   - Se `published`: "Sincronizar Métricas" + "Pausar Campanha"
+   - Sempre: "Editar" + "Arquivar"
+2. **Métricas da campanha** (KPI cards + gráfico de linha — período selecionável)
+3. **Ad Sets expandíveis**: cada ad set mostra seus anúncios
+4. **Por anúncio**: thumbnail do criativo vinculado, texto do anúncio, métricas individuais (impressões, cliques, CTR, CPC, conversões, gasto), status badge
+5. **Seção de configuração Meta** (colapsável): mostra ad account ID, page ID, pixel ID configurados para o cliente; link para editar
+
+#### Sidebar — novo item
+
+Adicionar "Tráfego" no menu lateral do sidebar, com ícone de gráfico de barras. A aba fica ativa para rotas `/customers/[id]/traffic/*`.
+
+> **Nota:** O item do sidebar fica dentro da navegação do cliente (não global), pois tráfego é sempre por cliente. Na aba do cliente (`/customers/[id]`) deve aparecer "Tráfego" ao lado de "Criativos", "Tarefas", etc.
+
+#### Navegação na página do cliente
+
+Na página `/customers/[id]` (ou no layout do cliente), adicionar "Tráfego" como aba/link de navegação, ao lado de Criativos, Tarefas, Atividades, etc.
+
+#### Definições de tipos frontend
+
+```typescript
+// src/lib/definitions.ts — adicionar:
+
+export type CampaignObjective =
+  | 'CONVERSIONS' | 'LINK_CLICKS' | 'REACH'
+  | 'BRAND_AWARENESS' | 'LEAD_GENERATION'
+  | 'VIDEO_VIEWS' | 'POST_ENGAGEMENT'
+
+export type CampaignPublishStatus =
+  | 'draft' | 'ready_to_publish' | 'publishing' | 'published' | 'publish_failed'
+
+export type CampaignStatus = 'active' | 'paused' | 'archived'
+
+export type AdCallToAction =
+  | 'LEARN_MORE' | 'SHOP_NOW' | 'SIGN_UP' | 'CONTACT_US'
+  | 'BOOK_NOW' | 'DOWNLOAD' | 'GET_QUOTE' | 'SUBSCRIBE'
+  | 'WATCH_MORE' | 'NO_BUTTON'
+
+export type Campaign = {
+  id: string
+  customerId: string
+  name: string
+  objective: CampaignObjective
+  status: CampaignStatus
+  publishStatus: CampaignPublishStatus
+  plannedBudget: number | null
+  dailyBudget: number | null
+  startAt: string | null
+  endAt: string | null
+  notes: string | null
+  metaCampaignId: string | null
+  publishError: string | null
+  createdAt: string
+  adSets?: AdSet[]
+}
+
+export type AdSet = {
+  id: string
+  campaignId: string
+  name: string
+  status: CampaignStatus
+  publishStatus: CampaignPublishStatus
+  dailyBudget: number | null
+  totalBudget: number | null
+  startAt: string | null
+  endAt: string | null
+  targeting: Record<string, unknown> | null
+  optimizationGoal: string | null
+  billingEvent: string | null
+  metaAdSetId: string | null
+  ads?: Ad[]
+}
+
+export type Ad = {
+  id: string
+  adSetId: string
+  creativeId: string | null
+  name: string
+  status: CampaignStatus
+  publishStatus: CampaignPublishStatus
+  primaryText: string | null
+  headline: string | null
+  description: string | null
+  callToAction: AdCallToAction
+  destinationUrl: string | null
+  metaAdId: string | null
+  creative?: Creative | null
+  metrics?: AdDailyMetric[]
+}
+
+export type AdDailyMetric = {
+  id: string
+  adId: string
+  campaignId: string
+  date: string
+  impressions: number
+  clicks: number
+  reach: number
+  spent: number
+  conversions: number
+  results: number
+  ctr: number | null
+  cpc: number | null
+  cpm: number | null
+  cpp: number | null
+  roas: number | null
+  frequency: number | null
+}
+
+export type MetaAdAccount = {
+  id: string
+  customerId: string
+  adAccountId: string
+  pageId: string | null
+  pixelId: string | null
+  instagramActorId: string | null
+  accountName: string | null
+  isActive: boolean
+}
+
+export type CampaignDashboard = {
+  campaign: Campaign
+  totals: {
+    impressions: number
+    clicks: number
+    reach: number
+    spent: number
+    conversions: number
+    ctr: number | null
+    cpc: number | null
+    roas: number | null
+  }
+  dailySeries: Array<{
+    date: string
+    impressions: number
+    clicks: number
+    spent: number
+    conversions: number
+  }>
+  adSetBreakdown: Array<{
+    adSet: AdSet
+    ads: Array<{
+      ad: Ad
+      creative: Creative | null
+      totals: {
+        impressions: number
+        clicks: number
+        spent: number
+        conversions: number
+        ctr: number | null
+        cpc: number | null
+        roas: number | null
+      }
+    }>
+  }>
+}
+```
+
+#### Server Actions frontend
+
+```typescript
+// src/app/actions/campaigns.ts
+export async function createCampaign(customerId, data): Promise<{ campaignId?: string; message?: string }>
+export async function updateCampaign(customerId, campaignId, data): Promise<{ message?: string }>
+export async function markCampaignReady(customerId, campaignId): Promise<{ message?: string }>
+export async function publishCampaign(customerId, campaignId): Promise<{ message?: string }>
+export async function syncCampaignMetrics(customerId, campaignId): Promise<{ message?: string }>
+export async function archiveCampaign(customerId, campaignId): Promise<{ message?: string }>
+export async function createAdSet(customerId, campaignId, data): Promise<{ adSetId?: string; message?: string }>
+export async function updateAdSet(customerId, campaignId, adSetId, data): Promise<{ message?: string }>
+export async function deleteAdSet(customerId, campaignId, adSetId): Promise<void>
+export async function createAd(customerId, campaignId, adSetId, data): Promise<{ adId?: string; message?: string }>
+export async function updateAd(customerId, campaignId, adSetId, adId, data): Promise<{ message?: string }>
+export async function deleteAd(customerId, campaignId, adSetId, adId): Promise<void>
+export async function saveMetaAdAccount(customerId, data): Promise<{ message?: string }>
+```
+
+#### Entregáveis Fase 11-C
+
+- [ ] Dashboard `/customers/[id]/traffic` com KPIs + gráficos (Tremor)
+- [ ] Formulário wizard de criação de campanha (3 passos)
+- [ ] Componente `CreativePicker` (modal com grid de criativos do cliente)
+- [ ] Detalhe da campanha com breakdown por ad + botão publicar
+- [ ] Configuração `MetaAdAccount` por cliente (formulário + exibição)
+- [ ] Navegação "Tráfego" no menu do cliente
+- [ ] Server actions em `campaigns.ts`
+- [ ] Tipos em `definitions.ts`
+- [ ] `tsc --noEmit` sem erros
+- [ ] Commit: `feat(paid-traffic): add traffic dashboard, campaign management and creative selector`
+
+---
+
+### Notas para o próximo agente implementar esta fase
+
+1. **Ordem de implementação:** 11-A → 11-B → 11-C. Cada uma gera um commit separado.
+2. **Padrão DDD obrigatório:** abstract class para injection tokens NestJS (não `type`). Ver bugs da Fase 10 como referência.
+3. **TDD obrigatório:** unit specs com in-memory repos para todos os use-cases. E2E para os endpoints principais.
+4. **Swagger obrigatório:** `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBody`/`@ApiParam`/`@ApiQuery`, `@ApiProperty` em todos os DTOs.
+5. **Meta API:** Se credenciais não estiverem disponíveis na Fase 11-B, criar `MockMetaAdPlatformAdapter` que retorna IDs falsos e logar chamadas — permite testar o fluxo sem conta Meta real.
+6. **Criptografia de tokens:** Usar `crypto.createCipheriv` (AES-256-GCM) com `META_ENCRYPTION_KEY` do `.env` para criptografar `systemUserToken` e `appSecret` antes de salvar no banco.
+7. **Tremor para gráficos:** Já está na decisão arquitetural do projeto. Instalar `@tremor/react` se ainda não estiver.
+8. **`CreativePicker`:** Reutilizável — será usado também na Fase 12 (CRM) para associar criativos a leads/campanhas.
+9. **Fase 11-B pode ser adiada:** Se as credenciais Meta não estiverem prontas, entregar 11-A e 11-C (com métricas manuais) e fazer 11-B depois como patch.
 
 ---
 

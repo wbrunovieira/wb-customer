@@ -37,6 +37,10 @@ export class InMemoryCampaignRepository implements ICampaignRepository {
     }
   }
 
+  async findAllPublished(): Promise<Campaign[]> {
+    return this.items.filter((c) => c.publishStatus === 'published')
+  }
+
   async delete(id: string): Promise<void> {
     this.items = this.items.filter((c) => c.id.value !== id)
   }

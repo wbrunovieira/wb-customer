@@ -53,6 +53,14 @@ export class PrismaCampaignRepository implements ICampaignRepository {
     })
   }
 
+  async findAllPublished(): Promise<Campaign[]> {
+    const raws = await this.prisma.campaign.findMany({
+      where: { publishStatus: 'published' },
+      orderBy: { createdAt: 'desc' },
+    })
+    return raws.map(CampaignMapper.toDomain)
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.campaign.delete({ where: { id } })
   }

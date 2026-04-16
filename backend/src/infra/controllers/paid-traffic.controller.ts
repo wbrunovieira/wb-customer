@@ -44,6 +44,10 @@ import { UpdateAdUseCase } from '@/domain/paid-traffic/application/use-cases/upd
 import { DeleteAdUseCase } from '@/domain/paid-traffic/application/use-cases/delete-ad.use-case'
 import { RecordAdDailyMetricsUseCase } from '@/domain/paid-traffic/application/use-cases/record-ad-daily-metrics.use-case'
 import { GetCampaignDashboardUseCase } from '@/domain/paid-traffic/application/use-cases/get-campaign-dashboard.use-case'
+import { PublishCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/publish-campaign.use-case'
+import { SyncCampaignMetricsUseCase } from '@/domain/paid-traffic/application/use-cases/sync-campaign-metrics.use-case'
+import { PauseCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/pause-campaign.use-case'
+import { ResumeCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/resume-campaign.use-case'
 
 import { Campaign } from '@/domain/paid-traffic/enterprise/entities/campaign'
 import { AdSet } from '@/domain/paid-traffic/enterprise/entities/ad-set'
@@ -309,6 +313,10 @@ export class CampaignsController {
     private readonly deleteAd: DeleteAdUseCase,
     private readonly recordMetrics: RecordAdDailyMetricsUseCase,
     private readonly getDashboard: GetCampaignDashboardUseCase,
+    private readonly publishCampaign: PublishCampaignUseCase,
+    private readonly syncMetrics: SyncCampaignMetricsUseCase,
+    private readonly pauseCampaign: PauseCampaignUseCase,
+    private readonly resumeCampaign: ResumeCampaignUseCase,
   ) {}
 
   // ── Campaigns ───────────────────────────────────────────────────────────────
@@ -644,5 +652,82 @@ export class CampaignsController {
       dailySeries: result.value.dailySeries,
       adSetBreakdown: result.value.adSetBreakdown,
     }
+  }
+
+  // ── Publish / Sync / Pause / Resume ────────────────────────────────────────
+
+  @Post(':campaignId/publish')
+  @ApiOperation({ summary: 'Publish a campaign to Meta Ads (must be in ready_to_publish state)' })
+  @ApiParam({ name: 'customerId', description: 'Customer ID' })
+  @ApiParam({ name: 'campaignId', description: 'Campaign ID' })
+  @ApiResponse({ status: 201, description: 'Campaign published successfully' })
+  @ApiResponse({ status: 400, description: 'Campaign not in ready_to_publish state or missing Meta config' })
+  @ApiResponse({ status: 404, description: 'Campaign not found' })
+  async publishCampaignRoute(
+    @Param('campaignId') campaignId: string,
+  ) {
+    const result = await this.publishCampaign.execute({ campaignId })
+    if (result.isLeft()) {
+      const msg = result.value.message
+      if (msg.includes('not found')) throw new NotFoundException(msg)
+      throw new BadRequestException(msg)
+    }
+    return { success: true, campaignId: result.value.campaignId }
+  }
+
+  @Post(':campaignId/sync')
+  @ApiOperation({ summary: 'Sync campaign metrics from Meta Ads for yesterday' })
+  @ApiParam({ name: 'customerId', description: 'Customer ID' })
+  @ApiParam({ name: 'campaignId', description: 'Campaign ID' })
+  @ApiResponse({ status: 201, description: 'Metrics synced' })
+  @ApiResponse({ status: 404, description: 'Campaign not found' })
+  async syncCampaignMetricsRoute(
+    @Param('campaignId') campaignId: string,
+  ) {
+    const result = await this.syncMetrics.execute({ campaignId })
+    if (result.isLeft()) {
+      const msg = result.value.message
+      if (msg.includes('not found')) throw new NotFoundException(msg)
+      throw new BadRequestException(msg)
+    }
+    return { success: true, synced: result.value.synced }
+  }
+
+  @Post(':campaignId/pause')
+  @ApiOperation({ summary: 'Pause a campaign on Meta Ads' })
+  @ApiParam({ name: 'customerId', description: 'Customer ID' })
+  @ApiParam({ name: 'campaignId', description: 'Campaign ID' })
+  @ApiResponse({ status: 201, description: 'Campaign paused' })
+  @ApiResponse({ status: 400, description: 'Campaign not yet published to Meta' })
+  @ApiResponse({ status: 404, description: 'Campaign not found' })
+  async pauseCampaignRoute(
+    @Param('campaignId') campaignId: string,
+  ) {
+    const result = await this.pauseCampaign.execute({ campaignId })
+    if (result.isLeft()) {
+      const msg = result.value.message
+      if (msg.includes('not found')) throw new NotFoundException(msg)
+      throw new BadRequestException(msg)
+    }
+    return { success: true }
+  }
+
+  @Post(':campaignId/resume')
+  @ApiOperation({ summary: 'Resume a paused campaign on Meta Ads' })
+  @ApiParam({ name: 'customerId', description: 'Customer ID' })
+  @ApiParam({ name: 'campaignId', description: 'Campaign ID' })
+  @ApiResponse({ status: 201, description: 'Campaign resumed' })
+  @ApiResponse({ status: 400, description: 'Campaign not yet published to Meta' })
+  @ApiResponse({ status: 404, description: 'Campaign not found' })
+  async resumeCampaignRoute(
+    @Param('campaignId') campaignId: string,
+  ) {
+    const result = await this.resumeCampaign.execute({ campaignId })
+    if (result.isLeft()) {
+      const msg = result.value.message
+      if (msg.includes('not found')) throw new NotFoundException(msg)
+      throw new BadRequestException(msg)
+    }
+    return { success: true }
   }
 }
