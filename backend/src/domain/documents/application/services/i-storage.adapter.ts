@@ -9,6 +9,7 @@ export interface UploadFileResult {
   fileId: string
   viewUrl: string
   downloadUrl: string
+  thumbnailUrl?: string | null
 }
 
 export abstract class IStorageAdapter {

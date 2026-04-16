@@ -3,6 +3,9 @@ import { UniqueEntityID } from '@/core/unique-entity-id'
 
 export type CreativeType = 'image' | 'video' | 'carousel'
 export type CreativeStatus = 'draft' | 'active' | 'paused' | 'archived'
+export type CreativeStage = 'exploration' | 'refinement' | 'scale'
+
+export const CREATIVE_STAGES: CreativeStage[] = ['exploration', 'refinement', 'scale']
 export type CampaignObjective =
   | 'awareness'
   | 'traffic'
@@ -29,6 +32,9 @@ export interface CreativeProps {
   textInCreative?: string | null
   designDescription?: string | null
   type: CreativeType
+  stage?: CreativeStage | null
+  parentCreativeId?: string | null
+  variationAspects?: string[]
   objective?: CampaignObjective | null
   status: CreativeStatus
   driveFileId?: string | null
@@ -76,6 +82,9 @@ export class Creative extends AggregateRoot<CreativeProps> {
   get textInCreative(): string | null { return this.props.textInCreative ?? null }
   get designDescription(): string | null { return this.props.designDescription ?? null }
   get type(): CreativeType { return this.props.type }
+  get stage(): CreativeStage | null { return this.props.stage ?? null }
+  get parentCreativeId(): string | null { return this.props.parentCreativeId ?? null }
+  get variationAspects(): string[] { return this.props.variationAspects ?? [] }
   get objective(): CampaignObjective | null { return this.props.objective ?? null }
   get status(): CreativeStatus { return this.props.status }
   get driveFileId(): string | null { return this.props.driveFileId ?? null }
@@ -96,12 +105,18 @@ export class Creative extends AggregateRoot<CreativeProps> {
     caption?: string | null
     textInCreative?: string | null
     designDescription?: string | null
+    stage?: CreativeStage | null
+    parentCreativeId?: string | null
+    variationAspects?: string[]
     objective?: CampaignObjective | null
   }): void {
     if (details.title !== undefined) this.props.title = details.title
     if (details.caption !== undefined) this.props.caption = details.caption
     if (details.textInCreative !== undefined) this.props.textInCreative = details.textInCreative
     if (details.designDescription !== undefined) this.props.designDescription = details.designDescription
+    if (details.stage !== undefined) this.props.stage = details.stage
+    if (details.parentCreativeId !== undefined) this.props.parentCreativeId = details.parentCreativeId
+    if (details.variationAspects !== undefined) this.props.variationAspects = details.variationAspects
     if (details.objective !== undefined) this.props.objective = details.objective
     this.props.updatedAt = new Date()
   }

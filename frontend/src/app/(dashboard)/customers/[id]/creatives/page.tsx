@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
-import { Customer, Creative, CreativeType, CreativeStatus, PaginatedResponse } from '@/lib/definitions'
+import { Customer, Creative, CreativeType, CreativeStatus, CreativeStage, PaginatedResponse } from '@/lib/definitions'
 import NewCreativeForm from './_components/new-creative-form'
 import DeleteCreativeButton from './_components/delete-creative-button'
 import UploadCreativeFile from './_components/upload-creative-file'
@@ -32,6 +32,24 @@ const STATUS_COLOR: Record<CreativeStatus, string> = {
   active: 'bg-green-500/10 text-green-400 ring-green-600/20',
   paused: 'bg-amber-500/10 text-amber-400 ring-amber-600/20',
   archived: 'bg-canvas text-lo ring-border',
+}
+
+const STAGE_LABEL: Record<CreativeStage, string> = {
+  exploration: 'Exploração',
+  refinement: 'Lapidação',
+  scale: 'Escala',
+}
+
+const STAGE_COLOR: Record<CreativeStage, string> = {
+  exploration: 'bg-sky-500/10 text-sky-400',
+  refinement: 'bg-violet-500/10 text-violet-400',
+  scale: 'bg-green-500/10 text-green-400',
+}
+
+function getThumbUrl(creative: Creative): string | null {
+  if (creative.thumbnailUrl) return creative.thumbnailUrl
+  if (creative.driveFileId) return `https://drive.google.com/thumbnail?id=${creative.driveFileId}&sz=w400-h300`
+  return null
 }
 
 type Props = {
@@ -127,7 +145,7 @@ export default async function CreativesPage({ params, searchParams }: Props) {
 
       {/* New Creative Form */}
       {newCreative === '1' && (
-        <NewCreativeForm customerId={id} />
+        <NewCreativeForm customerId={id} creatives={creatives} />
       )}
 
       {/* Filters */}
@@ -202,13 +220,13 @@ export default async function CreativesPage({ params, searchParams }: Props) {
               className="group relative flex flex-col rounded-xl border border-border bg-surface overflow-hidden transition-shadow hover:shadow-md"
             >
               {/* Thumbnail / Preview */}
-              <div className="relative h-40 bg-elevated flex items-center justify-center overflow-hidden">
-                {creative.thumbnailUrl || (creative.driveViewUrl && creative.mimeType?.startsWith('image')) ? (
+              <div className="relative h-44 bg-elevated flex items-center justify-center overflow-hidden">
+                {getThumbUrl(creative) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={creative.thumbnailUrl ?? creative.driveViewUrl ?? ''}
+                    src={getThumbUrl(creative)!}
                     alt={creative.title}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : creative.driveViewUrl ? (
                   <a
@@ -224,17 +242,27 @@ export default async function CreativesPage({ params, searchParams }: Props) {
                     <span className="text-xs">Ver no Drive</span>
                   </a>
                 ) : (
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-lo">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
+                  <div className="flex flex-col items-center gap-2 text-lo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span className="text-xs">Sem arquivo</span>
+                  </div>
                 )}
 
-                {/* Type badge */}
-                <span className={`absolute top-2 left-2 rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLOR[creative.type]}`}>
-                  {TYPE_LABEL[creative.type]}
-                </span>
+                {/* Badges overlay */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLOR[creative.type]}`}>
+                    {TYPE_LABEL[creative.type]}
+                  </span>
+                  {creative.stage && (
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_COLOR[creative.stage]}`}>
+                      {STAGE_LABEL[creative.stage]}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Body */}
@@ -251,12 +279,19 @@ export default async function CreativesPage({ params, searchParams }: Props) {
                   </span>
                 </div>
 
-                {creative.caption && (
-                  <p className="text-xs text-md line-clamp-2">{creative.caption}</p>
+                {creative.designDescription && (
+                  <p className="text-xs text-md line-clamp-2 italic">{creative.designDescription}</p>
                 )}
 
-                {creative.objective && (
-                  <p className="text-xs text-lo capitalize">{creative.objective}</p>
+                {creative.variationAspects.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {creative.variationAspects.slice(0, 3).map(a => (
+                      <span key={a} className="rounded-full bg-elevated px-2 py-0.5 text-xs text-lo">{a}</span>
+                    ))}
+                    {creative.variationAspects.length > 3 && (
+                      <span className="rounded-full bg-elevated px-2 py-0.5 text-xs text-lo">+{creative.variationAspects.length - 3}</span>
+                    )}
+                  </div>
                 )}
 
                 {/* Actions */}

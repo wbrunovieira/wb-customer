@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { Either, left, right } from '@/core/either'
 import { ICreativeRepository } from '../repositories/i-creative.repository'
-import { CampaignObjective, CreativeStatus } from '../../enterprise/entities/creative'
+import { CampaignObjective, CreativeStage, CreativeStatus } from '../../enterprise/entities/creative'
 import { CreativeNotFoundError } from '../../domain/exceptions/creative-not-found.error'
 
 export interface UpdateCreativeRequest {
@@ -11,6 +11,9 @@ export interface UpdateCreativeRequest {
   caption?: string | null
   textInCreative?: string | null
   designDescription?: string | null
+  stage?: string | null
+  parentCreativeId?: string | null
+  variationAspects?: string[]
   objective?: string | null
   status?: string
 }
@@ -33,6 +36,9 @@ export class UpdateCreativeUseCase {
       caption: req.caption,
       textInCreative: req.textInCreative,
       designDescription: req.designDescription,
+      stage: req.stage !== undefined ? (req.stage as CreativeStage | null) : undefined,
+      parentCreativeId: req.parentCreativeId,
+      variationAspects: req.variationAspects,
       objective: req.objective !== undefined ? (req.objective as CampaignObjective | null) : undefined,
     })
 

@@ -17,6 +17,9 @@ export async function createCreative(
   data: {
     title: string
     type: string
+    stage?: string
+    parentCreativeId?: string
+    variationAspects?: string[]
     caption?: string
     textInCreative?: string
     designDescription?: string
@@ -60,6 +63,9 @@ export async function updateCreative(
     caption?: string | null
     textInCreative?: string | null
     designDescription?: string | null
+    stage?: string | null
+    parentCreativeId?: string | null
+    variationAspects?: string[]
     objective?: string | null
     status?: string
   },

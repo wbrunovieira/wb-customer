@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { Either, left, right } from '@/core/either'
 import { ICreativeRepository } from '../repositories/i-creative.repository'
 import { ICustomerRepository } from '@/domain/customers/application/repositories/i-customer.repository'
-import { Creative, CREATIVE_TYPES, CAMPAIGN_OBJECTIVES, CreativeType, CampaignObjective } from '../../enterprise/entities/creative'
+import { Creative, CREATIVE_TYPES, CREATIVE_STAGES, CAMPAIGN_OBJECTIVES, CreativeType, CreativeStage, CampaignObjective } from '../../enterprise/entities/creative'
 import { CreativeNotFoundError } from '../../domain/exceptions/creative-not-found.error'
 
 export interface CreateCreativeRequest {
@@ -12,6 +12,9 @@ export interface CreateCreativeRequest {
   textInCreative?: string
   designDescription?: string
   type: string
+  stage?: string
+  parentCreativeId?: string
+  variationAspects?: string[]
   objective?: string
   createdByUserId: string
 }
@@ -43,6 +46,10 @@ export class CreateCreativeUseCase {
       return left(new Error(`Invalid objective: "${req.objective}"`))
     }
 
+    if (req.stage && !CREATIVE_STAGES.includes(req.stage as CreativeStage)) {
+      return left(new Error(`Invalid stage: "${req.stage}"`))
+    }
+
     const creative = Creative.create({
       customerId: req.customerId,
       title: req.title,
@@ -50,6 +57,9 @@ export class CreateCreativeUseCase {
       textInCreative: req.textInCreative ?? null,
       designDescription: req.designDescription ?? null,
       type: req.type as CreativeType,
+      stage: (req.stage as CreativeStage) ?? null,
+      parentCreativeId: req.parentCreativeId ?? null,
+      variationAspects: req.variationAspects ?? [],
       objective: (req.objective as CampaignObjective) ?? null,
       createdByUserId: req.createdByUserId,
     })

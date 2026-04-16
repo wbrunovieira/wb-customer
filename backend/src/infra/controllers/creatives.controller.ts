@@ -47,6 +47,9 @@ import { Creative } from '@/domain/creatives/enterprise/entities/creative'
 class CreateCreativeDto {
   @ApiProperty({ example: 'Anúncio de lançamento' }) title!: string
   @ApiProperty({ enum: ['image', 'video', 'carousel'] }) type!: string
+  @ApiPropertyOptional({ enum: ['exploration', 'refinement', 'scale'] }) stage?: string
+  @ApiPropertyOptional({ description: 'Parent creative ID (required for refinement stage)' }) parentCreativeId?: string
+  @ApiPropertyOptional({ type: [String], example: ['headline', 'background'], description: 'Aspects being varied (for refinement)' }) variationAspects?: string[]
   @ApiPropertyOptional({ example: 'Conheça nosso produto' }) caption?: string
   @ApiPropertyOptional({ example: 'DESCONTO 30%', description: 'Texto sobreposto visualmente no criativo (headline/CTA)' }) textInCreative?: string
   @ApiPropertyOptional({ example: 'Fundo branco, produto centralizado' }) designDescription?: string
@@ -58,6 +61,9 @@ class UpdateCreativeDto {
   @ApiPropertyOptional() caption?: string | null
   @ApiPropertyOptional({ description: 'Texto sobreposto visualmente no criativo' }) textInCreative?: string | null
   @ApiPropertyOptional() designDescription?: string | null
+  @ApiPropertyOptional({ enum: ['exploration', 'refinement', 'scale'] }) stage?: string | null
+  @ApiPropertyOptional() parentCreativeId?: string | null
+  @ApiPropertyOptional({ type: [String] }) variationAspects?: string[]
   @ApiPropertyOptional({ enum: ['awareness', 'traffic', 'engagement', 'leads', 'sales', 'retargeting'] }) objective?: string | null
   @ApiPropertyOptional({ enum: ['draft', 'active', 'paused', 'archived'] }) status?: string
 }
@@ -88,6 +94,9 @@ function toHttp(c: Creative) {
     caption: c.caption,
     textInCreative: c.textInCreative,
     designDescription: c.designDescription,
+    stage: c.stage,
+    parentCreativeId: c.parentCreativeId,
+    variationAspects: c.variationAspects,
     type: c.type,
     objective: c.objective,
     status: c.status,
@@ -139,6 +148,9 @@ export class CreativesController {
       customerId,
       title: body.title,
       type: body.type,
+      stage: body.stage,
+      parentCreativeId: body.parentCreativeId,
+      variationAspects: body.variationAspects,
       caption: body.caption,
       textInCreative: body.textInCreative,
       designDescription: body.designDescription,
@@ -257,6 +269,9 @@ export class CreativesController {
       caption: body.caption,
       textInCreative: body.textInCreative,
       designDescription: body.designDescription,
+      stage: body.stage,
+      parentCreativeId: body.parentCreativeId,
+      variationAspects: body.variationAspects,
       objective: body.objective,
       status: body.status,
     })

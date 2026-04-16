@@ -74,12 +74,14 @@ export class GoogleDriveAdapter implements IStorageAdapter {
       requestBody: { role: 'reader', type: 'anyone' },
     })
 
+    const fileId = data.id!
     return {
-      fileId: data.id!,
-      viewUrl: data.webViewLink ?? `https://drive.google.com/file/d/${data.id}/view`,
+      fileId,
+      viewUrl: data.webViewLink ?? `https://drive.google.com/file/d/${fileId}/view`,
       downloadUrl:
         data.webContentLink ??
-        `https://drive.google.com/uc?export=download&id=${data.id}`,
+        `https://drive.google.com/uc?export=download&id=${fileId}`,
+      thumbnailUrl: `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h400`,
     }
   }
 

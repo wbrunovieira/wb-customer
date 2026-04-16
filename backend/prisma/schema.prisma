@@ -573,6 +573,12 @@ enum CampaignObjective {
   retargeting
 }
 
+enum CreativeStage {
+  exploration
+  refinement
+  scale
+}
+
 enum StrategyPhase {
   exploration
   refinement
@@ -592,6 +598,9 @@ model Creative {
   textInCreative    String?           @map("text_in_creative")
   designDescription String?           @map("design_description")
   type              CreativeType
+  stage             CreativeStage?
+  parentCreativeId  String?           @map("parent_creative_id")
+  variationAspects  String[]          @default([]) @map("variation_aspects")
   objective         CampaignObjective?
   status            CreativeStatus    @default(draft)
 
@@ -608,6 +617,8 @@ model Creative {
   deletedAt         DateTime?         @map("deleted_at")
 
   customer          Customer          @relation(fields: [customerId], references: [id])
+  parentCreative    Creative?         @relation("CreativeVariations", fields: [parentCreativeId], references: [id])
+  variations        Creative[]        @relation("CreativeVariations")
   strategyItems     CreativeStrategyItem[]
   performances      CreativePerformance[]
 

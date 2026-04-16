@@ -59,6 +59,7 @@ export class UploadCreativeFileUseCase {
       driveDownloadUrl: uploaded.downloadUrl,
       mimeType: req.mimeType,
       sizeBytes: req.sizeBytes ? BigInt(req.sizeBytes) : null,
+      thumbnailUrl: uploaded.thumbnailUrl ?? null,
     })
 
     await this.creativeRepo.save(creative)

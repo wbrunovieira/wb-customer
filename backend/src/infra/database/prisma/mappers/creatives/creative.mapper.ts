@@ -1,5 +1,5 @@
 import { Creative as PrismaCreative } from '@prisma/client'
-import { Creative, CreativeType, CreativeStatus, CampaignObjective } from '@/domain/creatives/enterprise/entities/creative'
+import { Creative, CreativeType, CreativeStatus, CreativeStage, CampaignObjective } from '@/domain/creatives/enterprise/entities/creative'
 import { UniqueEntityID } from '@/core/unique-entity-id'
 
 export class CreativeMapper {
@@ -12,6 +12,9 @@ export class CreativeMapper {
         textInCreative: raw.textInCreative,
         designDescription: raw.designDescription,
         type: raw.type as CreativeType,
+        stage: raw.stage as CreativeStage | null,
+        parentCreativeId: raw.parentCreativeId,
+        variationAspects: raw.variationAspects,
         objective: raw.objective as CampaignObjective | null,
         status: raw.status as CreativeStatus,
         driveFileId: raw.driveFileId,
@@ -38,6 +41,9 @@ export class CreativeMapper {
       textInCreative: creative.textInCreative,
       designDescription: creative.designDescription,
       type: creative.type as PrismaCreative['type'],
+      stage: creative.stage as PrismaCreative['stage'],
+      parentCreativeId: creative.parentCreativeId,
+      variationAspects: creative.variationAspects,
       objective: creative.objective as PrismaCreative['objective'],
       status: creative.status as PrismaCreative['status'],
       driveFileId: creative.driveFileId,

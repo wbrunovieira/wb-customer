@@ -371,6 +371,7 @@ export type WhatsAppMessage = {
 
 export type CreativeType = 'image' | 'video' | 'carousel'
 export type CreativeStatus = 'draft' | 'active' | 'paused' | 'archived'
+export type CreativeStage = 'exploration' | 'refinement' | 'scale'
 export type CampaignObjective = 'awareness' | 'traffic' | 'engagement' | 'leads' | 'sales' | 'retargeting'
 
 export type Creative = {
@@ -381,6 +382,9 @@ export type Creative = {
   textInCreative: string | null
   designDescription: string | null
   type: CreativeType
+  stage: CreativeStage | null
+  parentCreativeId: string | null
+  variationAspects: string[]
   objective: CampaignObjective | null
   status: CreativeStatus
   driveFileId: string | null
