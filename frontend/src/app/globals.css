@@ -17,9 +17,9 @@
   --wb-border-strong:   #2C2C48;   /* borda de ênfase             */
 
   /* ── Texto ────────────────────────────────────────────────── */
-  --wb-text-hi:         #E8E8FF;   /* texto principal             */
-  --wb-text-md:         #8080AA;   /* texto secundário            */
-  --wb-text-lo:         #52527A;   /* texto muted / placeholder   */
+  --wb-text-hi:         #EEEEFF;   /* texto principal             */
+  --wb-text-md:         #A0A0CC;   /* texto secundário            */
+  --wb-text-lo:         #7070A0;   /* texto muted / placeholder   */
 
   /* ── Marca ────────────────────────────────────────────────── */
   --wb-brand:           #7C3AED;   /* violeta primário            */
@@ -41,10 +41,10 @@
   /* ── Sidebar ──────────────────────────────────────────────── */
   --wb-sidebar-bg:      #08080F;
   --wb-sidebar-border:  #13132A;
-  --wb-sidebar-text:    #6060A0;
+  --wb-sidebar-text:    #8484B8;
   --wb-sidebar-active:  rgba(124, 58, 237, 0.22);
   --wb-sidebar-active-border: rgba(124, 58, 237, 0.40);
-  --wb-sidebar-section: #2A2A50;
+  --wb-sidebar-section: #505080;
 }
 
 /* ═══════════════════════════════════════════════════════════════
