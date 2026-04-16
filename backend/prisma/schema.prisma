@@ -121,6 +121,8 @@ model Customer {
   activityLogs     Activity[]
   creatives        Creative[]
   creativeStrategies CreativeStrategy[]
+  campaigns        Campaign[]
+  metaAdAccount    MetaAdAccount?
 
   @@index([categoryId])
   @@map("customers")
@@ -621,6 +623,7 @@ model Creative {
   variations        Creative[]        @relation("CreativeVariations")
   strategyItems     CreativeStrategyItem[]
   performances      CreativePerformance[]
+  ads               Ad[]
 
   @@index([customerId])
   @@map("creatives")
@@ -794,4 +797,178 @@ model WhatsAppMessage {
   @@index([activityId])
   @@index([remoteJid])
   @@map("whatsapp_messages")
+}
+
+// ─────────────────────────────────────────
+// PAID TRAFFIC
+// ─────────────────────────────────────────
+
+model MetaConfig {
+  id              String   @id @default("meta-config-singleton")
+  appId           String   @map("app_id")
+  appSecret       String   @map("app_secret")
+  systemUserToken String   @map("system_user_token")
+  bmId            String   @map("bm_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("meta_config")
+}
+
+model MetaAdAccount {
+  id                 String   @id @default(uuid())
+  customerId         String   @unique @map("customer_id")
+  adAccountId        String   @map("ad_account_id")
+  pageId             String?  @map("page_id")
+  pixelId            String?  @map("pixel_id")
+  instagramActorId   String?  @map("instagram_actor_id")
+  accountName        String?  @map("account_name")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("meta_ad_accounts")
+}
+
+enum AdCampaignObjective {
+  CONVERSIONS
+  LINK_CLICKS
+  REACH
+  BRAND_AWARENESS
+  LEAD_GENERATION
+  VIDEO_VIEWS
+  POST_ENGAGEMENT
+}
+
+enum AdPublishStatus {
+  draft
+  ready_to_publish
+  publishing
+  published
+  publish_failed
+}
+
+enum AdCampaignStatus {
+  active
+  paused
+  archived
+}
+
+model Campaign {
+  id              String              @id @default(uuid())
+  customerId      String              @map("customer_id")
+  name            String
+  objective       AdCampaignObjective
+  status          AdCampaignStatus    @default(active)
+  publishStatus   AdPublishStatus     @default(draft) @map("publish_status")
+  plannedBudget   Float?              @map("planned_budget")
+  dailyBudget     Float?              @map("daily_budget")
+  startAt         DateTime?           @map("start_at")
+  endAt           DateTime?           @map("end_at")
+  notes           String?
+  metaCampaignId  String?             @map("meta_campaign_id")
+  publishError    String?             @map("publish_error")
+  createdByUserId String              @map("created_by_user_id")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  adSets   AdSet[]
+
+  @@index([customerId])
+  @@map("campaigns")
+}
+
+model AdSet {
+  id               String           @id @default(uuid())
+  campaignId       String           @map("campaign_id")
+  name             String
+  status           AdCampaignStatus @default(active)
+  publishStatus    AdPublishStatus  @default(draft) @map("publish_status")
+  dailyBudget      Float?           @map("daily_budget")
+  totalBudget      Float?           @map("total_budget")
+  startAt          DateTime?        @map("start_at")
+  endAt            DateTime?        @map("end_at")
+  targeting        Json?
+  optimizationGoal String?          @map("optimization_goal")
+  billingEvent     String?          @map("billing_event")
+  metaAdSetId      String?          @map("meta_ad_set_id")
+  publishError     String?          @map("publish_error")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads      Ad[]
+
+  @@index([campaignId])
+  @@map("ad_sets")
+}
+
+enum AdCallToAction {
+  LEARN_MORE
+  SHOP_NOW
+  SIGN_UP
+  CONTACT_US
+  BOOK_NOW
+  DOWNLOAD
+  GET_QUOTE
+  SUBSCRIBE
+  WATCH_MORE
+  NO_BUTTON
+}
+
+model Ad {
+  id              String           @id @default(uuid())
+  adSetId         String           @map("ad_set_id")
+  creativeId      String?          @map("creative_id")
+  name            String
+  status          AdCampaignStatus @default(active)
+  publishStatus   AdPublishStatus  @default(draft) @map("publish_status")
+  primaryText     String?          @map("primary_text")
+  headline        String?
+  description     String?
+  callToAction    AdCallToAction   @default(LEARN_MORE) @map("call_to_action")
+  destinationUrl  String?          @map("destination_url")
+  metaAdId        String?          @map("meta_ad_id")
+  metaCreativeId  String?          @map("meta_creative_id")
+  publishError    String?          @map("publish_error")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  adSet        AdSet           @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  creative     Creative?       @relation(fields: [creativeId], references: [id])
+  dailyMetrics AdDailyMetric[]
+
+  @@index([adSetId])
+  @@index([creativeId])
+  @@map("ads")
+}
+
+model AdDailyMetric {
+  id          String   @id @default(uuid())
+  adId        String   @map("ad_id")
+  campaignId  String   @map("campaign_id")
+  date        DateTime @db.Date
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  reach       Int      @default(0)
+  spent       Float    @default(0)
+  conversions Int      @default(0)
+  results     Int      @default(0)
+  ctr         Float?
+  cpc         Float?
+  cpm         Float?
+  cpp         Float?
+  roas        Float?
+  frequency   Float?
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@unique([adId, date])
+  @@index([adId])
+  @@index([campaignId])
+  @@index([date])
+  @@map("ad_daily_metrics")
 }
