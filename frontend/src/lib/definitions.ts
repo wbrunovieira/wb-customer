@@ -444,3 +444,139 @@ export type CreativeStrategy = {
   createdAt: string
   updatedAt: string
 }
+
+// ── PAID TRAFFIC ───────────────────────────────────────
+
+export type TrafficCampaignObjective =
+  | 'CONVERSIONS' | 'LINK_CLICKS' | 'REACH'
+  | 'BRAND_AWARENESS' | 'LEAD_GENERATION'
+  | 'VIDEO_VIEWS' | 'POST_ENGAGEMENT'
+
+export type CampaignPublishStatus =
+  | 'draft' | 'ready_to_publish' | 'publishing' | 'published' | 'publish_failed'
+
+export type TrafficCampaignStatus = 'active' | 'paused' | 'archived'
+
+export type AdCallToAction =
+  | 'LEARN_MORE' | 'SHOP_NOW' | 'SIGN_UP' | 'CONTACT_US'
+  | 'BOOK_NOW' | 'DOWNLOAD' | 'GET_QUOTE' | 'SUBSCRIBE'
+  | 'WATCH_MORE' | 'NO_BUTTON'
+
+export type Campaign = {
+  id: string
+  customerId: string
+  name: string
+  objective: TrafficCampaignObjective
+  status: TrafficCampaignStatus
+  publishStatus: CampaignPublishStatus
+  plannedBudget: number | null
+  dailyBudget: number | null
+  startAt: string | null
+  endAt: string | null
+  notes: string | null
+  metaCampaignId: string | null
+  publishError: string | null
+  createdAt: string
+  adSets?: TrafficAdSet[]
+}
+
+export type TrafficAdSet = {
+  id: string
+  campaignId: string
+  name: string
+  status: TrafficCampaignStatus
+  publishStatus: CampaignPublishStatus
+  dailyBudget: number | null
+  totalBudget: number | null
+  startAt: string | null
+  endAt: string | null
+  targeting: Record<string, unknown> | null
+  optimizationGoal: string | null
+  billingEvent: string | null
+  metaAdSetId: string | null
+  ads?: TrafficAd[]
+}
+
+export type TrafficAd = {
+  id: string
+  adSetId: string
+  creativeId: string | null
+  name: string
+  status: TrafficCampaignStatus
+  publishStatus: CampaignPublishStatus
+  primaryText: string | null
+  headline: string | null
+  description: string | null
+  callToAction: AdCallToAction
+  destinationUrl: string | null
+  metaAdId: string | null
+  creative?: Creative | null
+  metrics?: AdDailyMetric[]
+}
+
+export type AdDailyMetric = {
+  id: string
+  adId: string
+  campaignId: string
+  date: string
+  impressions: number
+  clicks: number
+  reach: number
+  spent: number
+  conversions: number
+  results: number
+  ctr: number | null
+  cpc: number | null
+  cpm: number | null
+  cpp: number | null
+  roas: number | null
+  frequency: number | null
+}
+
+export type MetaAdAccount = {
+  id: string
+  customerId: string
+  adAccountId: string
+  pageId: string | null
+  pixelId: string | null
+  instagramActorId: string | null
+  accountName: string | null
+  isActive: boolean
+}
+
+export type CampaignDashboard = {
+  campaign: Campaign
+  totals: {
+    impressions: number
+    clicks: number
+    reach: number
+    spent: number
+    conversions: number
+    ctr: number | null
+    cpc: number | null
+    roas: number | null
+  }
+  dailySeries: Array<{
+    date: string
+    impressions: number
+    clicks: number
+    spent: number
+    conversions: number
+  }>
+  adSetBreakdown: Array<{
+    adSet: TrafficAdSet
+    ads: Array<{
+      ad: TrafficAd
+      creative: Creative | null
+      totals: {
+        impressions: number
+        clicks: number
+        spent: number
+        conversions: number
+        ctr: number | null
+        cpc: number | null
+        roas: number | null
+      }
+    }>
+  }>
+}

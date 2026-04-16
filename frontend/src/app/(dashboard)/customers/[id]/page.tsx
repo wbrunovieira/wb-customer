@@ -100,6 +100,15 @@ export default async function CustomerDetailPage({ params }: Props) {
             Criativos
           </Link>
           <Link
+            href={`/customers/${id}/traffic`}
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+            Tráfego
+          </Link>
+          <Link
             href={`/customers/${id}/portal-users`}
             className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-hi transition-colors hover:bg-elevated"
           >
