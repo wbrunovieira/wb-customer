@@ -22,6 +22,7 @@ import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { SaveMetaConfigUseCase } from '@/domain/paid-traffic/application/use-cases/save-meta-config.use-case'
 import { GetMetaConfigUseCase } from '@/domain/paid-traffic/application/use-cases/get-meta-config.use-case'
+import { ListMetaAdAccountsUseCase } from '@/domain/paid-traffic/application/use-cases/list-meta-ad-accounts.use-case'
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,8 @@ class SaveMetaConfigDto {
   @ApiProperty({ example: 'abc123secret' }) appSecret!: string
   @ApiProperty({ example: 'EAAxxxxxxx' }) systemUserToken!: string
   @ApiProperty({ example: '987654321', description: 'Business Manager ID' }) bmId!: string
+  @ApiPropertyOptional({ example: 'act_123456789' }) ownAdAccountId?: string
+  @ApiPropertyOptional({ example: 'Minha Conta de Anúncios' }) ownAdAccountName?: string
 }
 
 class UpdateMetaConfigDto {
@@ -37,14 +40,18 @@ class UpdateMetaConfigDto {
   @ApiPropertyOptional({ example: 'abc123secret' }) appSecret?: string
   @ApiPropertyOptional({ example: 'EAAxxxxxxx' }) systemUserToken?: string
   @ApiPropertyOptional({ example: '987654321' }) bmId?: string
+  @ApiPropertyOptional({ example: 'act_123456789' }) ownAdAccountId?: string | null
+  @ApiPropertyOptional({ example: 'Minha Conta de Anúncios' }) ownAdAccountName?: string | null
 }
 
 // ── Serializer ────────────────────────────────────────────────────────────────
 
-function toHttp(config: { appId: string; bmId: string; updatedAt: Date; createdAt: Date }) {
+function toHttp(config: { appId: string; bmId: string; ownAdAccountId?: string | null; ownAdAccountName?: string | null; updatedAt: Date; createdAt: Date }) {
   return {
     appId: config.appId,
     bmId: config.bmId,
+    ownAdAccountId: config.ownAdAccountId ?? null,
+    ownAdAccountName: config.ownAdAccountName ?? null,
     updatedAt: config.updatedAt,
     createdAt: config.createdAt,
   }
@@ -59,6 +66,7 @@ export class MetaConfigController {
   constructor(
     private readonly saveMetaConfig: SaveMetaConfigUseCase,
     private readonly getMetaConfig: GetMetaConfigUseCase,
+    private readonly listMetaAdAccounts: ListMetaAdAccountsUseCase,
   ) {}
 
   @Post()
@@ -71,6 +79,8 @@ export class MetaConfigController {
       appSecret: body.appSecret,
       systemUserToken: body.systemUserToken,
       bmId: body.bmId,
+      ownAdAccountId: body.ownAdAccountId,
+      ownAdAccountName: body.ownAdAccountName,
     })
     return { success: true }
   }
@@ -83,6 +93,16 @@ export class MetaConfigController {
     const result = await this.getMetaConfig.execute()
     if (result.isLeft()) throw new NotFoundException(result.value.message)
     return toHttp(result.value.config)
+  }
+
+  @Get('ad-accounts')
+  @ApiOperation({ summary: 'List ad accounts available in the BM (admin only)' })
+  @ApiResponse({ status: 200, description: 'List of ad accounts linked to the BM' })
+  @ApiResponse({ status: 404, description: 'Meta config not found' })
+  async getAdAccounts() {
+    const result = await this.listMetaAdAccounts.execute()
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+    return { accounts: result.value.accounts }
   }
 
   @Patch()
@@ -100,6 +120,8 @@ export class MetaConfigController {
       appSecret: body.appSecret ?? existing.value.config.appSecret,
       systemUserToken: body.systemUserToken ?? existing.value.config.systemUserToken,
       bmId: body.bmId ?? existing.value.config.bmId,
+      ownAdAccountId: body.ownAdAccountId !== undefined ? body.ownAdAccountId : existing.value.config.ownAdAccountId,
+      ownAdAccountName: body.ownAdAccountName !== undefined ? body.ownAdAccountName : existing.value.config.ownAdAccountName,
     })
   }
 }

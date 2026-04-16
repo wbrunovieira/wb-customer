@@ -8,6 +8,8 @@ export interface SaveMetaConfigRequest {
   appSecret: string
   systemUserToken: string
   bmId: string
+  ownAdAccountId?: string | null
+  ownAdAccountName?: string | null
 }
 
 export interface SaveMetaConfigResponse {
@@ -29,6 +31,8 @@ export class SaveMetaConfigUseCase {
         appSecret: req.appSecret,
         systemUserToken: req.systemUserToken,
         bmId: req.bmId,
+        ownAdAccountId: req.ownAdAccountId,
+        ownAdAccountName: req.ownAdAccountName,
       })
       await this.metaConfigRepo.save(existing)
     } else {
@@ -37,6 +41,8 @@ export class SaveMetaConfigUseCase {
         appSecret: req.appSecret,
         systemUserToken: req.systemUserToken,
         bmId: req.bmId,
+        ownAdAccountId: req.ownAdAccountId,
+        ownAdAccountName: req.ownAdAccountName,
       })
       await this.metaConfigRepo.save(config)
     }

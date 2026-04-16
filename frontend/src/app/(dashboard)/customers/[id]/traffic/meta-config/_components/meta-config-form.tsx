@@ -2,12 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { MetaAdAccount } from '@/lib/definitions'
-import { saveMetaAdAccount } from '@/app/actions/campaigns'
+import { MetaBmAdAccount, saveMetaAdAccount } from '@/app/actions/campaigns'
 import { useToast } from '@/components/toast/toast-context'
 
 interface Props {
   customerId: string
   existing: MetaAdAccount | null
+  bmAccounts: MetaBmAdAccount[]
 }
 
 function Spinner() {
@@ -21,27 +22,31 @@ function Spinner() {
   )
 }
 
-export default function MetaConfigForm({ customerId, existing }: Props) {
+export default function MetaConfigForm({ customerId, existing, bmAccounts }: Props) {
   const { success, error: toastError } = useToast()
   const [isPending, startTransition] = useTransition()
 
-  const [adAccountId, setAdAccountId] = useState(existing?.adAccountId ?? '')
+  const [selectedAccountId, setSelectedAccountId] = useState(existing?.adAccountId ?? '')
   const [pageId, setPageId] = useState(existing?.pageId ?? '')
   const [pixelId, setPixelId] = useState(existing?.pixelId ?? '')
   const [instagramActorId, setInstagramActorId] = useState(existing?.instagramActorId ?? '')
-  const [accountName, setAccountName] = useState(existing?.accountName ?? '')
+
+  const hasBmAccounts = bmAccounts.length > 0
+  const selectedAccount = bmAccounts.find((a) => a.id === selectedAccountId)
 
   const inputCls = 'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi placeholder:text-lo focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60'
+  const selectCls = 'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60'
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     startTransition(async () => {
+      const accountName = selectedAccount?.name ?? undefined
       const res = await saveMetaAdAccount(customerId, {
-        adAccountId,
+        adAccountId: selectedAccountId,
         pageId: pageId || undefined,
         pixelId: pixelId || undefined,
         instagramActorId: instagramActorId || undefined,
-        accountName: accountName || undefined,
+        accountName: accountName ?? (existing?.accountName || undefined),
       })
       if (res.message) {
         toastError(res.message)
@@ -69,30 +74,50 @@ export default function MetaConfigForm({ customerId, existing }: Props) {
         </div>
       )}
 
+      {/* Ad Account selector */}
       <div>
         <label className="block text-xs font-medium text-lo mb-1">
-          Ad Account ID *{' '}
-          <span className="text-lo font-normal">(ex: act_123456789)</span>
+          Ad Account *
         </label>
-        <input
-          value={adAccountId}
-          onChange={e => setAdAccountId(e.target.value)}
-          placeholder="act_XXXXXXXXXX"
-          required
-          disabled={isPending}
-          className={inputCls}
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-lo mb-1">Account Name (opcional)</label>
-        <input
-          value={accountName}
-          onChange={e => setAccountName(e.target.value)}
-          placeholder="Nome da conta de anúncios"
-          disabled={isPending}
-          className={inputCls}
-        />
+        {hasBmAccounts ? (
+          <>
+            <select
+              value={selectedAccountId}
+              onChange={(e) => setSelectedAccountId(e.target.value)}
+              required
+              disabled={isPending}
+              className={selectCls}
+            >
+              <option value="">Selecione uma conta de anúncios...</option>
+              {bmAccounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name} — {account.id}
+                </option>
+              ))}
+            </select>
+            {selectedAccountId && (
+              <p className="mt-1 text-xs text-lo font-mono">{selectedAccountId}</p>
+            )}
+          </>
+        ) : (
+          <input
+            value={selectedAccountId}
+            onChange={(e) => setSelectedAccountId(e.target.value)}
+            placeholder="act_XXXXXXXXXX"
+            required
+            disabled={isPending}
+            className={inputCls}
+          />
+        )}
+        {!hasBmAccounts && (
+          <p className="mt-1 text-xs text-lo">
+            Configure o Business Manager em{' '}
+            <a href="/admin/meta-config" className="text-accent hover:underline">
+              Admin → Meta Config
+            </a>{' '}
+            para listar as contas disponíveis.
+          </p>
+        )}
       </div>
 
       <div>
@@ -131,7 +156,7 @@ export default function MetaConfigForm({ customerId, existing }: Props) {
       <div className="flex justify-end pt-2">
         <button
           type="submit"
-          disabled={isPending || !adAccountId.trim()}
+          disabled={isPending || !selectedAccountId.trim()}
           className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {isPending && <Spinner />}

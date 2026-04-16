@@ -7,6 +7,7 @@ import {
   CreateMetaAdParams,
   SyncMetricsParams,
   AdMetricsResult,
+  MetaAdAccountEntry,
 } from '@/domain/paid-traffic/application/services/i-ad-platform.adapter'
 
 @Injectable()
@@ -244,6 +245,45 @@ export class MetaAdPlatformAdapter extends IAdPlatformAdapter {
     } catch (err) {
       this.logger.error('resumeCampaign failed', err)
       throw err
+    }
+  }
+
+  async listAdAccounts(bmId: string): Promise<MetaAdAccountEntry[]> {
+    if (this.isMockMode) {
+      this.logger.debug('[MOCK] listAdAccounts')
+      return [
+        { id: 'act_111111111', name: 'Mock Ad Account 1', currency: 'BRL', accountStatus: 1 },
+        { id: 'act_222222222', name: 'Mock Ad Account 2', currency: 'BRL', accountStatus: 1 },
+      ]
+    }
+
+    try {
+      const fields = 'name,account_id,account_status,currency'
+
+      const [owned, client] = await Promise.all([
+        this.graphGet<{ data: Array<{ account_id: string; name: string; currency: string; account_status: number }> }>(
+          `/${bmId}/owned_ad_accounts`,
+          { fields, access_token: this.accessToken },
+        ),
+        this.graphGet<{ data: Array<{ account_id: string; name: string; currency: string; account_status: number }> }>(
+          `/${bmId}/client_ad_accounts`,
+          { fields, access_token: this.accessToken },
+        ),
+      ])
+
+      const seen = new Set<string>()
+      const results: MetaAdAccountEntry[] = []
+      for (const item of [...(owned.data ?? []), ...(client.data ?? [])]) {
+        const id = `act_${item.account_id}`
+        if (!seen.has(id)) {
+          seen.add(id)
+          results.push({ id, name: item.name, currency: item.currency, accountStatus: item.account_status })
+        }
+      }
+      return results
+    } catch (err) {
+      this.logger.error('listAdAccounts failed, returning empty', err)
+      return []
     }
   }
 

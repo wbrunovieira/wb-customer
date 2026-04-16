@@ -8,6 +8,59 @@ import {
   MetaAdAccount,
 } from '@/lib/definitions'
 
+export type MetaConfigInfo = {
+  appId: string
+  bmId: string
+  ownAdAccountId: string | null
+  ownAdAccountName: string | null
+  updatedAt: string
+  createdAt: string
+}
+
+export type MetaBmAdAccount = {
+  id: string
+  name: string
+  currency: string
+  accountStatus: number
+}
+
+export async function getAdminMetaConfig(): Promise<MetaConfigInfo | null> {
+  try {
+    return await apiServer.get<MetaConfigInfo>('/api/v1/admin/meta-config')
+  } catch {
+    return null
+  }
+}
+
+export async function listBmAdAccounts(): Promise<MetaBmAdAccount[]> {
+  try {
+    const res = await apiServer.get<{ accounts: MetaBmAdAccount[] }>('/api/v1/admin/meta-config/ad-accounts')
+    return res.accounts
+  } catch {
+    return []
+  }
+}
+
+export async function saveAdminMetaConfig(data: {
+  appId: string
+  appSecret: string
+  systemUserToken: string
+  bmId: string
+  ownAdAccountId?: string | null
+  ownAdAccountName?: string | null
+}): Promise<{ message?: string }> {
+  try {
+    try {
+      await apiServer.post('/api/v1/admin/meta-config', data)
+    } catch {
+      await apiServer.patch('/api/v1/admin/meta-config', data)
+    }
+    return {}
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
 function revalidateCampaigns(customerId: string) {
   revalidatePath(`/customers/${customerId}/traffic`)
 }

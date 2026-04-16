@@ -8,6 +8,8 @@ export interface MetaConfigProps {
   appSecret: string
   systemUserToken: string
   bmId: string
+  ownAdAccountId?: string | null
+  ownAdAccountName?: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -38,6 +40,8 @@ export class MetaConfig extends AggregateRoot<MetaConfigProps> {
   get appSecret(): string { return this.props.appSecret }
   get systemUserToken(): string { return this.props.systemUserToken }
   get bmId(): string { return this.props.bmId }
+  get ownAdAccountId(): string | null | undefined { return this.props.ownAdAccountId }
+  get ownAdAccountName(): string | null | undefined { return this.props.ownAdAccountName }
   get createdAt(): Date { return this.props.createdAt }
   get updatedAt(): Date { return this.props.updatedAt }
 
@@ -46,11 +50,15 @@ export class MetaConfig extends AggregateRoot<MetaConfigProps> {
     appSecret?: string
     systemUserToken?: string
     bmId?: string
+    ownAdAccountId?: string | null
+    ownAdAccountName?: string | null
   }): void {
     if (details.appId !== undefined) this.props.appId = details.appId
     if (details.appSecret !== undefined) this.props.appSecret = details.appSecret
     if (details.systemUserToken !== undefined) this.props.systemUserToken = details.systemUserToken
     if (details.bmId !== undefined) this.props.bmId = details.bmId
+    if (details.ownAdAccountId !== undefined) this.props.ownAdAccountId = details.ownAdAccountId
+    if (details.ownAdAccountName !== undefined) this.props.ownAdAccountName = details.ownAdAccountName
     this.props.updatedAt = new Date()
   }
 }

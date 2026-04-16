@@ -804,13 +804,15 @@ model WhatsAppMessage {
 // ─────────────────────────────────────────
 
 model MetaConfig {
-  id              String   @id @default("meta-config-singleton")
-  appId           String   @map("app_id")
-  appSecret       String   @map("app_secret")
-  systemUserToken String   @map("system_user_token")
-  bmId            String   @map("bm_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                String   @id @default("meta-config-singleton")
+  appId             String   @map("app_id")
+  appSecret         String   @map("app_secret")
+  systemUserToken   String   @map("system_user_token")
+  bmId              String   @map("bm_id")
+  ownAdAccountId    String?  @map("own_ad_account_id")
+  ownAdAccountName  String?  @map("own_ad_account_name")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("meta_config")
 }

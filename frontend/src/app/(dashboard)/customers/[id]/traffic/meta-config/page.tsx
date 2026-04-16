@@ -1,5 +1,6 @@
 import { apiServer } from '@/lib/api-server'
 import { MetaAdAccount } from '@/lib/definitions'
+import { listBmAdAccounts, MetaBmAdAccount } from '@/app/actions/campaigns'
 import MetaConfigForm from './_components/meta-config-form'
 import Link from 'next/link'
 
@@ -12,12 +13,12 @@ type Props = {
 export default async function MetaConfigPage({ params }: Props) {
   const { id } = await params
 
-  let metaAccount: MetaAdAccount | null = null
-  try {
-    metaAccount = await apiServer.get<MetaAdAccount>(`/api/v1/customers/${id}/meta-account`)
-  } catch {
-    // not configured yet
-  }
+  const [metaAccount, bmAccounts] = await Promise.all([
+    apiServer
+      .get<MetaAdAccount>(`/api/v1/customers/${id}/meta-account`)
+      .catch(() => null),
+    listBmAdAccounts(),
+  ])
 
   return (
     <div className="mx-auto max-w-xl flex flex-col gap-6">
@@ -35,7 +36,7 @@ export default async function MetaConfigPage({ params }: Props) {
         <span className="text-sm font-medium text-hi">Conta Meta</span>
       </div>
 
-      <MetaConfigForm customerId={id} existing={metaAccount} />
+      <MetaConfigForm customerId={id} existing={metaAccount} bmAccounts={bmAccounts} />
     </div>
   )
 }

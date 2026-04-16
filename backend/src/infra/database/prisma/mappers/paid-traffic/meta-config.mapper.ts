@@ -10,6 +10,8 @@ export class MetaConfigMapper {
         appSecret: raw.appSecret,
         systemUserToken: raw.systemUserToken,
         bmId: raw.bmId,
+        ownAdAccountId: raw.ownAdAccountId,
+        ownAdAccountName: raw.ownAdAccountName,
         createdAt: raw.createdAt,
         updatedAt: raw.updatedAt,
       },
@@ -24,6 +26,8 @@ export class MetaConfigMapper {
       appSecret: config.appSecret,
       systemUserToken: config.systemUserToken,
       bmId: config.bmId,
+      ownAdAccountId: config.ownAdAccountId ?? null,
+      ownAdAccountName: config.ownAdAccountName ?? null,
       createdAt: config.createdAt,
       updatedAt: config.updatedAt,
     }
