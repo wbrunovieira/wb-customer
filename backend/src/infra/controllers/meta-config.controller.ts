@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common'
 import {
@@ -23,8 +24,16 @@ import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { SaveMetaConfigUseCase } from '@/domain/paid-traffic/application/use-cases/save-meta-config.use-case'
 import { GetMetaConfigUseCase } from '@/domain/paid-traffic/application/use-cases/get-meta-config.use-case'
 import { ListMetaAdAccountsUseCase } from '@/domain/paid-traffic/application/use-cases/list-meta-ad-accounts.use-case'
+import { CreateMetaAdAccountUseCase } from '@/domain/paid-traffic/application/use-cases/create-meta-ad-account.use-case'
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
+
+class CreateAdAccountDto {
+  @ApiProperty({ example: 'Salto Up Ads' }) name!: string
+  @ApiPropertyOptional({ example: 'BRL', default: 'BRL' }) currency?: string
+  @ApiPropertyOptional({ example: 37, description: 'Meta timezone ID (37 = America/Sao_Paulo)' }) timezoneId?: number
+  @ApiPropertyOptional({ description: 'Page or Business ID of the end advertiser' }) endAdvertiser?: string
+}
 
 class SaveMetaConfigDto {
   @ApiProperty({ example: '123456789' }) appId!: string
@@ -67,6 +76,7 @@ export class MetaConfigController {
     private readonly saveMetaConfig: SaveMetaConfigUseCase,
     private readonly getMetaConfig: GetMetaConfigUseCase,
     private readonly listMetaAdAccounts: ListMetaAdAccountsUseCase,
+    private readonly createMetaAdAccount: CreateMetaAdAccountUseCase,
   ) {}
 
   @Post()
@@ -103,6 +113,27 @@ export class MetaConfigController {
     const result = await this.listMetaAdAccounts.execute()
     if (result.isLeft()) throw new NotFoundException(result.value.message)
     return { accounts: result.value.accounts }
+  }
+
+  @Post('ad-accounts')
+  @ApiOperation({ summary: 'Create a new ad account under the configured BM (admin only)' })
+  @ApiBody({ type: CreateAdAccountDto })
+  @ApiResponse({ status: 201, description: 'Ad account created', schema: { example: { id: 'act_123456789', name: 'Salto Up Ads' } } })
+  @ApiResponse({ status: 400, description: 'Creation failed' })
+  @ApiResponse({ status: 404, description: 'Meta config not found' })
+  async createAdAccount(@Body() body: CreateAdAccountDto) {
+    const result = await this.createMetaAdAccount.execute({
+      name: body.name,
+      currency: body.currency,
+      timezoneId: body.timezoneId,
+      endAdvertiser: body.endAdvertiser,
+    })
+    if (result.isLeft()) {
+      const msg = result.value.message
+      if (msg.includes('not found')) throw new NotFoundException(msg)
+      throw new BadRequestException(msg)
+    }
+    return result.value
   }
 
   @Patch()

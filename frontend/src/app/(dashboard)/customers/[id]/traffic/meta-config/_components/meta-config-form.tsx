@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { MetaAdAccount } from '@/lib/definitions'
-import { MetaBmAdAccount, saveMetaAdAccount } from '@/app/actions/campaigns'
+import { MetaBmAdAccount, saveMetaAdAccount, createBmAdAccount } from '@/app/actions/campaigns'
 import { useToast } from '@/components/toast/toast-context'
 import LoadingDots from '@/components/ui/loading-dots'
 
@@ -14,18 +15,47 @@ interface Props {
 
 export default function MetaConfigForm({ customerId, existing, bmAccounts }: Props) {
   const { success, error: toastError } = useToast()
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isCreating, startCreating] = useTransition()
 
   const [selectedAccountId, setSelectedAccountId] = useState(existing?.adAccountId ?? '')
   const [pageId, setPageId] = useState(existing?.pageId ?? '')
   const [pixelId, setPixelId] = useState(existing?.pixelId ?? '')
   const [instagramActorId, setInstagramActorId] = useState(existing?.instagramActorId ?? '')
 
+  const [showNewAccount, setShowNewAccount] = useState(false)
+  const [newAccountName, setNewAccountName] = useState('')
+  const [newAccountCurrency, setNewAccountCurrency] = useState('BRL')
+  const [newAccountEndAdvertiser, setNewAccountEndAdvertiser] = useState('')
+
   const hasBmAccounts = bmAccounts.length > 0
   const selectedAccount = bmAccounts.find((a) => a.id === selectedAccountId)
 
   const inputCls = 'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi placeholder:text-lo focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60'
   const selectCls = 'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60'
+
+  function handleCreateAccount(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newAccountName.trim()) return
+    startCreating(async () => {
+      const res = await createBmAdAccount({
+        name: newAccountName.trim(),
+        currency: newAccountCurrency || undefined,
+        endAdvertiser: newAccountEndAdvertiser.trim() || undefined,
+      })
+      if (res.message) {
+        toastError(res.message)
+      } else {
+        success(`Conta "${res.name}" criada! ID: ${res.id}`)
+        setSelectedAccountId(res.id!)
+        setShowNewAccount(false)
+        setNewAccountName('')
+        setNewAccountEndAdvertiser('')
+        router.refresh()
+      }
+    })
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -108,6 +138,88 @@ export default function MetaConfigForm({ customerId, existing, bmAccounts }: Pro
             para listar as contas disponíveis.
           </p>
         )}
+
+        {/* Create new ad account inline */}
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setShowNewAccount(v => !v)}
+            className="flex items-center gap-1.5 text-xs text-accent hover:underline"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Criar nova conta de anúncios na BM
+          </button>
+
+          {showNewAccount && (
+            <form
+              onSubmit={handleCreateAccount}
+              className="mt-3 rounded-lg border border-border bg-canvas p-4 flex flex-col gap-3"
+            >
+              <p className="text-xs text-lo">
+                Cria uma nova conta de anúncios diretamente no seu Business Manager.
+              </p>
+
+              <div>
+                <label className="block text-xs font-medium text-lo mb-1">Nome da conta *</label>
+                <input
+                  value={newAccountName}
+                  onChange={e => setNewAccountName(e.target.value)}
+                  placeholder="Ex.: Salto Up Ads"
+                  required
+                  disabled={isCreating}
+                  className={inputCls}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-lo mb-1">Moeda</label>
+                  <select
+                    value={newAccountCurrency}
+                    onChange={e => setNewAccountCurrency(e.target.value)}
+                    disabled={isCreating}
+                    className={selectCls}
+                  >
+                    <option value="BRL">BRL — Real</option>
+                    <option value="USD">USD — Dólar</option>
+                    <option value="EUR">EUR — Euro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-lo mb-1">End Advertiser ID</label>
+                  <input
+                    value={newAccountEndAdvertiser}
+                    onChange={e => setNewAccountEndAdvertiser(e.target.value)}
+                    placeholder="Page ID ou Business ID"
+                    disabled={isCreating}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewAccount(false)}
+                  disabled={isCreating}
+                  className="text-xs text-lo hover:text-hi transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating || !newAccountName.trim()}
+                  className="flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {isCreating && <LoadingDots />}
+                  {isCreating ? 'Criando...' : 'Criar conta'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
 
       <div>

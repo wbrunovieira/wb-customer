@@ -65,6 +65,14 @@ export interface MetaAdAccountEntry {
   accountStatus: number
 }
 
+export interface CreateMetaAdAccountParams {
+  bmId: string
+  name: string
+  currency?: string
+  timezoneId?: number
+  endAdvertiser?: string
+}
+
 export abstract class IAdPlatformAdapter {
   abstract createCampaign(params: CreateMetaCampaignParams): Promise<{ externalId: string }>
   abstract createAdSet(params: CreateMetaAdSetParams): Promise<{ externalId: string }>
@@ -74,4 +82,5 @@ export abstract class IAdPlatformAdapter {
   abstract resumeCampaign(adAccountId: string, metaCampaignId: string): Promise<void>
   abstract syncMetrics(params: SyncMetricsParams): Promise<AdMetricsResult[]>
   abstract listAdAccounts(bmId: string): Promise<MetaAdAccountEntry[]>
+  abstract createAdAccount(params: CreateMetaAdAccountParams): Promise<{ id: string; name: string }>
 }

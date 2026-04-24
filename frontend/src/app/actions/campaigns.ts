@@ -359,3 +359,18 @@ export async function getMetaAdAccount(customerId: string): Promise<MetaAdAccoun
     return null
   }
 }
+
+export async function createBmAdAccount(data: {
+  name: string
+  currency?: string
+  timezoneId?: number
+  endAdvertiser?: string
+}): Promise<{ id?: string; name?: string; message?: string }> {
+  try {
+    const res = await apiServer.post<{ id: string; name: string }>('/api/v1/admin/meta-config/ad-accounts', data)
+    revalidatePath('/customers/[id]/traffic/meta-config', 'page')
+    return { id: res.id, name: res.name }
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}

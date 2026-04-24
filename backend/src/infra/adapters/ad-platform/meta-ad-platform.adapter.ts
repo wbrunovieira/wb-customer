@@ -8,6 +8,7 @@ import {
   SyncMetricsParams,
   AdMetricsResult,
   MetaAdAccountEntry,
+  CreateMetaAdAccountParams,
 } from '@/domain/paid-traffic/application/services/i-ad-platform.adapter'
 
 @Injectable()
@@ -285,6 +286,26 @@ export class MetaAdPlatformAdapter extends IAdPlatformAdapter {
       this.logger.error('listAdAccounts failed, returning empty', err)
       return []
     }
+  }
+
+  async createAdAccount(params: CreateMetaAdAccountParams): Promise<{ id: string; name: string }> {
+    if (this.isMockMode) {
+      this.logger.debug('[MOCK] createAdAccount')
+      return { id: `act_mock_${Date.now()}`, name: params.name }
+    }
+
+    const body: Record<string, unknown> = {
+      name: params.name,
+      currency: params.currency ?? 'BRL',
+      timezone_id: params.timezoneId ?? 37,
+      end_advertiser: params.endAdvertiser ?? params.bmId,
+      media_agency: params.bmId,
+      partner: 'NONE',
+      access_token: this.accessToken,
+    }
+
+    const data = await this.graphPost<{ id: string }>(`/${params.bmId}/adaccount`, body)
+    return { id: data.id, name: params.name }
   }
 
   async syncMetrics(params: SyncMetricsParams): Promise<AdMetricsResult[]> {

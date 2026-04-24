@@ -27,6 +27,7 @@ import { SyncCampaignMetricsUseCase } from '@/domain/paid-traffic/application/us
 import { PauseCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/pause-campaign.use-case'
 import { ResumeCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/resume-campaign.use-case'
 import { ListMetaAdAccountsUseCase } from '@/domain/paid-traffic/application/use-cases/list-meta-ad-accounts.use-case'
+import { CreateMetaAdAccountUseCase } from '@/domain/paid-traffic/application/use-cases/create-meta-ad-account.use-case'
 
 // Repository interfaces
 import { IMetaConfigRepository } from '@/domain/paid-traffic/application/repositories/i-meta-config.repository'
@@ -79,6 +80,7 @@ import { MetricsSyncSchedulerService } from '@/infra/scheduled/metrics-sync-sche
     PauseCampaignUseCase,
     ResumeCampaignUseCase,
     ListMetaAdAccountsUseCase,
+    CreateMetaAdAccountUseCase,
 
     // Schedulers
     MetricsSyncSchedulerService,
