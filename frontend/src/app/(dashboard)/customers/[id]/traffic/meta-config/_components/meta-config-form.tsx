@@ -35,8 +35,7 @@ export default function MetaConfigForm({ customerId, existing, bmAccounts }: Pro
   const inputCls = 'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi placeholder:text-lo focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60'
   const selectCls = 'w-full rounded-lg border border-border bg-canvas px-3 py-2 text-sm text-hi focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60'
 
-  function handleCreateAccount(e: React.FormEvent) {
-    e.preventDefault()
+  function handleCreateAccount() {
     if (!newAccountName.trim()) return
     startCreating(async () => {
       const res = await createBmAdAccount({
@@ -153,8 +152,7 @@ export default function MetaConfigForm({ customerId, existing, bmAccounts }: Pro
           </button>
 
           {showNewAccount && (
-            <form
-              onSubmit={handleCreateAccount}
+            <div
               className="mt-3 rounded-lg border border-border bg-canvas p-4 flex flex-col gap-3"
             >
               <p className="text-xs text-lo">
@@ -209,7 +207,8 @@ export default function MetaConfigForm({ customerId, existing, bmAccounts }: Pro
                   Cancelar
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleCreateAccount}
                   disabled={isCreating || !newAccountName.trim()}
                   className="flex items-center gap-2 rounded-lg bg-accent px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
@@ -217,7 +216,7 @@ export default function MetaConfigForm({ customerId, existing, bmAccounts }: Pro
                   {isCreating ? 'Criando...' : 'Criar conta'}
                 </button>
               </div>
-            </form>
+            </div>
           )}
         </div>
       </div>

@@ -294,18 +294,25 @@ export class MetaAdPlatformAdapter extends IAdPlatformAdapter {
       return { id: `act_mock_${Date.now()}`, name: params.name }
     }
 
-    const body: Record<string, unknown> = {
-      name: params.name,
-      currency: params.currency ?? 'BRL',
-      timezone_id: params.timezoneId ?? 37,
-      end_advertiser: params.endAdvertiser ?? params.bmId,
-      media_agency: params.bmId,
-      partner: 'NONE',
-      access_token: this.accessToken,
-    }
+    try {
+      const body: Record<string, unknown> = {
+        name: params.name,
+        currency: params.currency ?? 'BRL',
+        timezone_id: params.timezoneId ?? 37,
+        end_advertiser: params.endAdvertiser ?? params.bmId,
+        media_agency: params.bmId,
+        partner: 'NONE',
+        access_token: this.accessToken,
+      }
 
-    const data = await this.graphPost<{ id: string }>(`/${params.bmId}/adaccount`, body)
-    return { id: data.id, name: params.name }
+      this.logger.debug('createAdAccount request', { bmId: params.bmId, name: params.name })
+      const data = await this.graphPost<{ id: string }>(`/${params.bmId}/adaccount`, body)
+      this.logger.debug('createAdAccount response', data)
+      return { id: data.id, name: params.name }
+    } catch (err) {
+      this.logger.error('createAdAccount failed', err)
+      throw err
+    }
   }
 
   async syncMetrics(params: SyncMetricsParams): Promise<AdMetricsResult[]> {
