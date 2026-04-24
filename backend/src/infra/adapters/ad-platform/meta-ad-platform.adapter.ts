@@ -35,6 +35,31 @@ export class MetaAdPlatformAdapter extends IAdPlatformAdapter {
     return `${this.baseUrl}${path}`
   }
 
+  private parseMetaError(text: string, status: number): Error {
+    const CODE_MESSAGES: Record<number, string> = {
+      190:  'Token de acesso inválido ou expirado. Gere um novo token no Gerenciador de Negócios.',
+      200:  'Permissão insuficiente. Verifique as permissões do System User na BM.',
+      3979: 'Limite de contas de anúncio atingido. Faça um pagamento na BM para aumentar o limite (Configurações → Informações Comerciais).',
+      368:  'Conta temporariamente suspensa pela Meta.',
+      100:  'Parâmetro inválido na requisição à Meta.',
+      17:   'Limite de requisições atingido. Aguarde alguns minutos e tente novamente.',
+    }
+
+    try {
+      const json = JSON.parse(text) as { error?: { code?: number; error_subcode?: number; error_user_msg?: string; message?: string } }
+      const err = json.error
+      if (err) {
+        const mapped = err.code !== undefined ? CODE_MESSAGES[err.code] : undefined
+        const human = err.error_user_msg ?? err.message ?? 'Erro desconhecido na Meta API.'
+        return new Error(mapped ?? human)
+      }
+    } catch {
+      // not JSON — fall through
+    }
+
+    return new Error(`Meta API retornou status ${status}. Tente novamente ou verifique as configurações.`)
+  }
+
   private async graphPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
     const response = await fetch(this.url(path), {
       method: 'POST',
@@ -47,7 +72,7 @@ export class MetaAdPlatformAdapter extends IAdPlatformAdapter {
 
     if (!response.ok) {
       const text = await response.text()
-      throw new Error(`Meta API POST ${path} failed (${response.status}): ${text}`)
+      throw this.parseMetaError(text, response.status)
     }
 
     return response.json() as Promise<T>
@@ -62,7 +87,7 @@ export class MetaAdPlatformAdapter extends IAdPlatformAdapter {
 
     if (!response.ok) {
       const text = await response.text()
-      throw new Error(`Meta API GET ${path} failed (${response.status}): ${text}`)
+      throw this.parseMetaError(text, response.status)
     }
 
     return response.json() as Promise<T>
