@@ -14,22 +14,24 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Test } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { PrismaClient } from '@prisma/client'
 import request from 'supertest'
 import { setupE2E, teardownE2E } from '../../setup-e2e'
 import { AppModule } from '@/app.module'
 
-// Use unique test-only values for secrets not already in .env.
-// For CRON_SECRET (which IS in .env), we read the real value so dotenv doesn't interfere.
-// We set the others BEFORE the NestJS module boots so ConfigService picks them up.
+// Valores só de teste para os segredos. Definidos antes de o módulo do NestJS
+// bootar, para o ConfigService pegá-los.
 const GOTO_WEBHOOK_SECRET = 'e2e-goto-secret-test'
 const EVOLUTION_WEBHOOK_SECRET = 'e2e-evolution-secret-test'
 const INTERNAL_API_KEY = 'e2e-internal-key-test'
 
-// CRON_SECRET is already in .env — read and reuse the real value.
-// URL-encode it because it may contain special chars (/, +, =).
-const CRON_SECRET = process.env.CRON_SECRET ?? 'fallback-e2e-cron-secret'
-const CRON_SECRET_ENCODED = encodeURIComponent(CRON_SECRET)
+// CRON_SECRET é o único que costuma existir no .env de quem desenvolve, e nesse
+// caso o valor do arquivo vence sobre process.env no ConfigService. Por isso o
+// valor efetivo é lido do app depois do boot, em vez de presumido: sem isso a
+// suíte passava na máquina de quem tinha .env e devolvia 401 em CI, que não tem.
+const CRON_SECRET_FALLBACK = 'e2e-cron-secret-test'
+let cronSecretEncoded: string
 
 let app: INestApplication
 let adminToken: string
@@ -37,10 +39,13 @@ let customerId: string
 let seedPrisma: PrismaClient
 
 beforeAll(async () => {
-  // Set secrets that are NOT in .env before the NestJS module boots
+  // Todos os segredos definidos aqui, antes de o módulo do NestJS bootar.
+  // dotenv não sobrescreve o que já está em process.env, então estes valores
+  // valem tanto em CI (sem .env) quanto na máquina de quem tem um.
   process.env.GOTO_WEBHOOK_SECRET = GOTO_WEBHOOK_SECRET
   process.env.EVOLUTION_WEBHOOK_SECRET = EVOLUTION_WEBHOOK_SECRET
   process.env.INTERNAL_API_KEY = INTERNAL_API_KEY
+  process.env.CRON_SECRET = process.env.CRON_SECRET ?? CRON_SECRET_FALLBACK
 
   const { prisma } = await setupE2E()
   seedPrisma = prisma
@@ -52,6 +57,11 @@ beforeAll(async () => {
   app = moduleRef.createNestApplication()
   app.setGlobalPrefix('api/v1')
   await app.init()
+
+  // O valor que o app realmente usa, seja do .env ou do process.env acima.
+  // URL-encoded porque um segredo pode carregar / + =.
+  const effectiveCronSecret = app.get(ConfigService).get<string>('CRON_SECRET')!
+  cronSecretEncoded = encodeURIComponent(effectiveCronSecret)
 
   // Create admin user + token
   await request(app.getHttpServer())
@@ -122,7 +132,7 @@ describe('POST /api/v1/goto/check-recordings', () => {
 
   it('should return 200 with correct cron secret', async () => {
     const res = await request(app.getHttpServer())
-      .post(`/api/v1/goto/check-recordings?secret=${CRON_SECRET_ENCODED}`)
+      .post(`/api/v1/goto/check-recordings?secret=${cronSecretEncoded}`)
     expect(res.status).toBe(200)
   })
 })
@@ -136,7 +146,7 @@ describe('POST /api/v1/goto/check-transcriptions', () => {
 
   it('should return 200 with correct cron secret', async () => {
     const res = await request(app.getHttpServer())
-      .post(`/api/v1/goto/check-transcriptions?secret=${CRON_SECRET_ENCODED}`)
+      .post(`/api/v1/goto/check-transcriptions?secret=${cronSecretEncoded}`)
     expect(res.status).toBe(200)
   })
 })
@@ -184,7 +194,7 @@ describe('POST /api/v1/evolution/check-transcriptions', () => {
 
   it('should return 200 with correct cron secret', async () => {
     const res = await request(app.getHttpServer())
-      .post(`/api/v1/evolution/check-transcriptions?secret=${CRON_SECRET_ENCODED}`)
+      .post(`/api/v1/evolution/check-transcriptions?secret=${cronSecretEncoded}`)
     expect(res.status).toBe(200)
   })
 })
