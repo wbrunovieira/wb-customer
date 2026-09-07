@@ -108,7 +108,7 @@ Issues
   pm.sh start  <#id>              # → In Progress
   pm.sh done   <#id>              # → Done (dispara métricas de SLA no servidor)
   pm.sh status <#id> <estado>     # backlog|todo|in_progress|done|canceled
-  pm.sh edit   <#id> [--title T] [--desc D] [--priority P] [--milestone <id>|null]
+  pm.sh edit   <#id> [--title T] [--desc D] [--priority P] [--status S] [--milestone <id>|null]
   pm.sh rm     <#id>              # deleta de vez (sem undo)
 
 Milestones
@@ -196,6 +196,7 @@ cmd_edit() {
       --priority)  body=$(jq -c --arg v "$(printf '%s' "$2" | tr '[:lower:]-' '[:upper:]_')" '. + {priority:$v}' <<<"$body"); shift 2 ;;
       --milestone) if [[ $2 == null ]]; then body=$(jq -c '. + {milestoneId:null}' <<<"$body")
                    else body=$(jq -c --arg v "$2" '. + {milestoneId:$v}' <<<"$body"); fi; shift 2 ;;
+      --status)    body=$(jq -c --arg v "$(status_id "$2")" '. + {statusId:$v}' <<<"$body"); shift 2 ;;
       *) die "flag desconhecida em edit: $1" ;;
     esac
   done
