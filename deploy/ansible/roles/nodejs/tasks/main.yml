@@ -1,0 +1,35 @@
+---
+- name: Node instalado e na versão certa?
+  ansible.builtin.command: node --version
+  register: node_check
+  changed_when: false
+  failed_when: false
+
+- name: Instalar Node {{ node_version }}
+  # O servidor já tem Node por causa do WB-crm, mas em outra major. Só instala
+  # quando a major difere, para não trocar o Node do CRM sem necessidade.
+  ansible.builtin.shell: |
+    curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | bash -
+    apt-get install -y nodejs
+  when: node_check.rc != 0 or not node_check.stdout.startswith('v' + node_version)
+
+- name: pnpm instalado?
+  ansible.builtin.command: pnpm --version
+  register: pnpm_check
+  changed_when: false
+  failed_when: false
+
+- name: Instalar pnpm
+  # O projeto usa pnpm nos dois pacotes; o WB-crm usa npm. Não dá para reaproveitar.
+  ansible.builtin.command: npm install -g pnpm
+  when: pnpm_check.rc != 0
+
+- name: PM2 instalado?
+  ansible.builtin.command: pm2 --version
+  register: pm2_check
+  changed_when: false
+  failed_when: false
+
+- name: Instalar PM2
+  ansible.builtin.command: npm install -g pm2
+  when: pm2_check.rc != 0

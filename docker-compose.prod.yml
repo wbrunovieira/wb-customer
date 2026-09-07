@@ -1,0 +1,25 @@
+# Compose de PRODUÇÃO. O compose.yml da raiz é de desenvolvimento — monta o código,
+# roda start:dev com hot reload e sobe um Postgres junto. Nada disso serve aqui.
+#
+# Diferenças que importam:
+#   - target production do Dockerfile (build compilado, sem devDependencies)
+#   - sem bind mount do código
+#   - sem serviço de banco: o Postgres vive num compose próprio em /opt/wb-customer-db,
+#     gerido pelo role postgres (issue #1643)
+#   - porta publicada só em loopback; quem expõe para a internet é o nginx
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    env_file:
+      - ./backend/.env
+    ports:
+      - '127.0.0.1:${BACKEND_PORT:-3011}:3000'
+    # O banco roda fora deste compose, no host. Sem isto, host.docker.internal
+    # não resolve no Linux.
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped

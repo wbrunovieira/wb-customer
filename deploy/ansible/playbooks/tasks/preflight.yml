@@ -1,0 +1,80 @@
+---
+# Preflight — tudo o que precisa ser verdade ANTES de o deploy tocar em qualquer coisa.
+#
+# Herdado do WB-crm, onde nasceu de um incidente real: um deploy queimou os 30 minutos
+# de timeout num `git fetch` esperando senha, e o GitHub Actions reportou apenas
+# "cancelled", sem erro em lugar nenhum. Falhar aqui custa ~15 segundos e diz
+# exatamente o que está errado.
+
+- name: "Preflight | diretório da aplicação é um repositório git"
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/.git"
+  register: preflight_repo
+
+- name: "Preflight | abortar se não for repositório"
+  ansible.builtin.fail:
+    msg: "{{ app_dir }} não é um repositório git. Deploy abortado."
+  when: not preflight_repo.stat.exists
+
+- name: "Preflight | o servidor consegue BUSCAR código do GitHub"
+  # `fetch --dry-run`, não `ls-remote`: são caminhos diferentes no servidor do GitHub.
+  # O ls-remote faz só o GET /info/refs, que continua respondendo 200 mesmo quando o
+  # push/fetch está recusando — um preflight baseado nele diria "tudo certo" e o deploy
+  # morreria logo depois. Quem leva 401 é o POST /git-upload-pack, que o dry-run exercita.
+  ansible.builtin.command:
+    cmd: git fetch --dry-run origin {{ github_branch }}
+    chdir: "{{ app_dir }}"
+  register: preflight_fetch
+  changed_when: false
+  failed_when: false
+  timeout: 30
+
+- name: "Preflight | abortar com diagnóstico se o GitHub recusou"
+  ansible.builtin.fail:
+    msg: |
+      ❌ O servidor não consegue buscar código do GitHub. Deploy abortado ANTES de mexer em nada.
+
+      Saída: {{ preflight_fetch.stderr | default(preflight_fetch.stdout) | trim }}
+
+      Se a mensagem fala em "could not read Username": o servidor busca de forma anônima
+      e o GitHub recusou. Correção: deploy key somente-leitura no servidor e remote em SSH.
+  when: preflight_fetch.rc != 0
+
+- name: "Preflight | Docker respondendo"
+  ansible.builtin.command: docker info --format '{{ "{{" }}.ServerVersion{{ "}}" }}'
+  register: preflight_docker
+  changed_when: false
+  failed_when: preflight_docker.rc != 0
+  timeout: 30
+
+- name: "Preflight | as portas do WB-crm continuam intocadas"
+  # Os dois projetos dividem o servidor. Se algum dia o wb-customer for configurado
+  # para uma porta do CRM, o sintoma aparece como "o CRM caiu" — difícil de ligar a
+  # este deploy. Falhar aqui é muito mais barato. Ver issue #1639.
+  ansible.builtin.fail:
+    msg: "❌ Porta {{ item }} pertence ao WB-crm. Ajuste group_vars/all.yml antes de continuar."
+  when: item | int in [3000, 3001, 5433]
+  loop:
+    - "{{ frontend_port }}"
+    - "{{ backend_port }}"
+    - "{{ db_port }}"
+
+- name: "Preflight | espaço em disco"
+  ansible.builtin.shell: >
+    df --output=avail -BG {{ app_dir }} | tail -1 | tr -dc '0-9'
+  register: preflight_disk
+  changed_when: false
+  timeout: 30
+
+- name: "Preflight | abortar se o disco está apertado"
+  # Build de Next + imagem Docker não cabe em pouco espaço, e o modo de falha
+  # (build morrendo no meio) é pior do que não começar.
+  ansible.builtin.fail:
+    msg: "❌ Apenas {{ preflight_disk.stdout }}GB livres em {{ app_dir }}. Mínimo {{ min_free_gb }}GB. Deploy abortado."
+  when: preflight_disk.stdout | int < min_free_gb | int
+
+- name: "Preflight | OK"
+  ansible.builtin.debug:
+    msg: >-
+      ✅ Preflight: repo ok, GitHub acessível, Docker {{ preflight_docker.stdout | trim }},
+      {{ preflight_disk.stdout }}GB livres, portas {{ frontend_port }}/{{ backend_port }}/{{ db_port }} sem colisão.

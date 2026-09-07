@@ -1,0 +1,63 @@
+# Aplicação
+app_name: wb-customer
+app_domain: customer.wbdigitalsolutions.com
+app_dir: /opt/wb-customer
+
+# ── Portas ────────────────────────────────────────────────────────────────────
+# O servidor JÁ hospeda o WB-crm, que ocupa 3000 (Next), 3001 (backend) e 5433
+# (Postgres). Nada aqui pode encostar nessas três. Ver issue #1639.
+frontend_port: 3010
+backend_port: 3011
+db_port: 5434
+
+# ── Banco ─────────────────────────────────────────────────────────────────────
+# Instância própria, separada da do CRM: isola falha, backup e upgrade.
+db_dir: /opt/wb-customer-db
+db_container: wb_customer_postgres
+db_name: wb_customer
+db_user: wb_customer
+db_password: "{{ vault_db_password }}"
+
+# ── Repositório ───────────────────────────────────────────────────────────────
+github_repo: git@github.com:wbrunovieira/wb-customer.git
+github_branch: main
+
+node_version: "22"
+
+# ── Aplicação ─────────────────────────────────────────────────────────────────
+# O frontend fala com o backend pelo MESMO domínio, sob /api/v1, roteado pelo
+# nginx. Essa escolha não é livre: o redirect URI já registrado no Google Cloud
+# Console é https://customer.wbdigitalsolutions.com/api/v1/google/callback.
+# Trocar para um subdomínio próprio exige reregistrar lá. Ver issue #1641.
+public_api_url: "https://{{ app_domain }}"
+
+jwt_secret: "{{ vault_jwt_secret }}"
+seed_admin_email: bruno@wbdigitalsolutions.com
+seed_admin_password: "{{ vault_seed_admin_password }}"
+
+# Adapters — em produção ambos usam o Google de verdade.
+storage_adapter: google-drive
+calendar_adapter: google-calendar
+
+google_client_id: "{{ vault_google_client_id }}"
+google_client_secret: "{{ vault_google_client_secret }}"
+google_redirect_uri: "https://{{ app_domain }}/api/v1/google/callback"
+
+# Integrações
+transcriptor_base_url: "https://transcritor.wbdigitalsolutions.com"
+transcriptor_api_key: "{{ vault_transcriptor_api_key }}"
+meta_system_user_token: "{{ vault_meta_system_user_token }}"
+meta_mock_mode: "false"
+evolution_api_url: "{{ vault_evolution_api_url }}"
+evolution_api_key: "{{ vault_evolution_api_key }}"
+evolution_instance: "{{ vault_evolution_instance }}"
+
+# Segurança interna
+cron_secret: "{{ vault_cron_secret }}"
+internal_api_key: "{{ vault_internal_api_key }}"
+
+# Certbot
+certbot_email: bruno@wbdigitalsolutions.com
+
+# Preflight: build de Next + imagem Docker não cabe em pouco espaço.
+min_free_gb: 5

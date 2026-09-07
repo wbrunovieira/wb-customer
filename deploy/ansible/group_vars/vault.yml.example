@@ -1,0 +1,35 @@
+# Modelo do vault. Copie para vault.yml, preencha e criptografe:
+#
+#   cp vault.yml.example vault.yml
+#   # preencher
+#   ansible-vault encrypt vault.yml
+#
+# vault.yml entra no git JÁ CRIPTOGRAFADO (mesmo padrão do WB-crm).
+# Este arquivo .example fica em texto puro e só pode conter placeholders.
+#
+# GERE SEGREDOS NOVOS. Não reaproveite os do WB-crm: comprometer um projeto
+# não pode dar acesso ao outro. Ver issue #1642.
+#
+# Sugestão para os aleatórios:  openssl rand -base64 48
+
+vault_db_password: "CHANGE_ME"
+
+# Mínimo de 32 caracteres — o schema de env do backend valida isso no boot.
+vault_jwt_secret: "CHANGE_ME"
+
+# NÃO repita a senha usada em desenvolvimento: ela já circulou.
+vault_seed_admin_password: "CHANGE_ME"
+
+vault_google_client_id: "CHANGE_ME"
+vault_google_client_secret: "CHANGE_ME"
+
+vault_transcriptor_api_key: "CHANGE_ME"
+
+vault_meta_system_user_token: "CHANGE_ME"
+
+vault_evolution_api_url: "CHANGE_ME"
+vault_evolution_api_key: "CHANGE_ME"
+vault_evolution_instance: "CHANGE_ME"
+
+vault_cron_secret: "CHANGE_ME"
+vault_internal_api_key: "CHANGE_ME"
