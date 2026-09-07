@@ -30,6 +30,7 @@ import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
 import { CreateCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/create-creative-strategy.use-case'
 import { UpdateCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/update-creative-strategy.use-case'
 import { DeleteCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/delete-creative-strategy.use-case'
+import { GetCreativeStrategyComparisonUseCase } from '@/domain/creatives/application/use-cases/get-creative-strategy-comparison.use-case'
 import { ListCreativeStrategiesUseCase } from '@/domain/creatives/application/use-cases/list-creative-strategies.use-case'
 import { CreativeStrategy } from '@/domain/creatives/enterprise/entities/creative-strategy'
 
@@ -94,6 +95,7 @@ export class CreativeStrategiesController {
     private readonly updateStrategy: UpdateCreativeStrategyUseCase,
     private readonly deleteStrategy: DeleteCreativeStrategyUseCase,
     private readonly listStrategies: ListCreativeStrategiesUseCase,
+    private readonly compareStrategy: GetCreativeStrategyComparisonUseCase,
   ) {}
 
   @Post()
@@ -123,6 +125,43 @@ export class CreativeStrategiesController {
 
     if (result.isLeft()) throw new BadRequestException(result.value.message)
     return { strategyId: result.value.strategyId }
+  }
+
+  @Get(':strategyId/comparison')
+  @ApiOperation({
+    summary: 'Compare the performance of every creative in a strategy',
+    description:
+      'Aggregates CreativePerformance per creative of the batch and returns the leader of each metric (best CTR, lowest CPA, best ROAS, most conversions). Rates are derived from the totals, not averaged across records. Creatives with no data are returned with zeroed totals and null rates so they stay visible in the comparison. No single ranking score is invented — the objective of the campaign decides which metric matters.',
+  })
+  @ApiParam({ name: 'customerId' })
+  @ApiParam({ name: 'strategyId' })
+  @ApiResponse({ status: 200, description: 'Per-creative totals plus the leader of each metric' })
+  @ApiResponse({ status: 404, description: 'Strategy not found for this customer' })
+  async comparison(
+    @Param('customerId') customerId: string,
+    @Param('strategyId') strategyId: string,
+  ) {
+    const result = await this.compareStrategy.execute({ customerId, strategyId })
+
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+
+    const { strategy, entries, highlights } = result.value
+
+    return {
+      strategy: toHttp(strategy),
+      highlights,
+      entries: entries.map((e) => ({
+        creativeId: e.creative.id.value,
+        title: e.creative.title,
+        type: e.creative.type,
+        stage: e.creative.stage,
+        thumbnailUrl: e.creative.thumbnailUrl,
+        driveViewUrl: e.creative.driveViewUrl,
+        position: e.position,
+        isWinner: e.isWinner,
+        totals: e.totals,
+      })),
+    }
   }
 
   @Get()

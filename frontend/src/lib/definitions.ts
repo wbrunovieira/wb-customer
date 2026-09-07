@@ -445,6 +445,47 @@ export type CreativeStrategy = {
   updatedAt: string
 }
 
+// Comparativo de performance dos criativos de uma estratégia.
+// Taxas nulas = ainda não há dado suficiente para o cálculo.
+export type StrategyCreativeTotals = {
+  recordCount: number
+  impressions: number
+  clicks: number
+  conversions: number
+  spend: number
+  ctr: number | null
+  cpc: number | null
+  cpa: number | null
+  roas: number | null
+  platforms: string[]
+}
+
+export type StrategyComparisonEntry = {
+  creativeId: string
+  title: string
+  type: CreativeType
+  stage: CreativeStage | null
+  thumbnailUrl: string | null
+  driveViewUrl: string | null
+  position: number
+  isWinner: boolean
+  totals: StrategyCreativeTotals
+}
+
+// creativeId líder de cada métrica; null quando nenhum criativo tem dado.
+export type StrategyComparisonHighlights = {
+  bestCtr: string | null
+  bestCpa: string | null
+  bestRoas: string | null
+  mostConversions: string | null
+}
+
+export type StrategyComparison = {
+  strategy: CreativeStrategy
+  entries: StrategyComparisonEntry[]
+  highlights: StrategyComparisonHighlights
+}
+
 // ── PAID TRAFFIC ───────────────────────────────────────
 
 export type TrafficCampaignObjective =
