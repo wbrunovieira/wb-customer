@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { SyncCampaignMetricsUseCase } from '@/domain/paid-traffic/application/use-cases/sync-campaign-metrics.use-case'
+import { SyncCreativePerformanceUseCase } from '@/domain/paid-traffic/application/use-cases/sync-creative-performance.use-case'
 import { ICampaignRepository } from '@/domain/paid-traffic/application/repositories/i-campaign.repository'
 
 @Injectable()
@@ -9,6 +10,7 @@ export class MetricsSyncSchedulerService {
 
   constructor(
     private readonly syncUseCase: SyncCampaignMetricsUseCase,
+    private readonly syncCreativePerformance: SyncCreativePerformanceUseCase,
     private readonly campaignRepo: ICampaignRepository,
   ) {}
 
@@ -27,6 +29,20 @@ export class MetricsSyncSchedulerService {
           this.logger.log(
             `Synced ${result.value.synced} metrics for campaign ${campaign.id.value} ("${campaign.name}")`,
           )
+
+          // As métricas acabaram de chegar; agrega por criativo enquanto estão frescas.
+          const perCreative = await this.syncCreativePerformance.execute({
+            campaignId: campaign.id.value,
+          })
+          if (perCreative.isRight()) {
+            this.logger.log(
+              `Aggregated performance for ${perCreative.value.synced} creative(s) of campaign ${campaign.id.value}`,
+            )
+          } else {
+            this.logger.warn(
+              `Creative performance skipped for campaign ${campaign.id.value}: ${(perCreative.value as Error).message}`,
+            )
+          }
         } else {
           this.logger.warn(
             `Sync skipped for campaign ${campaign.id.value}: ${(result.value as Error).message}`,

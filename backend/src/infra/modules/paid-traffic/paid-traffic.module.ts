@@ -28,6 +28,7 @@ import { PauseCampaignUseCase } from '@/domain/paid-traffic/application/use-case
 import { ResumeCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/resume-campaign.use-case'
 import { ListMetaAdAccountsUseCase } from '@/domain/paid-traffic/application/use-cases/list-meta-ad-accounts.use-case'
 import { CreateMetaAdAccountUseCase } from '@/domain/paid-traffic/application/use-cases/create-meta-ad-account.use-case'
+import { SyncCreativePerformanceUseCase } from '@/domain/paid-traffic/application/use-cases/sync-creative-performance.use-case'
 
 // Repository interfaces
 import { IMetaConfigRepository } from '@/domain/paid-traffic/application/repositories/i-meta-config.repository'
@@ -36,6 +37,8 @@ import { ICampaignRepository } from '@/domain/paid-traffic/application/repositor
 import { IAdSetRepository } from '@/domain/paid-traffic/application/repositories/i-ad-set.repository'
 import { IAdRepository } from '@/domain/paid-traffic/application/repositories/i-ad.repository'
 import { IAdDailyMetricRepository } from '@/domain/paid-traffic/application/repositories/i-ad-daily-metric.repository'
+// Escrita cross-domain: o sync de métricas alimenta a performance por criativo.
+import { ICreativePerformanceRepository } from '@/domain/creatives/application/repositories/i-creative-performance.repository'
 
 // Adapter interface and implementation
 import { IAdPlatformAdapter } from '@/domain/paid-traffic/application/services/i-ad-platform.adapter'
@@ -48,6 +51,7 @@ import { PrismaCampaignRepository } from '@/infra/database/prisma/repositories/p
 import { PrismaAdSetRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-ad-set.repository'
 import { PrismaAdRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-ad.repository'
 import { PrismaAdDailyMetricRepository } from '@/infra/database/prisma/repositories/paid-traffic/prisma-ad-daily-metric.repository'
+import { PrismaCreativePerformanceRepository } from '@/infra/database/prisma/repositories/creatives/prisma-creative-performance.repository'
 
 // Schedulers
 import { MetricsSyncSchedulerService } from '@/infra/scheduled/metrics-sync-scheduler.service'
@@ -81,6 +85,7 @@ import { MetricsSyncSchedulerService } from '@/infra/scheduled/metrics-sync-sche
     ResumeCampaignUseCase,
     ListMetaAdAccountsUseCase,
     CreateMetaAdAccountUseCase,
+    SyncCreativePerformanceUseCase,
 
     // Schedulers
     MetricsSyncSchedulerService,
@@ -95,6 +100,7 @@ import { MetricsSyncSchedulerService } from '@/infra/scheduled/metrics-sync-sche
     { provide: IAdSetRepository, useClass: PrismaAdSetRepository },
     { provide: IAdRepository, useClass: PrismaAdRepository },
     { provide: IAdDailyMetricRepository, useClass: PrismaAdDailyMetricRepository },
+    { provide: ICreativePerformanceRepository, useClass: PrismaCreativePerformanceRepository },
   ],
 })
 export class PaidTrafficModule {}
