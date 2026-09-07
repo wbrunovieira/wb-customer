@@ -1,3 +1,6 @@
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+# Decisão de build por dependência. Ver backend/pnpm-workspace.yaml.
+allowBuilds:
+  # Otimização de imagem do Next; sem o build nativo o next/image degrada.
+  sharp: true
+  # Binding nativo transitivo; nada do app o usa em runtime.
+  unrs-resolver: false
