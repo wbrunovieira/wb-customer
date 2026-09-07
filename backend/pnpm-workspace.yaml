@@ -1,6 +1,16 @@
-ignoredBuiltDependencies:
-  - '@nestjs/core'
-  - '@prisma/client'
-  - '@prisma/engines'
-  - esbuild
-  - prisma
+# Decisão de build por dependência. O pnpm 11 recusa rodar QUALQUER script
+# enquanto houver pacote pendente aqui — e em CI não existe TTY para
+# `pnpm approve-builds`, então a decisão precisa estar commitada.
+allowBuilds:
+  # Gera o Prisma Client. Sem isto o tsc acusa erros fantasma como
+  # "Property 'activity' does not exist on type 'PrismaService'".
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
+  # Binários nativos do Vitest (unplugin-swc) e do bundler.
+  '@swc/core': true
+  esbuild: true
+  # postinstall só imprime pedido de doação.
+  '@nestjs/core': false
+  # Telemetria de instalação; nada do projeto depende dela.
+  '@scarf/scarf': false

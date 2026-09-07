@@ -12,6 +12,7 @@ import { GetCreativePerformanceSummaryUseCase } from '@/domain/creatives/applica
 import { CreateCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/create-creative-strategy.use-case'
 import { UpdateCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/update-creative-strategy.use-case'
 import { DeleteCreativeStrategyUseCase } from '@/domain/creatives/application/use-cases/delete-creative-strategy.use-case'
+import { GetCreativeStrategyComparisonUseCase } from '@/domain/creatives/application/use-cases/get-creative-strategy-comparison.use-case'
 import { ListCreativeStrategiesUseCase } from '@/domain/creatives/application/use-cases/list-creative-strategies.use-case'
 import { ICreativeRepository } from '@/domain/creatives/application/repositories/i-creative.repository'
 import { ICreativeStrategyRepository } from '@/domain/creatives/application/repositories/i-creative-strategy.repository'
@@ -40,6 +41,7 @@ import { ICustomerRepository } from '@/domain/customers/application/repositories
     UpdateCreativeStrategyUseCase,
     DeleteCreativeStrategyUseCase,
     ListCreativeStrategiesUseCase,
+    GetCreativeStrategyComparisonUseCase,
 
     // Repository bindings
     { provide: ICreativeRepository, useClass: PrismaCreativeRepository },

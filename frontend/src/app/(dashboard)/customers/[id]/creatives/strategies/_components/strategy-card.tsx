@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Creative, CreativeStrategy, StrategyStatus } from '@/lib/definitions'
+import { Creative, CreativeStrategy, StrategyComparison, StrategyStatus } from '@/lib/definitions'
+import CreativeComparison from './creative-comparison'
 import { updateStrategy, deleteStrategy } from '@/app/actions/creative-strategies'
 import { useToast } from '@/components/toast/toast-context'
 
@@ -30,9 +31,13 @@ interface Props {
   strategy: CreativeStrategy
   creatives: Creative[]
   customerId: string
+  /** Ausente quando a busca do comparativo falhou; o card degrada para os chips simples. */
+  comparison?: StrategyComparison | null
 }
 
-export default function StrategyCard({ strategy, creatives, customerId }: Props) {
+const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+export default function StrategyCard({ strategy, creatives, customerId, comparison }: Props) {
   const { success, error, confirm } = useToast()
   const [isPending, startTransition] = useTransition()
   const [showWinnerPicker, setShowWinnerPicker] = useState(false)
@@ -46,6 +51,20 @@ export default function StrategyCard({ strategy, creatives, customerId }: Props)
   const winner = strategy.winnerId
     ? creatives.find(c => c.id === strategy.winnerId)
     : null
+
+  const totalsByCreative = new Map(
+    (comparison?.entries ?? []).map(e => [e.creativeId, e.totals]),
+  )
+
+  // Resumo curto para o seletor: escolher o campeão sem ver número era o problema.
+  function metricHint(creativeId: string): string | null {
+    const t = totalsByCreative.get(creativeId)
+    if (!t || t.recordCount === 0) return null
+    const parts: string[] = []
+    if (t.ctr != null) parts.push(`CTR ${nf2.format(t.ctr)}%`)
+    if (t.cpa != null) parts.push(`CPA R$ ${nf2.format(t.cpa)}`)
+    return parts.length > 0 ? parts.join(' · ') : null
+  }
 
   function changeStatus(newStatus: StrategyStatus) {
     startTransition(async () => {
@@ -134,7 +153,10 @@ export default function StrategyCard({ strategy, creatives, customerId }: Props)
       {/* Creatives strip */}
       <div className="px-5 py-3 flex flex-col gap-2">
         <p className="text-xs text-lo">{strategyCreatives.length} criativo{strategyCreatives.length !== 1 ? 's' : ''}</p>
-        {strategyCreatives.length > 0 && (
+        {comparison && (
+          <CreativeComparison entries={comparison.entries} highlights={comparison.highlights} />
+        )}
+        {!comparison && strategyCreatives.length > 0 && (
           <div className="flex gap-1.5 flex-wrap">
             {strategyCreatives.map(c => (
               <div
@@ -178,13 +200,18 @@ export default function StrategyCard({ strategy, creatives, customerId }: Props)
                   type="button"
                   disabled={isPending}
                   onClick={() => handleSetWinner(c.id)}
-                  className={`rounded-lg border px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
+                  className={`flex flex-col items-start gap-0.5 rounded-lg border px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
                     c.id === strategy.winnerId
                       ? 'border-amber-500 bg-amber-500/15 text-amber-400'
                       : 'border-border bg-canvas text-md hover:bg-elevated'
                   }`}
                 >
-                  {c.title}
+                  <span className="max-w-[160px] truncate">{c.title}</span>
+                  {metricHint(c.id) ? (
+                    <span className="text-[10px] tabular-nums text-lo">{metricHint(c.id)}</span>
+                  ) : (
+                    comparison && <span className="text-[10px] text-lo">sem métrica</span>
+                  )}
                 </button>
               ))}
             </div>

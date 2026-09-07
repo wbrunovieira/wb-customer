@@ -1,0 +1,120 @@
+---
+# Deploy do backend COM migração de schema.
+#
+# Ordem obrigatória: backup → migrate → swap. Código novo nunca sobe antes de a
+# coluna existir. É o mesmo desenho do WB-crm, e é o motivo de o CD inspecionar o
+# diff: se ele tocar backend/prisma/migrations/, roda ESTE playbook antes do
+# quick-deploy.
+#
+# Uso:
+#   ansible-playbook -i inventory/production.yml playbooks/deploy-backend.yml
+
+- name: Deploy do backend com migração
+  hosts: customer_server
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  environment:
+    GIT_TERMINAL_PROMPT: "0"
+    GIT_ASKPASS: /bin/true
+    GIT_PAGER: cat
+
+  tasks:
+    - name: Info
+      ansible.builtin.debug:
+        msg: "🗄️  DEPLOY COM MIGRAÇÃO — {{ app_name }}"
+
+    - name: Preflight
+      ansible.builtin.import_tasks: tasks/preflight.yml
+
+    # ── Backup ANTES de qualquer coisa ────────────────────────────────────────
+    - name: Garantir diretório de backup
+      ansible.builtin.file:
+        path: "{{ db_dir }}/backups"
+        state: directory
+        mode: "0750"
+
+    - name: Dump do banco antes de migrar
+      # Sem isto, uma migração ruim não tem volta. O nome carrega a data para o
+      # rollback saber qual restaurar.
+      ansible.builtin.shell: >
+        docker exec {{ db_container }}
+        pg_dump -U {{ db_user }} -d {{ db_name }} -Fc
+        > {{ db_dir }}/backups/pre-migrate-$(date +%Y%m%d-%H%M%S).dump
+      register: db_backup
+      timeout: 600
+
+    - name: Confirmar que o dump não saiu vazio
+      ansible.builtin.shell: >
+        find {{ db_dir }}/backups -name 'pre-migrate-*.dump' -newermt '-5 minutes' -size +1k | wc -l
+      register: backup_check
+      changed_when: false
+
+    - name: Abortar se o backup falhou
+      ansible.builtin.fail:
+        msg: "❌ Backup pré-migração não gerou arquivo utilizável. Deploy abortado antes de migrar."
+      when: backup_check.stdout | int < 1
+
+    # ── Código ────────────────────────────────────────────────────────────────
+    - name: Buscar código do GitHub
+      ansible.builtin.command:
+        cmd: git fetch origin {{ github_branch }}
+        chdir: "{{ app_dir }}"
+      register: git_fetch
+      changed_when: false
+      timeout: 120
+      retries: 3
+      delay: 10
+      until: git_fetch.rc == 0
+
+    - name: Aplicar código
+      ansible.builtin.command:
+        cmd: git reset --hard origin/{{ github_branch }}
+        chdir: "{{ app_dir }}"
+      timeout: 120
+
+    # ── Migração ──────────────────────────────────────────────────────────────
+    - name: Construir a imagem do backend com o código novo
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml build backend
+        chdir: "{{ app_dir }}"
+      timeout: 900
+
+    - name: Rodar migrate deploy
+      # `migrate deploy`, nunca `migrate dev`: dev tenta gerar migration e mexe em
+      # shadow database, o que não pode acontecer em produção.
+      # Roda num container efêmero para migrar ANTES de trocar o que está servindo.
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml run --rm backend pnpm prisma migrate deploy
+        chdir: "{{ app_dir }}"
+      register: migrate_out
+      timeout: 600
+
+    - name: Saída da migração
+      ansible.builtin.debug:
+        msg: "{{ migrate_out.stdout_lines | default([]) }}"
+
+    # ── Swap ──────────────────────────────────────────────────────────────────
+    - name: Subir o backend novo
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml up -d backend
+        chdir: "{{ app_dir }}"
+      timeout: 300
+
+    - name: Health check do backend
+      ansible.builtin.uri:
+        url: "http://localhost:{{ backend_port }}/api/v1/health"
+        timeout: 10
+      register: back_health
+      retries: 24
+      delay: 5
+      until: back_health.status is defined and back_health.status == 200
+
+    - name: Resultado
+      ansible.builtin.debug:
+        msg: |
+          ✅ MIGRAÇÃO E DEPLOY DO BACKEND CONCLUÍDOS
+          Backup : {{ db_dir }}/backups/
+          Backend: {{ back_health.status }} — https://{{ app_domain }}/api/v1

@@ -1,0 +1,57 @@
+---
+# Instância própria, separada da do WB-crm. Compartilhar o mesmo servidor de banco
+# acoplaria backup, restauração e upgrade dos dois projetos. Ver issue #1643.
+
+- name: Criar diretório do banco
+  ansible.builtin.file:
+    path: "{{ db_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Escrever o compose do Postgres
+  ansible.builtin.copy:
+    dest: "{{ db_dir }}/docker-compose.yml"
+    mode: "0640"
+    content: |
+      services:
+        postgres:
+          image: postgres:16-alpine
+          container_name: {{ db_container }}
+          restart: unless-stopped
+          environment:
+            POSTGRES_DB: {{ db_name }}
+            POSTGRES_USER: {{ db_user }}
+            POSTGRES_PASSWORD: {{ db_password }}
+          # Publica só em loopback: o banco não precisa ser alcançável de fora,
+          # e o backend fala com ele pela rede do host.
+          ports:
+            - "127.0.0.1:{{ db_port }}:5432"
+          volumes:
+            - postgres_data:/var/lib/postgresql/data
+          healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U {{ db_user }} -d {{ db_name }}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+      volumes:
+        postgres_data:
+  register: db_compose
+
+- name: Subir o Postgres
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ db_dir }}"
+  timeout: 300
+
+- name: Esperar o Postgres aceitar conexão
+  ansible.builtin.command: docker exec {{ db_container }} pg_isready -U {{ db_user }} -d {{ db_name }}
+  register: pg_ready
+  changed_when: false
+  retries: 30
+  delay: 2
+  until: pg_ready.rc == 0
+
+- name: Status
+  ansible.builtin.debug:
+    msg: "PostgreSQL pronto em 127.0.0.1:{{ db_port }} (container {{ db_container }})"

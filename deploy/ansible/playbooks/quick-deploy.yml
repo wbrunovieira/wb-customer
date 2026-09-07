@@ -1,0 +1,137 @@
+---
+# Quick Deploy — atualização de código (frontend sob PM2 + container do backend).
+#
+# Use para:
+#   - mudanças de frontend/UI, correções, patches
+#   - mudanças de CÓDIGO do backend SEM migração de schema
+#
+# ⚠️  MIGRAÇÕES rodam em deploy-backend.yml. O backend é a autoridade do Prisma.
+#
+# Herda do WB-crm as decisões que lá custaram incidente:
+#   - `command`/`shell` em vez de `raw`. O `raw` existe para hosts sem Python; este
+#     tem. O preço do `raw` era um PTY em toda tarefa: qualquer comando que peça
+#     input trava para sempre (foi o pager do git e depois o prompt de senha).
+#   - `environment:` desarma os prompts do git de uma vez, em vez de repetir a
+#     variável em cada comando e esquecer em uma.
+#   - preflight antes de tocar em qualquer coisa.
+#   - `timeout:` em toda tarefa que fala com a rede ou compila.
+#   - `retries` nas tarefas de rede, que são as que falham de forma intermitente.
+#
+# Uso:
+#   ansible-playbook -i inventory/production.yml playbooks/quick-deploy.yml
+
+- name: Quick Deploy — só código
+  hosts: customer_server
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  environment:
+    GIT_TERMINAL_PROMPT: "0"
+    GIT_ASKPASS: /bin/true
+    GIT_PAGER: cat
+
+  tasks:
+    - name: Info
+      ansible.builtin.debug:
+        msg: "🚀 QUICK DEPLOY — {{ app_name }} @ {{ github_branch }}"
+
+    - name: Preflight
+      ansible.builtin.import_tasks: tasks/preflight.yml
+
+    # ── Código ────────────────────────────────────────────────────────────────
+    - name: Buscar código do GitHub
+      ansible.builtin.command:
+        cmd: git fetch origin {{ github_branch }}
+        chdir: "{{ app_dir }}"
+      register: git_fetch
+      changed_when: false
+      timeout: 120
+      retries: 3
+      delay: 10
+      until: git_fetch.rc == 0
+
+    - name: Aplicar código
+      ansible.builtin.command:
+        cmd: git reset --hard origin/{{ github_branch }}
+        chdir: "{{ app_dir }}"
+      timeout: 120
+
+    - name: Commit deployado
+      ansible.builtin.command:
+        cmd: git --no-pager log -1 --oneline
+        chdir: "{{ app_dir }}"
+      register: git_commit
+      changed_when: false
+      timeout: 30
+
+    - name: Mostrar commit
+      ansible.builtin.debug:
+        msg: "Commit: {{ git_commit.stdout }}"
+
+    # ── Frontend ──────────────────────────────────────────────────────────────
+    # --frozen-lockfile: em produção o lockfile manda. Se divergir do package.json,
+    # falhar é melhor do que resolver versão nova sozinho no servidor.
+    - name: Instalar dependências do frontend
+      ansible.builtin.command:
+        cmd: pnpm install --frozen-lockfile
+        chdir: "{{ app_dir }}/frontend"
+      timeout: 900
+
+    - name: Build do Next.js
+      ansible.builtin.command:
+        cmd: pnpm build
+        chdir: "{{ app_dir }}/frontend"
+      environment:
+        NODE_OPTIONS: "--max-old-space-size=4096"
+        NODE_ENV: production
+      timeout: 1200
+
+    - name: Reiniciar PM2 (frontend)
+      # sudo com caminho absoluto: o PM2 roda no daemon do root. Funciona como root
+      # (local) e como o usuário `deploy` do CD (sudoers escopado). Ver issue #1645.
+      ansible.builtin.command: sudo /usr/bin/pm2 restart {{ app_name }}
+      timeout: 120
+
+    # ── Backend ───────────────────────────────────────────────────────────────
+    - name: Rebuild da imagem do backend
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml build backend
+        chdir: "{{ app_dir }}"
+      timeout: 900
+
+    - name: Subir o container do backend
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml up -d backend
+        chdir: "{{ app_dir }}"
+      timeout: 300
+
+    # ── Health checks ─────────────────────────────────────────────────────────
+    - name: Health check do frontend
+      # A raiz redireciona para /login quando não há sessão; 307 é resposta saudável.
+      ansible.builtin.uri:
+        url: "http://localhost:{{ frontend_port }}"
+        status_code: [200, 307, 302]
+        timeout: 10
+      register: front_health
+      retries: 12
+      delay: 5
+      until: front_health.status is defined and front_health.status in [200, 307, 302]
+
+    - name: Health check do backend (boot frio do NestJS leva até ~2min)
+      ansible.builtin.uri:
+        url: "http://localhost:{{ backend_port }}/api/v1/health"
+        timeout: 10
+      register: back_health
+      retries: 24
+      delay: 5
+      until: back_health.status is defined and back_health.status == 200
+
+    - name: Resultado
+      ansible.builtin.debug:
+        msg: |
+          ✅ QUICK DEPLOY CONCLUÍDO
+          Commit  : {{ git_commit.stdout }}
+          Frontend: {{ front_health.status }} — https://{{ app_domain }}
+          Backend : {{ back_health.status }} — https://{{ app_domain }}/api/v1

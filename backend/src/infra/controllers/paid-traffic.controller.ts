@@ -47,6 +47,7 @@ import { RecordAdDailyMetricsUseCase } from '@/domain/paid-traffic/application/u
 import { GetCampaignDashboardUseCase } from '@/domain/paid-traffic/application/use-cases/get-campaign-dashboard.use-case'
 import { PublishCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/publish-campaign.use-case'
 import { SyncCampaignMetricsUseCase } from '@/domain/paid-traffic/application/use-cases/sync-campaign-metrics.use-case'
+import { SyncCreativePerformanceUseCase } from '@/domain/paid-traffic/application/use-cases/sync-creative-performance.use-case'
 import { PauseCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/pause-campaign.use-case'
 import { ResumeCampaignUseCase } from '@/domain/paid-traffic/application/use-cases/resume-campaign.use-case'
 
@@ -317,6 +318,7 @@ export class CampaignsController {
     private readonly getDashboard: GetCampaignDashboardUseCase,
     private readonly publishCampaign: PublishCampaignUseCase,
     private readonly syncMetrics: SyncCampaignMetricsUseCase,
+    private readonly syncCreativePerformance: SyncCreativePerformanceUseCase,
     private readonly pauseCampaign: PauseCampaignUseCase,
     private readonly resumeCampaign: ResumeCampaignUseCase,
   ) {}
@@ -710,6 +712,28 @@ export class CampaignsController {
     @Param('campaignId') campaignId: string,
   ) {
     const result = await this.syncMetrics.execute({ campaignId })
+    if (result.isLeft()) {
+      const msg = result.value.message
+      if (msg.includes('not found')) throw new NotFoundException(msg)
+      throw new BadRequestException(msg)
+    }
+    return { success: true, synced: result.value.synced }
+  }
+
+  @Post(':campaignId/sync-creative-performance')
+  @ApiOperation({
+    summary: 'Aggregate this campaign daily ad metrics into per-creative performance',
+    description:
+      'Groups AdDailyMetric rows by the creative each ad uses and upserts one CreativePerformance row per creative (source "meta_sync"). Idempotent: re-running updates the same rows. Manually entered rows are never touched. Runs automatically after the daily metrics sync.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Customer ID' })
+  @ApiParam({ name: 'campaignId', description: 'Campaign ID' })
+  @ApiResponse({ status: 201, description: 'Creative performance synced', schema: { example: { success: true, synced: 3 } } })
+  @ApiResponse({ status: 404, description: 'Campaign not found' })
+  async syncCreativePerformanceRoute(
+    @Param('campaignId') campaignId: string,
+  ) {
+    const result = await this.syncCreativePerformance.execute({ campaignId })
     if (result.isLeft()) {
       const msg = result.value.message
       if (msg.includes('not found')) throw new NotFoundException(msg)

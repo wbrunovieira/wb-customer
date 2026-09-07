@@ -1,0 +1,73 @@
+---
+# Deploy completo — use na PRIMEIRA subida. Depois disso, o dia a dia é
+# quick-deploy.yml (código) e deploy-backend.yml (código + migração).
+#
+# Uso:
+#   ansible-playbook -i inventory/production.yml playbooks/deploy.yml --ask-vault-pass
+
+- name: Deploy completo do WB Customer
+  hosts: customer_server
+  become: yes
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  pre_tasks:
+    - name: Informações do deploy
+      ansible.builtin.debug:
+        msg: |
+          Aplicação : {{ app_name }} → https://{{ app_domain }}
+          Repo      : {{ github_repo }} @ {{ github_branch }}
+          Portas    : front {{ frontend_port }} · back {{ backend_port }} · db {{ db_port }}
+          Servidor  : compartilhado com o WB-crm (3000/3001/5433 são dele)
+
+    - name: Diretório de log do PM2
+      ansible.builtin.file:
+        path: /var/log/pm2
+        state: directory
+        mode: "0755"
+
+  roles:
+    - common
+    - nodejs
+    - postgres
+    - app
+    - nginx
+
+  post_tasks:
+    - name: Health check do backend
+      ansible.builtin.uri:
+        url: "http://localhost:{{ backend_port }}/api/v1/health"
+        timeout: 10
+      register: back_health
+      retries: 24
+      delay: 5
+      until: back_health.status is defined and back_health.status == 200
+      ignore_errors: yes
+
+    - name: Health check do frontend
+      ansible.builtin.uri:
+        url: "http://localhost:{{ frontend_port }}"
+        status_code: [200, 307, 302]
+        timeout: 10
+      register: front_health
+      retries: 12
+      delay: 5
+      until: front_health.status is defined and front_health.status in [200, 307, 302]
+      ignore_errors: yes
+
+    - name: Resumo
+      ansible.builtin.debug:
+        msg: |
+          ================================
+          Deploy concluído
+          ================================
+          URL      : https://{{ app_domain }}
+          Swagger  : https://{{ app_domain }}/api/docs
+          Frontend : {{ front_health.status | default('sem resposta') }}
+          Backend  : {{ back_health.status | default('sem resposta') }}
+          Banco    : {{ db_container }} em 127.0.0.1:{{ db_port }}
+
+          Falta fazer à mão: conectar o Google em /admin/google — o token fica
+          no banco e não migra do desenvolvimento (issue #1562).
+          ================================

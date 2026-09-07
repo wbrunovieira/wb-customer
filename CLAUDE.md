@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ Sempre rastreie o trabalho como issues (skill `track-work`)
+
+Toda feature, correção, melhoria ou débito técnico DEVE virar uma issue no
+projeto "WB Customer Admin" (`cmor7l5c1000bpa017kplrgct`) no WB Project Manager,
+agrupada no milestone da fase, com o status em dia (Backlog/Todo → In Progress →
+Done). O board já tem issue: LISTE antes de criar. Antes de planejar ou iniciar
+trabalho não-trivial, e sempre que descobrir um bug/melhoria, invoque a skill
+**`track-work`** (`.claude/skills/track-work/SKILL.md`) — ela tem o projectId, os
+status IDs, a localização da API key e o CLI `pm.sh`.
+
 ## Commands
 
 ### Backend (`/backend`)
@@ -103,6 +113,7 @@ frontend/src/
 
 ## Conventions
 
+- **API-first — agents operate this system**: every capability the UI offers MUST be reachable through a documented API route. Never put business logic in a Next.js Server Action that has no backend equivalent; actions call the API, they don't replace it. Routes must be usable by a machine principal (API key), not only by a logged-in human, and scoped to least privilege.
 - **Swagger on every route**: `@ApiTags`, `@ApiOperation`, `@ApiResponse`, and `@ApiBody`/`@ApiParam`/`@ApiQuery` on controllers; `@ApiProperty` on all DTOs.
 - **TDD**: write tests before or alongside implementation. Unit tests for use-cases, E2E for HTTP layer.
 - **Commit messages in English** (imperative, lowercase subject).

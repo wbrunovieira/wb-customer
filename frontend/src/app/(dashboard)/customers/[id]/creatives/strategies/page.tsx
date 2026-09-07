@@ -7,6 +7,7 @@ import {
   CreativeStrategy,
   StrategyPhase,
   StrategyStatus,
+  StrategyComparison,
   PaginatedResponse,
 } from '@/lib/definitions'
 import NewStrategyForm from './_components/new-strategy-form'
@@ -63,6 +64,22 @@ export default async function StrategiesPage({ params, searchParams }: Props) {
   } catch {
     // empty
   }
+
+  // Comparativo de desempenho por estratégia — é o que sustenta a escolha do campeão.
+  // Buscado em paralelo; se uma falhar, o card daquela estratégia cai para os chips simples.
+  const comparisons = new Map<string, StrategyComparison>()
+  await Promise.all(
+    strategies.map(async s => {
+      try {
+        const data = await apiServer.get<StrategyComparison>(
+          `/api/v1/customers/${id}/creative-strategies/${s.id}/comparison`,
+        )
+        comparisons.set(s.id, data)
+      } catch {
+        // sem comparativo para esta estratégia
+      }
+    }),
+  )
 
   // Phase A strategies available as parents for phase B
   const phaseAStrategies = strategies.filter(s => s.phase === 'exploration')
@@ -197,6 +214,7 @@ export default async function StrategiesPage({ params, searchParams }: Props) {
                     strategy={s}
                     creatives={creatives}
                     customerId={id}
+                    comparison={comparisons.get(s.id) ?? null}
                   />
                 ))}
               </div>
@@ -219,6 +237,7 @@ export default async function StrategiesPage({ params, searchParams }: Props) {
                     strategy={s}
                     creatives={creatives}
                     customerId={id}
+                    comparison={comparisons.get(s.id) ?? null}
                   />
                 ))}
               </div>

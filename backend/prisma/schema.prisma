@@ -645,11 +645,14 @@ model CreativePerformance {
   startDate   DateTime  @map("start_date")
   endDate     DateTime? @map("end_date")
   notes       String?
+  // 'manual' = digitado por uma pessoa; 'meta_sync' = agregado do tráfego pago.
+  source      String    @default("manual")
   recordedAt  DateTime  @default(now()) @map("recorded_at")
   createdAt   DateTime  @default(now()) @map("created_at")
 
   creative Creative @relation(fields: [creativeId], references: [id], onDelete: Cascade)
 
+  @@unique([creativeId, campaignId, source])
   @@index([creativeId])
   @@map("creative_performances")
 }

@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Um run por ref; cancela o anterior ao empurrar de novo.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "11.11.0"
+  # Segredos dummy, NUNCA reais. Existem só para o envSchema (Zod) aceitar o boot
+  # do Nest nos testes — JWT_SECRET tem mínimo de 32 e SEED_ADMIN_PASSWORD de 8.
+  JWT_SECRET: ci-dummy-jwt-secret-with-at-least-32-chars
+  SEED_ADMIN_EMAIL: ci@example.com
+  SEED_ADMIN_PASSWORD: ci-dummy-password
+  # Sem Google nem Meta em CI: os adapters locais evitam credencial de verdade.
+  STORAGE_ADAPTER: local
+  CALENDAR_ADAPTER: mock
+
+jobs:
+  # ── Backend: type-check + unit (Vitest, in-memory) + build. Sem banco. ──
+  backend:
+    name: Backend (type-check · unit · build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # O envSchema exige uma URL válida no boot; nenhum teste unitário conecta.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      # O postinstall do @prisma/client gera o client. Se algum dia falhar aqui,
+      # olhe allowBuilds em pnpm-workspace.yaml antes de qualquer outra coisa: o
+      # pnpm 11 recusa rodar script de dependência sem decisão explícita, e em CI
+      # não há TTY para responder. Ver issue #1580.
+      - run: pnpm install --frozen-lockfile
+      - name: Type-check (tsc --noEmit)
+        run: pnpm type-check
+      - name: Unit tests (Vitest)
+        run: pnpm test
+      - name: Build (nest build)
+        run: pnpm build
+
+  # ── Backend E2E: Postgres real. Cada suíte cria o próprio schema e roda
+  #    `prisma migrate deploy` — o que só funciona porque a história de migrations
+  #    virou um baseline reproduzível (issue #1608). ──
+  backend-e2e:
+    name: Backend E2E (Postgres)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: wb_customer_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/wb_customer_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: E2E tests (Vitest)
+        run: pnpm test:e2e
+
+  # ── Frontend: o build do Next também type-checa. Não há suíte de testes aqui. ──
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Build (next build)
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3011
