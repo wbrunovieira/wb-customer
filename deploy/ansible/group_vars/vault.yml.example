@@ -31,5 +31,10 @@ vault_evolution_api_url: "CHANGE_ME"
 vault_evolution_api_key: "CHANGE_ME"
 vault_evolution_instance: "CHANGE_ME"
 
+# Token da Cloudflare com permissão de DNS na zona wbdigitalsolutions.com.
+# Usado só pelo certbot, para o desafio DNS-01. O mesmo que vive em ~/.cf_token
+# na máquina do Bruno serve.
+vault_cloudflare_api_token: "CHANGE_ME"
+
 vault_cron_secret: "CHANGE_ME"
 vault_internal_api_key: "CHANGE_ME"

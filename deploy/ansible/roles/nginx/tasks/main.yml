@@ -1,64 +1,73 @@
 ---
-- name: Instalar nginx
+- name: Instalar nginx e o plugin DNS do certbot
   ansible.builtin.apt:
-    name: nginx
+    name:
+      - nginx
+      - python3-certbot-dns-cloudflare
     state: present
-
-- name: Diretório do webroot do certbot
-  ansible.builtin.file:
-    path: /var/www/html
-    state: directory
-    mode: "0755"
 
 - name: Certificado já existe?
   ansible.builtin.stat:
     path: "/etc/letsencrypt/live/{{ app_domain }}/fullchain.pem"
   register: ssl_cert
 
-# ── Primeiro certificado ──────────────────────────────────────────────────────
-# O vhost final referencia arquivos de certificado; se eles não existirem ainda,
-# o `nginx -t` falha e o certbot nunca chega a rodar. Por isso o HTTP puro primeiro.
-- name: Vhost temporário só com HTTP, para o desafio do certbot
+# ── Emissão do certificado ────────────────────────────────────────────────────
+# Por que DNS-01 e não o HTTP-01 que os outros 17 certificados deste servidor usam:
+#
+# O UFW libera 80/443 apenas para as faixas da Cloudflare, então a Let's Encrypt
+# não alcança a origem diretamente. E através do proxy também não dá para emitir:
+# a zona está com Always Use HTTPS, o desafio é redirecionado para HTTPS
+# (verificado em 08/09/2026 — /.well-known/acme-challenge/ leva 301), e com SSL
+# strict a Cloudflare exige um certificado válido na origem, que um domínio novo
+# ainda não tem.
+#
+# Isso explica por que os certificados existentes renovam sem problema e mesmo
+# assim um domínio novo não consegue o primeiro: na renovação o certificado já
+# está lá e a perna HTTPS fecha. Todos eles foram emitidos antes do lockdown.
+#
+# O DNS-01 ignora a rede inteira: prova a posse do domínio por registro TXT.
+# O plugin já estava instalado no servidor, só nunca tinha sido usado.
+
+- name: Diretório de segredos do certbot
+  ansible.builtin.file:
+    path: /root/.secrets
+    state: directory
+    mode: "0700"
+  when: not ssl_cert.stat.exists
+
+- name: Credencial da Cloudflare para o certbot
   ansible.builtin.copy:
+    dest: /root/.secrets/certbot-cloudflare.ini
+    mode: "0600"
+    content: |
+      dns_cloudflare_api_token = {{ cloudflare_api_token }}
+  no_log: true
+  when: not ssl_cert.stat.exists
+
+- name: Emitir o certificado por DNS-01
+  ansible.builtin.command: >
+    certbot certonly
+    --dns-cloudflare
+    --dns-cloudflare-credentials /root/.secrets/certbot-cloudflare.ini
+    --dns-cloudflare-propagation-seconds 30
+    -d {{ app_domain }}
+    --non-interactive --agree-tos --email {{ certbot_email }}
+  when: not ssl_cert.stat.exists
+  timeout: 300
+
+# ── Vhost ─────────────────────────────────────────────────────────────────────
+- name: Escrever o vhost com TLS e o roteamento de /api/v1
+  ansible.builtin.template:
+    src: site.conf.j2
     dest: "/etc/nginx/sites-available/{{ app_name }}.conf"
     mode: "0644"
-    content: |
-      server {
-          listen 80;
-          server_name {{ app_domain }};
-          location /.well-known/acme-challenge/ { root /var/www/html; }
-          location / { return 200 'aguardando certificado'; add_header Content-Type text/plain; }
-      }
-  when: not ssl_cert.stat.exists
+  notify: reload nginx
 
 - name: Habilitar o site
   ansible.builtin.file:
     src: "/etc/nginx/sites-available/{{ app_name }}.conf"
     dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
     state: link
-
-- name: Recarregar nginx para o desafio
-  ansible.builtin.systemd:
-    name: nginx
-    state: reloaded
-  when: not ssl_cert.stat.exists
-
-- name: Emitir o certificado
-  # Requer o DNS já apontando para este servidor. Se o registro ainda estiver na
-  # Vercel, o desafio falha aqui — ver issue #1640.
-  ansible.builtin.command: >
-    certbot certonly --webroot -w /var/www/html
-    -d {{ app_domain }}
-    --non-interactive --agree-tos --email {{ certbot_email }}
-  when: not ssl_cert.stat.exists
-  timeout: 300
-
-# ── Vhost definitivo ──────────────────────────────────────────────────────────
-- name: Escrever o vhost com TLS e o roteamento de /api/v1
-  ansible.builtin.template:
-    src: site.conf.j2
-    dest: "/etc/nginx/sites-available/{{ app_name }}.conf"
-    mode: "0644"
   notify: reload nginx
 
 - name: Validar a configuração
@@ -69,3 +78,14 @@
 - name: Resultado
   ansible.builtin.debug:
     msg: "{{ nginx_test.stderr_lines | default([]) }}"
+
+- name: Lembrete — proxiar o registro na Cloudflare
+  # O registro foi criado DNS-only porque, sem certificado na origem, o modo
+  # strict da Cloudflare devolveria 526. Agora que o certificado existe, o
+  # domínio deve ficar proxiado como crm, projects e transcritor — inclusive
+  # porque o UFW só aceita 80/443 vindos da Cloudflare: sem o proxy, o site
+  # fica inalcançável do lado de fora.
+  ansible.builtin.debug:
+    msg: >-
+      ⚠️  Falta proxiar customer.wbdigitalsolutions.com na Cloudflare
+      (registro A, proxied=true). Sem isso o UFW bloqueia o acesso externo.

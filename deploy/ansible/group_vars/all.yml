@@ -56,8 +56,10 @@ evolution_instance: "{{ vault_evolution_instance }}"
 cron_secret: "{{ vault_cron_secret }}"
 internal_api_key: "{{ vault_internal_api_key }}"
 
-# Certbot
+# Certbot — emissão por DNS-01, porque o UFW só aceita 80/443 vindos da
+# Cloudflare e a emissão via HTTP não fecha num domínio novo. Ver o role nginx.
 certbot_email: bruno@wbdigitalsolutions.com
+cloudflare_api_token: "{{ vault_cloudflare_api_token }}"
 
 # Preflight: build de Next + imagem Docker não cabe em pouco espaço.
 min_free_gb: 5

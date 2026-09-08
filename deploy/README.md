@@ -50,14 +50,36 @@ pode dar acesso ao outro.
 
 ## Antes da primeira subida
 
-1. **DNS** — `customer.wbdigitalsolutions.com` ainda aponta para a Vercel. Sem
-   repontar para o IP do servidor, o certbot falha no desafio HTTP.
+1. **DNS** — feito em 08/09/2026: registro A na Cloudflare apontando para o VPS,
+   ainda **DNS-only**. Depois que o certificado for emitido, proxiar (laranja),
+   porque o UFW só aceita 80/443 vindos da Cloudflare — sem proxy o site fica
+   inalcançável de fora.
 2. **Vault** preenchido e criptografado.
 3. **Deploy key** de leitura no servidor, com o remote em SSH. O preflight testa
    isso com `git fetch --dry-run` e aborta com diagnóstico se o GitHub recusar.
 
 Depois da subida, resta um passo manual: conectar o Google em `/admin/google`. O
 token fica no banco e não migra do ambiente de desenvolvimento.
+
+## Por que DNS-01 e não HTTP-01
+
+Os outros 17 certificados deste servidor usam o autenticador `nginx` (HTTP-01),
+mas nenhum domínio novo consegue emitir assim hoje:
+
+- o UFW libera 80/443 **apenas para as faixas da Cloudflare**, então a Let's
+  Encrypt não alcança a origem direto;
+- pelo proxy também não fecha: a zona está com *Always Use HTTPS*, o caminho
+  `/.well-known/acme-challenge/` leva 301 para HTTPS (verificado), e com SSL
+  **strict** a Cloudflare exige um certificado válido na origem — que um domínio
+  novo ainda não tem.
+
+Renovação funciona porque o certificado já existe e a perna HTTPS fecha; os 17
+foram emitidos antes do lockdown de julho. O `crm` renovou em 06/09/2026 sem
+problema.
+
+O DNS-01 contorna a rede inteira provando posse por registro TXT. O plugin
+`python3-certbot-dns-cloudflare` já estava instalado no servidor e nunca tinha
+sido usado.
 
 ## Por que `command` e não `raw`
 
