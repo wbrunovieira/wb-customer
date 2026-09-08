@@ -4,10 +4,16 @@ app_domain: customer.wbdigitalsolutions.com
 app_dir: /opt/wb-customer
 
 # ── Portas ────────────────────────────────────────────────────────────────────
-# O servidor JÁ hospeda o WB-crm, que ocupa 3000 (Next), 3001 (backend) e 5433
-# (Postgres). Nada aqui pode encostar nessas três. Ver issue #1639.
-frontend_port: 3010
-backend_port: 3011
+# O servidor é compartilhado e está cheio. Levantamento em 08/09/2026 das portas
+# já em escuta: 22 25 53 80 443 3000 3001 3002 3003 3004 3010 3334-3337 5433
+# 5435 5436 5678 6381 8000 8001 8010 8080 8090 9090-9092.
+#
+# O WB-crm usa 3000 (Next sob PM2), 3001 e 3010 (backend em Docker) e 5433
+# (Postgres). A 3010 foi a armadilha: parecia livre pela documentação daquele
+# projeto e não estava. O preflight agora confere as portas reais do servidor,
+# em vez de comparar com uma lista escrita à mão. Ver issue #1639.
+frontend_port: 3020
+backend_port: 3021
 db_port: 5434
 
 # ── Banco ─────────────────────────────────────────────────────────────────────

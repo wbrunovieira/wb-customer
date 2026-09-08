@@ -47,13 +47,24 @@
   failed_when: preflight_docker.rc != 0
   timeout: 30
 
-- name: "Preflight | as portas do WB-crm continuam intocadas"
-  # Os dois projetos dividem o servidor. Se algum dia o wb-customer for configurado
-  # para uma porta do CRM, o sintoma aparece como "o CRM caiu" — difícil de ligar a
-  # este deploy. Falhar aqui é muito mais barato. Ver issue #1639.
+- name: "Preflight | portas realmente em escuta no servidor"
+  # Confere o estado do servidor, não uma lista escrita à mão. Uma lista fixa já
+  # falhou uma vez: a 3010 parecia livre pela documentação do WB-crm e era do
+  # container de backend dele. Os dois projetos dividem a máquina, e uma colisão
+  # se manifesta como "o outro projeto caiu" — difícil de ligar a este deploy.
+  ansible.builtin.shell: >
+    ss -ltn | awk 'NR>1 {print $4}' | sed 's/.*://' | sort -n -u
+  register: preflight_ports
+  changed_when: false
+  timeout: 30
+
+- name: "Preflight | abortar se alguma porta nossa já está ocupada"
   ansible.builtin.fail:
-    msg: "❌ Porta {{ item }} pertence ao WB-crm. Ajuste group_vars/all.yml antes de continuar."
-  when: item | int in [3000, 3001, 5433]
+    msg: >-
+      ❌ Porta {{ item }} já está em uso neste servidor por outro serviço.
+      Escolha outra em group_vars/all.yml. Em escuta agora:
+      {{ preflight_ports.stdout_lines | join(' ') }}
+  when: item | string in preflight_ports.stdout_lines
   loop:
     - "{{ frontend_port }}"
     - "{{ backend_port }}"
@@ -77,4 +88,4 @@
   ansible.builtin.debug:
     msg: >-
       ✅ Preflight: repo ok, GitHub acessível, Docker {{ preflight_docker.stdout | trim }},
-      {{ preflight_disk.stdout }}GB livres, portas {{ frontend_port }}/{{ backend_port }}/{{ db_port }} sem colisão.
+      {{ preflight_disk.stdout }}GB livres, portas {{ frontend_port }}/{{ backend_port }}/{{ db_port }} livres.
