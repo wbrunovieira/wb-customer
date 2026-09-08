@@ -7,14 +7,15 @@ VPS Contabo, **o mesmo servidor que hospeda o WB-crm**. Estrutura adaptada de
 
 | Peça | Onde | Porta |
 |---|---|---|
-| Frontend (Next) | PM2, `/opt/wb-customer/frontend` | 3010 |
-| Backend (NestJS) | Docker, `docker-compose.prod.yml` | 3011 |
+| Frontend (Next) | PM2, `/opt/wb-customer/frontend` | 3020 |
+| Backend (NestJS) | Docker, `docker-compose.prod.yml` | 3021 |
 | Postgres | Docker, `/opt/wb-customer-db` | 5434 (só loopback) |
 | nginx + certbot | host | 80/443 |
 
-**As portas 3000, 3001 e 5433 são do WB-crm.** O preflight aborta se alguma delas
-aparecer na configuração — o sintoma de uma colisão seria "o CRM caiu", difícil de
-ligar a este deploy.
+**O servidor está cheio.** O WB-crm usa 3000, 3001, 3010 e 5433, e há dezenas de
+outras portas ocupadas. O preflight consulta as portas realmente em escuta no
+servidor e aborta se alguma das nossas estiver tomada — o sintoma de uma colisão
+seria "o outro projeto caiu", difícil de ligar a este deploy.
 
 O backend responde sob `https://customer.wbdigitalsolutions.com/api/v1`, no mesmo
 domínio do frontend. Não é escolha livre: o redirect URI já registrado no Google
