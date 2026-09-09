@@ -20,6 +20,8 @@ db_port: 5434
 # Instância própria, separada da do CRM: isola falha, backup e upgrade.
 db_dir: /opt/wb-customer-db
 db_container: wb_customer_postgres
+# Rede Docker que liga o backend ao banco, que vivem em composes diferentes.
+db_network: wb-customer-net
 db_name: wb_customer
 db_user: wb_customer
 db_password: "{{ vault_db_password }}"

@@ -2,6 +2,15 @@
 # Instância própria, separada da do WB-crm. Compartilhar o mesmo servidor de banco
 # acoplaria backup, restauração e upgrade dos dois projetos. Ver issue #1643.
 
+- name: Criar a rede Docker compartilhada
+  # O backend vive em outro compose e precisa alcançar o banco. Uma rede comum
+  # resolve por nome de container, sem publicar porta para o host — mais simples
+  # e mais fechado do que expor o Postgres na bridge.
+  ansible.builtin.command: docker network create {{ db_network }}
+  register: net_create
+  changed_when: "'already exists' not in (net_create.stderr | default(''))"
+  failed_when: net_create.rc != 0 and 'already exists' not in (net_create.stderr | default(''))
+
 - name: Criar diretório do banco
   ansible.builtin.file:
     path: "{{ db_dir }}"
@@ -22,10 +31,13 @@
             POSTGRES_DB: {{ db_name }}
             POSTGRES_USER: {{ db_user }}
             POSTGRES_PASSWORD: {{ db_password }}
-          # Publica só em loopback: o banco não precisa ser alcançável de fora,
-          # e o backend fala com ele pela rede do host.
+          # A porta em loopback é só conveniência de administração (psql, dump).
+          # O backend NÃO passa por aqui: fala pela rede {{ db_network }},
+          # resolvendo o nome do container.
           ports:
             - "127.0.0.1:{{ db_port }}:5432"
+          networks:
+            - {{ db_network }}
           volumes:
             - postgres_data:/var/lib/postgresql/data
           healthcheck:
@@ -36,6 +48,10 @@
 
       volumes:
         postgres_data:
+
+      networks:
+        {{ db_network }}:
+          external: true
   register: db_compose
 
 - name: Subir o Postgres
