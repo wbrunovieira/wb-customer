@@ -78,9 +78,13 @@ Renovação funciona porque o certificado já existe e a perna HTTPS fecha; os 1
 foram emitidos antes do lockdown de julho. O `crm` renovou em 06/09/2026 sem
 problema.
 
-O DNS-01 contorna a rede inteira provando posse por registro TXT. O plugin
-`python3-certbot-dns-cloudflare` já estava instalado no servidor e nunca tinha
-sido usado.
+O DNS-01 contorna a rede inteira provando posse por registro TXT.
+
+**Use o certbot do snap.** Existem dois no servidor: `/usr/bin/certbot` 0.40.0
+(apt, que é o que o `which certbot` devolve) e `/snap/bin/certbot` 5.8.0, que é
+quem gerencia os 17 certificados existentes. O antigo é da era pré-token e exige
+`dns_cloudflare_email` + Global API Key — a credencial mais poderosa de uma conta
+Cloudflare. O 5.8.0 aceita `dns_cloudflare_api_token`, que é escopável.
 
 ## Por que `command` e não `raw`
 

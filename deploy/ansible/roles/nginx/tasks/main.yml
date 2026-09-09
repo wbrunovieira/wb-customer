@@ -1,16 +1,34 @@
 ---
-- name: Instalar nginx e o plugin DNS do certbot
+- name: Instalar nginx
   # `command` e não o módulo apt: o python3-apt do servidor é do python3.8 e o
   # Ansible roda sob o 3.9, que não tem as bindings. Ver o role common.
-  ansible.builtin.command: apt-get install -y --no-install-recommends {{ item }}
+  ansible.builtin.command: apt-get install -y --no-install-recommends nginx
   environment:
     DEBIAN_FRONTEND: noninteractive
   register: nginx_apt
   changed_when: "'0 upgraded, 0 newly installed' not in (nginx_apt.stdout | default(''))"
   timeout: 600
-  loop:
-    - nginx
-    - python3-certbot-dns-cloudflare
+
+# ── Qual certbot ──────────────────────────────────────────────────────────────
+# Existem DOIS no servidor: /usr/bin/certbot 0.40.0 (apt) e /snap/bin/certbot
+# 5.8.0 (snap). O `which certbot` resolve para o antigo, e foi ele que rodou na
+# primeira tentativa — o plugin dele é da era pré-token e exigiu
+# dns_cloudflare_email + dns_cloudflare_api_key, ou seja, a Global API Key, que
+# é a credencial mais poderosa de uma conta Cloudflare.
+#
+# O snap 5.8.0 aceita dns_cloudflare_api_token e é quem já gerencia os outros 17
+# certificados da máquina. Usar ele mantém tudo sob a mesma renovação.
+- name: Autorizar plugins do certbot no snap
+  ansible.builtin.command: snap set certbot trust-plugin-with-root=ok
+  changed_when: false
+  timeout: 120
+
+- name: Instalar o plugin dns-cloudflare no snap
+  ansible.builtin.command: snap install certbot-dns-cloudflare
+  register: snap_plugin
+  changed_when: "'already installed' not in (snap_plugin.stderr | default('')) and snap_plugin.rc == 0"
+  failed_when: snap_plugin.rc != 0 and 'already installed' not in (snap_plugin.stderr | default(''))
+  timeout: 300
 
 - name: Certificado já existe?
   ansible.builtin.stat:
@@ -51,8 +69,9 @@
   when: not ssl_cert.stat.exists
 
 - name: Emitir o certificado por DNS-01
+  # Caminho absoluto de propósito: `certbot` no PATH é o 0.40.0 do apt.
   ansible.builtin.command: >
-    certbot certonly
+    /snap/bin/certbot certonly
     --dns-cloudflare
     --dns-cloudflare-credentials /root/.secrets/certbot-cloudflare.ini
     --dns-cloudflare-propagation-seconds 30
