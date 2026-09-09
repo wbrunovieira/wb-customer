@@ -50,3 +50,9 @@ docker-volumes/
 *.pem
 *.key
 *.cert
+
+# Senha do Ansible Vault — a chave-mestra. NUNCA versionar.
+# O vault.yml em si entra no repo, mas criptografado.
+.vault_pass
+*.vault_pass
+deploy/ansible/.vault_pass
