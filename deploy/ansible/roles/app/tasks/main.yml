@@ -107,7 +107,10 @@
         apps: [{
           name: '{{ app_name }}',
           cwd: '{{ app_dir }}/frontend',
-          script: 'node_modules/.bin/next',
+          // O binário JS de verdade, não node_modules/.bin/next: aquele é um
+          // wrapper #!/bin/sh e o PM2, em fork mode, tenta interpretá-lo como
+          // JavaScript — dá SyntaxError e o processo entra em loop de restart.
+          script: 'node_modules/next/dist/bin/next',
           args: 'start -p {{ frontend_port }}',
           env: { NODE_ENV: 'production' },
           error_file: '/var/log/pm2/{{ app_name }}-error.log',
@@ -117,6 +120,8 @@
       }
 
 - name: Registrar o app no PM2
+  # O delete antes do start também limpa um processo que esteja em loop de
+  # restart de uma execução anterior.
   ansible.builtin.shell: |
     pm2 delete {{ app_name }} 2>/dev/null || true
     cd {{ app_dir }} && pm2 start ecosystem.config.js
