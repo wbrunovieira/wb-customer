@@ -4,8 +4,9 @@
 # Diferenças que importam:
 #   - target production do Dockerfile (build compilado, sem devDependencies)
 #   - sem bind mount do código
-#   - sem serviço de banco: o Postgres vive num compose próprio em /opt/wb-customer-db,
-#     gerido pelo role postgres (issue #1643)
+#   - sem serviço de banco: o Postgres vive num compose próprio em
+#     /opt/wb-customer-db, gerido pelo role postgres (issue #1643)
+#   - alcança o banco pelo nome do container, na rede wb-customer-net
 #   - porta publicada só em loopback; quem expõe para a internet é o nginx
 
 services:
@@ -17,9 +18,12 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - '127.0.0.1:${BACKEND_PORT:-3011}:3000'
-    # O banco roda fora deste compose, no host. Sem isto, host.docker.internal
-    # não resolve no Linux.
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - '127.0.0.1:${BACKEND_PORT:-3021}:3000'
+    networks:
+      - wb-customer-net
     restart: unless-stopped
+
+# Criada pelo role postgres; os dois composes se encontram por ela.
+networks:
+  wb-customer-net:
+    external: true

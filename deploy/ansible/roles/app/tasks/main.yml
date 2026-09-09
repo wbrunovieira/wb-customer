@@ -12,8 +12,9 @@
     GIT_TERMINAL_PROMPT: "0"
 
 # ── Env do backend ────────────────────────────────────────────────────────────
-# O container do backend alcança o Postgres pelo host, porque o banco vive num
-# compose separado. host.docker.internal precisa do extra_hosts do compose de produção.
+# O backend alcança o banco pelo NOME DO CONTAINER, na rede compartilhada.
+# host.docker.internal não serve: o Postgres publica só em 127.0.0.1 e esse nome
+# resolve para o gateway da bridge (172.17.x), que não alcança o loopback do host.
 - name: Escrever backend/.env
   ansible.builtin.copy:
     dest: "{{ app_dir }}/backend/.env"
@@ -21,7 +22,7 @@
     content: |
       NODE_ENV=production
       PORT=3000
-      DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@host.docker.internal:{{ db_port }}/{{ db_name }}
+      DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@{{ db_container }}:5432/{{ db_name }}
       JWT_SECRET={{ jwt_secret }}
       JWT_ACCESS_EXPIRES_IN=15m
       JWT_REFRESH_EXPIRES_IN=7d
