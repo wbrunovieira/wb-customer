@@ -1,10 +1,16 @@
 ---
 - name: Instalar nginx e o plugin DNS do certbot
-  ansible.builtin.apt:
-    name:
-      - nginx
-      - python3-certbot-dns-cloudflare
-    state: present
+  # `command` e não o módulo apt: o python3-apt do servidor é do python3.8 e o
+  # Ansible roda sob o 3.9, que não tem as bindings. Ver o role common.
+  ansible.builtin.command: apt-get install -y --no-install-recommends {{ item }}
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  register: nginx_apt
+  changed_when: "'0 upgraded, 0 newly installed' not in (nginx_apt.stdout | default(''))"
+  timeout: 600
+  loop:
+    - nginx
+    - python3-certbot-dns-cloudflare
 
 - name: Certificado já existe?
   ansible.builtin.stat:

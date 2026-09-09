@@ -1,19 +1,38 @@
 ---
+# Por que `command` e não o módulo ansible.builtin.apt:
+#
+# O python3-apt deste servidor está compilado para o python3.8 do sistema, e o
+# Ansible 2.21 exige Python 3.9+ no alvo. Rodando sob /usr/bin/python3.9 o módulo
+# apt não consegue importar apt_pkg e falha — verificado em 09/09/2026:
+#   python3.8 -c "import apt"  → ok
+#   python3.9 -c "import apt"  → ModuleNotFoundError: No module named 'apt_pkg'
+#
+# É o mesmo motivo pelo qual os roles do WB-crm usam `raw`. O `command` é melhor
+# que o `raw` (não aloca PTY, então nada trava esperando input) e não depende de
+# bindings nenhuma.
+
 - name: Atualizar cache do apt
-  ansible.builtin.apt:
-    update_cache: yes
-    cache_valid_time: 3600
+  ansible.builtin.command: apt-get update -qq
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  changed_when: false
+  timeout: 300
 
 - name: Instalar dependências de base
-  ansible.builtin.apt:
-    name:
-      - git
-      - curl
-      - ca-certificates
-      - ufw
-      - certbot
-      - python3-certbot-nginx
-    state: present
+  # Idempotente: apt-get install num pacote já presente é no-op e sai 0.
+  # Em 09/09/2026 os sete já estavam instalados neste servidor.
+  ansible.builtin.command: apt-get install -y --no-install-recommends {{ item }}
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  register: apt_result
+  changed_when: "'0 upgraded, 0 newly installed' not in (apt_result.stdout | default(''))"
+  timeout: 600
+  loop:
+    - git
+    - curl
+    - ca-certificates
+    - ufw
+    - certbot
 
 - name: Docker está instalado?
   ansible.builtin.command: docker --version
@@ -23,9 +42,10 @@
 
 - name: Instalar Docker
   # Só quando falta. O servidor já roda o WB-crm em Docker, então na prática
-  # esta tarefa não deve disparar — está aqui para o caso de servidor novo.
+  # esta tarefa não dispara — está aqui para o caso de servidor novo.
   ansible.builtin.shell: curl -fsSL https://get.docker.com | sh
   when: docker_check.rc != 0
+  timeout: 900
 
 - name: Garantir que o Docker sobe no boot
   ansible.builtin.systemd:

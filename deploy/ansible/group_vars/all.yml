@@ -25,7 +25,11 @@ db_user: wb_customer
 db_password: "{{ vault_db_password }}"
 
 # ── Repositório ───────────────────────────────────────────────────────────────
-github_repo: git@github.com:wbrunovieira/wb-customer.git
+# Alias de SSH definido em /root/.ssh/config no servidor, amarrado à deploy key
+# somente-leitura (/root/.ssh/wb_customer_deploy). A identidade padrão do root
+# também alcança o repositório, mas com permissão de escrita em tudo — o deploy
+# só precisa ler.
+github_repo: git@github.com-wb-customer:wbrunovieira/wb-customer.git
 github_branch: main
 
 node_version: "22"
