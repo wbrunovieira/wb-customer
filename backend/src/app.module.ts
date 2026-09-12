@@ -17,6 +17,7 @@ import { WhatsAppModule } from '@/infra/modules/whatsapp/whatsapp.module'
 import { GmailModule } from '@/infra/modules/gmail/gmail.module'
 import { CreativesModule } from '@/infra/modules/creatives/creatives.module'
 import { PaidTrafficModule } from '@/infra/modules/paid-traffic/paid-traffic.module'
+import { SocialModule } from '@/infra/modules/social/social.module'
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PaidTrafficModule } from '@/infra/modules/paid-traffic/paid-traffic.mod
     GmailModule,
     CreativesModule,
     PaidTrafficModule,
+    SocialModule,
   ],
   controllers: [HealthController],
 })
