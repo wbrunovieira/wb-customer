@@ -33,6 +33,10 @@ const mockNotifications = {
   pushBroadcast: vi.fn(),
 }
 
+const mockAttributionLinks = {
+  findByCode: vi.fn(),
+}
+
 function makePayload(overrides: Partial<EvolutionWebhookPayload> = {}): EvolutionWebhookPayload {
   return {
     event: 'messages.upsert',
@@ -54,6 +58,7 @@ beforeEach(() => {
     mockPhoneMatcher as never,
     mockMediaService as never,
     mockNotifications as never,
+    mockAttributionLinks as never,
   )
 })
 
@@ -346,5 +351,74 @@ describe('WhatsAppWebhookService.process', () => {
 
       expect(mockMediaService.process).not.toHaveBeenCalled()
     })
+  })
+})
+
+// ── Atribuição de origem ────────────────────────────────────────────────────
+// Sem isto, um lead novo vindo do Instagram é descartado: o número não casa com
+// nenhum Contact e o webhook retorna antes de criar qualquer coisa.
+
+describe('atribuição de origem', () => {
+  const withMarker = (text: string) =>
+    makePayload({ message: { conversation: text } })
+
+  beforeEach(() => {
+    mockWhatsAppMessageFindUnique.mockResolvedValue(null)
+    mockActivityFindFirst.mockResolvedValue(null)
+    mockActivityCreate.mockResolvedValue({ id: 'act-attr' })
+    mockWhatsAppMessageCreate.mockResolvedValue({})
+  })
+
+  it('cria a conversa de um número desconhecido quando a mensagem traz marcador válido', async () => {
+    mockPhoneMatcher.match.mockResolvedValueOnce(null)
+    mockAttributionLinks.findByCode.mockResolvedValueOnce({
+      id: 'link-1',
+      code: 'K7MQ2A',
+      source: 'instagram',
+      customerId: 'cust-9',
+    })
+
+    await sut.process(withMarker('Olá! Vim pelo Instagram. [ref: K7MQ2A]'))
+
+    expect(mockActivityCreate).toHaveBeenCalledOnce()
+    const data = mockActivityCreate.mock.calls[0][0].data
+    expect(data.customerId).toBe('cust-9')
+    expect(data.attributionLinkId).toBe('link-1')
+    expect(data.attributionSource).toBe('instagram')
+    expect(data.attributionCode).toBe('K7MQ2A')
+  })
+
+  it('grava a origem também quando o número já é conhecido', async () => {
+    mockPhoneMatcher.match.mockResolvedValueOnce({ customerId: 'cust-1', contactId: 'c-1' })
+    mockAttributionLinks.findByCode.mockResolvedValueOnce({
+      id: 'link-2',
+      code: 'ZW9TK4',
+      source: 'instagram',
+      customerId: 'cust-1',
+    })
+
+    await sut.process(withMarker('oi [ref: ZW9TK4]'))
+
+    const data = mockActivityCreate.mock.calls[0][0].data
+    expect(data.customerId).toBe('cust-1')
+    expect(data.attributionLinkId).toBe('link-2')
+  })
+
+  it('continua ignorando número desconhecido quando não há marcador', async () => {
+    mockPhoneMatcher.match.mockResolvedValueOnce(null)
+
+    await sut.process(withMarker('Olá, queria um orçamento'))
+
+    expect(mockAttributionLinks.findByCode).not.toHaveBeenCalled()
+    expect(mockActivityCreate).not.toHaveBeenCalled()
+  })
+
+  it('ignora marcador que não corresponde a vínculo nenhum', async () => {
+    mockPhoneMatcher.match.mockResolvedValueOnce(null)
+    mockAttributionLinks.findByCode.mockResolvedValueOnce(null)
+
+    await sut.process(withMarker('oi [ref: XXXXXX]'))
+
+    expect(mockActivityCreate).not.toHaveBeenCalled()
   })
 })

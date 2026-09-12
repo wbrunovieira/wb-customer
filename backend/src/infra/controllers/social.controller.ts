@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
 import {
   ApiTags,
   ApiOperation,
@@ -6,11 +15,15 @@ import {
   ApiBody,
   ApiBearerAuth,
   ApiProperty,
+  ApiPropertyOptional,
+  ApiParam,
 } from '@nestjs/swagger'
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
+import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
+import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -63,6 +76,77 @@ export class SocialController {
 
     // O use-case não retorna left: texto ruim é resultado, não erro.
     if (result.isLeft()) throw result.value
+
+    return result.value
+  }
+}
+
+// ── Atribuição ───────────────────────────────────────────────────────────────
+
+class CreateAttributionLinkDto {
+  @ApiProperty({ example: 'instagram', description: 'Rede de onde a conversa virá.' })
+  source!: string
+
+  @ApiProperty({ example: '+55 24 99999-8888', description: 'Telefone que receberá a conversa.' })
+  destinationPhone!: string
+
+  @ApiPropertyOptional({
+    example: 'Quero encomendar uma peça',
+    description: 'Texto que o cliente vê ao abrir a conversa. O marcador é anexado ao fim.',
+  })
+  baseMessage?: string
+
+  @ApiPropertyOptional({
+    example: 'carrossel-semana-3',
+    description: 'Referência ao post, para saber qual publicação gerou a conversa.',
+  })
+  postRef?: string
+}
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/attribution-links')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialAttributionController {
+  constructor(private readonly createLink: CreateAttributionLinkUseCase) {}
+
+  @Post()
+  @ApiOperation({
+    summary: 'Gerar link rastreável de WhatsApp para um post',
+    description:
+      'Devolve um wa.me com texto pré-preenchido carregando um código curto. Quando a pessoa abre a conversa pelo post, a primeira mensagem chega com o código e o webhook atribui a conversa àquela publicação. É o que permite responder quantas conversas o Instagram gerou — pergunta que nenhum dado existente responde, porque nem Activity nem WhatsAppMessage guardam origem.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente dono da conta social' })
+  @ApiBody({ type: CreateAttributionLinkDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Link gerado',
+    schema: {
+      example: {
+        linkId: '2f6c…',
+        code: 'K7MQ2A',
+        prefilledMessage: 'Olá! Vim pelo Instagram. [ref: K7MQ2A]',
+        url: 'https://wa.me/5524999998888?text=Ol%C3%A1!%20Vim%20pelo%20Instagram.%20%5Bref%3A%20K7MQ2A%5D',
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  async create(
+    @Param('customerId') customerId: string,
+    @Body() body: CreateAttributionLinkDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.createLink.execute({
+      customerId,
+      source: body.source,
+      destinationPhone: body.destinationPhone,
+      baseMessage: body.baseMessage,
+      postRef: body.postRef,
+      createdByUserId: user.userId,
+    })
+
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
 
     return result.value
   }
