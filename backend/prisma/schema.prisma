@@ -123,6 +123,7 @@ model Customer {
   creativeStrategies CreativeStrategy[]
   campaigns        Campaign[]
   metaAdAccount    MetaAdAccount?
+  attributionLinks SocialAttributionLink[]
 
   @@index([categoryId])
   @@map("customers")
@@ -698,6 +699,40 @@ model CreativeStrategyItem {
 }
 
 // ─────────────────────────────────────────
+// SOCIAL — ATRIBUIÇÃO
+// ─────────────────────────────────────────
+
+/// Liga uma conversa de WhatsApp ao post que a originou.
+///
+/// Não existe campo de origem em Activity nem em WhatsAppMessage, então a
+/// atribuição não sai de um cruzamento: precisa de marcação. O link gera um
+/// wa.me com texto pré-preenchido carregando um código curto, e a primeira
+/// mensagem chega com ele — que é o único caminho que fecha o ciclo com o que
+/// o Evolution já entrega.
+model SocialAttributionLink {
+  id               String    @id @default(uuid())
+  /// Código curto que viaja no texto pré-preenchido.
+  code             String    @unique
+  /// instagram | facebook | outro
+  source           String
+  customerId       String    @map("customer_id")
+  /// Referência livre ao post enquanto SocialPost não existe.
+  postRef          String?   @map("post_ref")
+  destinationPhone String    @map("destination_phone")
+  prefilledMessage String    @map("prefilled_message")
+  createdByUserId  String    @map("created_by_user_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  activities Activity[]
+
+  @@index([customerId])
+  @@index([deletedAt])
+  @@map("social_attribution_links")
+}
+
+// ─────────────────────────────────────────
 // ACTIVITIES (Communication Log)
 // ─────────────────────────────────────────
 
@@ -741,13 +776,21 @@ model Activity {
   emailFromName    String?  @map("email_from_name")
   emailReplied     Boolean  @default(false) @map("email_replied")
 
+  // Atribuição — de onde a conversa veio. Sem isto não havia como ligar um
+  // contato no WhatsApp ao post que o originou.
+  attributionLinkId String? @map("attribution_link_id")
+  attributionSource String? @map("attribution_source")
+  attributionCode   String? @map("attribution_code")
+
   customer         Customer              @relation(fields: [customerId], references: [id])
   contact          Contact?              @relation(fields: [contactId], references: [id])
   attachments      ActivityAttachment[]
   whatsappMessages WhatsAppMessage[]
+  attributionLink  SocialAttributionLink? @relation(fields: [attributionLinkId], references: [id])
 
   @@index([customerId])
   @@index([externalId])
+  @@index([attributionLinkId])
   @@map("activities")
 }
 

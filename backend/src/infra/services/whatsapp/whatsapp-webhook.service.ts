@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 import { WhatsAppMediaService } from './whatsapp-media.service'
 import { GoToPhoneMatcherService } from '@/infra/services/goto/goto-phone-matcher.service'
+import { ISocialAttributionLinkRepository } from '@/domain/social/application/repositories/i-social-attribution-link.repository'
+import { extractAttributionCode } from '@/domain/social/application/services/attribution-marker'
 import { NotificationsService } from '@/infra/notifications/notifications.service'
 
 export interface EvolutionWebhookPayload {
@@ -37,6 +39,7 @@ export class WhatsAppWebhookService {
     private readonly phoneMatcher: GoToPhoneMatcherService,
     private readonly mediaService: WhatsAppMediaService,
     private readonly notifications: NotificationsService,
+    private readonly attributionLinks: ISocialAttributionLinkRepository,
   ) {}
 
   async process(payload: EvolutionWebhookPayload): Promise<void> {
@@ -64,14 +67,23 @@ export class WhatsAppWebhookService {
     // Extract phone from JID: "5511999998888@s.whatsapp.net" → "5511999998888"
     const phone = remoteJid.split('@')[0]
 
-    // Match to CRM
+    const text = this.extractText(payload)
+
+    // O marcador é lido ANTES do match: um lead novo vindo de um post não tem
+    // Contact nem Customer, e até aqui a mensagem dele era simplesmente
+    // descartada. O vínculo diz de qual cliente é a conta que originou a conversa.
+    const code = extractAttributionCode(text)
+    const link = code ? await this.attributionLinks.findByCode(code) : null
+
     const match = await this.phoneMatcher.match(phone)
-    if (!match) {
+
+    const customerId = match?.customerId ?? link?.customerId
+    const contactId = match?.contactId ?? null
+
+    if (!customerId) {
       this.logger.debug(`WhatsApp — no CRM match for ${phone}`)
       return
     }
-
-    const text = this.extractText(payload)
     const mediaLabel = this.buildMediaLabel(messageType, payload)
     const senderName = fromMe ? 'Você' : (payload.pushName ?? phone)
 
@@ -79,7 +91,7 @@ export class WhatsAppWebhookService {
     const since = new Date(Date.now() - SESSION_WINDOW_MS)
     const openActivity = await this.prisma.activity.findFirst({
       where: {
-        customerId: match.customerId,
+        customerId,
         type: 'whatsapp',
         deletedAt: null,
         createdAt: { gte: since },
@@ -112,8 +124,11 @@ export class WhatsAppWebhookService {
 
       const created = await this.prisma.activity.create({
         data: {
-          customerId: match.customerId,
-          contactId: match.contactId ?? null,
+          customerId,
+          contactId,
+          attributionLinkId: link?.id ?? null,
+          attributionSource: link?.source ?? null,
+          attributionCode: link?.code ?? null,
           type: 'whatsapp',
           status: 'open',
           subject: `WhatsApp — ${displayName}`,
@@ -144,7 +159,7 @@ export class WhatsAppWebhookService {
     const isDownloadable = ['audioMessage', 'videoMessage', 'imageMessage', 'documentMessage'].includes(messageType)
     if (isDownloadable) {
       this.mediaService
-        .process(messageId, remoteJid, messageType, activityId, match.customerId)
+        .process(messageId, remoteJid, messageType, activityId, customerId)
         .catch((err) => this.logger.error(`WhatsApp media error: ${err}`))
     }
 
@@ -155,7 +170,7 @@ export class WhatsAppWebhookService {
         type: 'activity.whatsapp',
         title: `WhatsApp — ${senderName}`,
         body: content,
-        meta: { customerId: match.customerId, activityId, remoteJid },
+        meta: { customerId, activityId, remoteJid },
       })
     }
   }
