@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   NotFoundException,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common'
 import {
@@ -17,12 +19,14 @@ import {
   ApiProperty,
   ApiPropertyOptional,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger'
 import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
+import { GetAttributionPanelUseCase } from '@/domain/social/application/use-cases/get-attribution-panel.use-case'
 import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
@@ -144,6 +148,57 @@ export class SocialAttributionController {
       baseMessage: body.baseMessage,
       postRef: body.postRef,
       createdByUserId: user.userId,
+    })
+
+    if (result.isLeft()) throw new NotFoundException(result.value.message)
+
+    return result.value
+  }
+}
+
+// ── Painel ───────────────────────────────────────────────────────────────────
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/attribution-panel')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialAttributionPanelController {
+  constructor(private readonly panel: GetAttributionPanelUseCase) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Conversas atribuídas por semana, origem e post',
+    description:
+      'Responde se entraram conversas novas, de quais posts vieram e se a curva reage à cadência. Semanas começam na segunda-feira e as vazias vêm com zero — uma curva que pula semana sem conversa esconde justamente a informação mais útil. Seguidor não entra: a venda é presencial e a rede é apoio ao porta a porta.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente' })
+  @ApiQuery({ name: 'weeks', required: false, type: Number, description: 'Janela em semanas (padrão 4).' })
+  @ApiResponse({
+    status: 200,
+    description: 'Painel de atribuição',
+    schema: {
+      example: {
+        total: 7,
+        weeks: [
+          { weekStart: '2026-08-17', conversations: 0 },
+          { weekStart: '2026-08-24', conversations: 2 },
+          { weekStart: '2026-08-31', conversations: 1 },
+          { weekStart: '2026-09-07', conversations: 4 },
+        ],
+        bySource: [{ source: 'instagram', conversations: 7 }],
+        byPost: [
+          { postRef: 'carrossel-semana-3', conversations: 5 },
+          { postRef: null, conversations: 2 },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  async get(@Param('customerId') customerId: string, @Query('weeks') weeks?: string) {
+    const result = await this.panel.execute({
+      customerId,
+      weeks: weeks ? Number(weeks) : undefined,
     })
 
     if (result.isLeft()) throw new NotFoundException(result.value.message)
