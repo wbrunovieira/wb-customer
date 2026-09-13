@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -11,6 +12,7 @@ import {
   Put,
   Query,
   ServiceUnavailableException,
+  UnprocessableEntityException,
   UseGuards,
 } from '@nestjs/common'
 import {
@@ -36,6 +38,12 @@ import { LinkCustomerSocialGroupUseCase } from '@/domain/social/application/use-
 import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/use-cases/get-customer-social-channels.use-case'
 import { SocialEngineNotConfiguredError } from '@/domain/social/domain/exceptions/social-engine-not-configured.error'
 import { SocialGroupAlreadyLinkedError } from '@/domain/social/domain/exceptions/social-group-already-linked.error'
+import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/publish-social-post.use-case'
+import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
+import { CustomerNotLinkedToGroupError } from '@/domain/social/domain/exceptions/customer-not-linked-to-group.error'
+import { ContentRulesViolationError } from '@/domain/social/domain/exceptions/content-rules-violation.error'
+import { ChannelNotAvailableError } from '@/domain/social/domain/exceptions/channel-not-available.error'
+import { InvalidScheduleDateError } from '@/domain/social/domain/exceptions/invalid-schedule-date.error'
 
 /**
  * Traduz a falha do domínio para HTTP. Motor fora do ar é 503 e não 500: o
@@ -45,8 +53,25 @@ function toHttpError(error: Error): Error {
   if (error instanceof SocialEngineNotConfiguredError) {
     return new ServiceUnavailableException(error.message)
   }
-  if (error instanceof SocialGroupAlreadyLinkedError) {
+  if (
+    error instanceof SocialGroupAlreadyLinkedError ||
+    error instanceof CustomerNotLinkedToGroupError
+  ) {
     return new ConflictException(error.message)
+  }
+  if (error instanceof ContentRulesViolationError) {
+    // 422 e não 400: o pedido está bem formado, o texto é que não passa. As
+    // violações vão no corpo porque a tela precisa destacar o trecho.
+    return new UnprocessableEntityException({
+      message: error.message,
+      violations: error.violations,
+    })
+  }
+  if (
+    error instanceof ChannelNotAvailableError ||
+    error instanceof InvalidScheduleDateError
+  ) {
+    return new BadRequestException(error.message)
   }
   return new NotFoundException(error.message)
 }
@@ -369,6 +394,152 @@ export class CustomerSocialGroupController {
   @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
   async listChannels(@Param('customerId') customerId: string) {
     const result = await this.channels.execute({ customerId })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+}
+
+
+// ── Publicação ───────────────────────────────────────────────────────────────
+
+class PublishSocialPostDto {
+  @ApiProperty({
+    example: 'Encomende sua peça pelo WhatsApp. [ref: K7MQ2A]',
+    description:
+      'Texto do post. Passa pelas regras da casa antes de ir ao motor; reprovação responde 422 com as violações.',
+  })
+  content!: string
+
+  @ApiProperty({
+    example: ['int-instagram-1', 'int-facebook-1'],
+    description:
+      'Canais de destino, de GET /customers/:id/social/channels. Vários numa chamada só espelham o post entre redes.',
+    type: [String],
+  })
+  channelIds!: string[]
+
+  @ApiProperty({
+    example: 'schedule',
+    enum: ['now', 'schedule'],
+    description: '"now" publica já; "schedule" guarda para a data.',
+  })
+  mode!: 'now' | 'schedule'
+
+  @ApiPropertyOptional({
+    example: '2026-09-20T13:00:00.000Z',
+    description: 'ISO 8601. Obrigatório em "schedule" e precisa ser futuro.',
+  })
+  scheduledFor?: string
+
+  @ApiPropertyOptional({
+    example: '2f6c…',
+    description: 'Link rastreável que viajou no texto, para cruzar conversa com post.',
+  })
+  attributionLinkId?: string
+
+  @ApiPropertyOptional({ example: 'creative-1', description: 'Criativo que originou o post.' })
+  creativeId?: string
+}
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/publications')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialPublicationsController {
+  constructor(
+    private readonly publish: PublishSocialPostUseCase,
+    private readonly list: ListSocialPublicationsUseCase,
+  ) {}
+
+  @Post()
+  @ApiOperation({
+    summary: 'Publicar ou agendar um post nas redes do cliente',
+    description:
+      'A decisão é tomada aqui e o motor (Postiz) só executa. A ordem é deliberada: o texto passa pelas regras da casa ANTES de chegar ao motor — validar depois seria validar o que já saiu. O agendamento vive no motor porque a API do Instagram não agenda (media_publish não aceita data futura). Publicar em vários canais numa chamada só é o que espelha o post entre redes. Devolve um id de post por canal, que é o caminho de volta das métricas.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente dono das contas' })
+  @ApiBody({ type: PublishSocialPostDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Publicação registrada e entregue ao motor',
+    schema: {
+      example: {
+        publicationId: '9c3a…',
+        scheduledFor: '2026-09-20T13:00:00.000Z',
+        targets: [
+          { channelId: 'int-instagram-1', provider: 'instagram', postizPostId: 'ckp1…' },
+          { channelId: 'int-facebook-1', provider: 'facebook', postizPostId: 'ckp2…' },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Canal indisponível ou data de agendamento inválida' })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  @ApiResponse({ status: 409, description: 'Cliente ainda não ligado a um grupo do motor' })
+  @ApiResponse({
+    status: 422,
+    description: 'Texto fere as regras editoriais; o corpo traz as violações com trecho e posição',
+  })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  async create(
+    @Param('customerId') customerId: string,
+    @Body() body: PublishSocialPostDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.publish.execute({
+      customerId,
+      content: body.content,
+      channelIds: body.channelIds ?? [],
+      mode: body.mode,
+      scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : undefined,
+      attributionLinkId: body.attributionLinkId ?? null,
+      creativeId: body.creativeId ?? null,
+      createdByUserId: user.userId,
+    })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Publicações que este cliente mandou publicar',
+    description:
+      'A decisão registrada deste lado, com o id de post de cada canal. Não substitui a fila do motor: serve para reencontrar a publicação quando a métrica chega falando em id de post.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Publicações do cliente',
+    schema: {
+      example: {
+        publications: [
+          {
+            id: '9c3a…',
+            customerId: '7b1e…',
+            postizGroupId: 'clx9f2k1a0001abcd',
+            content: 'Encomende sua peça pelo WhatsApp. [ref: K7MQ2A]',
+            mode: 'schedule',
+            scheduledFor: '2026-09-20T13:00:00.000Z',
+            attributionLinkId: '2f6c…',
+            creativeId: null,
+            createdByUserId: 'user-1',
+            createdAt: '2026-09-13T12:00:00.000Z',
+            targets: [
+              { channelId: 'int-instagram-1', provider: 'instagram', postizPostId: 'ckp1…' },
+            ],
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  async listAll(@Param('customerId') customerId: string) {
+    const result = await this.list.execute({ customerId })
 
     if (result.isLeft()) throw toHttpError(result.value)
 

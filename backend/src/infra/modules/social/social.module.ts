@@ -6,6 +6,7 @@ import {
   SocialAttributionPanelController,
   SocialGroupsController,
   CustomerSocialGroupController,
+  SocialPublicationsController,
 } from '@/infra/controllers/social.controller'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
@@ -18,6 +19,10 @@ import { ListSocialGroupsUseCase } from '@/domain/social/application/use-cases/l
 import { LinkCustomerSocialGroupUseCase } from '@/domain/social/application/use-cases/link-customer-social-group.use-case'
 import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/use-cases/get-customer-social-channels.use-case'
 import { ISocialEngineGateway } from '@/domain/social/application/gateways/i-social-engine.gateway'
+import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/publish-social-post.use-case'
+import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
+import { ISocialPublicationRepository } from '@/domain/social/application/repositories/i-social-publication.repository'
+import { PrismaSocialPublicationRepository } from '@/infra/database/prisma/repositories/social/prisma-social-publication.repository'
 import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz-social-engine.adapter'
 
 /**
@@ -35,6 +40,7 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     SocialAttributionPanelController,
     SocialGroupsController,
     CustomerSocialGroupController,
+    SocialPublicationsController,
   ],
   providers: [
     ValidateSocialContentUseCase,
@@ -43,6 +49,12 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     ListSocialGroupsUseCase,
     LinkCustomerSocialGroupUseCase,
     GetCustomerSocialChannelsUseCase,
+    PublishSocialPostUseCase,
+    ListSocialPublicationsUseCase,
+    {
+      provide: ISocialPublicationRepository,
+      useClass: PrismaSocialPublicationRepository,
+    },
     {
       provide: ISocialEngineGateway,
       useClass: PostizSocialEngineAdapter,
