@@ -653,3 +653,22 @@ export type CustomerSocialChannels = {
   groupName: string | null
   channels: SocialChannel[]
 }
+
+/** Violação de regra editorial, com o trecho para destacar no texto. */
+export type ContentViolation = {
+  ruleId: string
+  severity: 'block' | 'warn'
+  message: string
+  excerpt: string
+  index: number
+}
+
+export type PublishedPost = {
+  publicationId: string
+  scheduledFor: string
+  targets: {
+    channelId: string
+    provider: string
+    postizPostId: string
+  }[]
+}
