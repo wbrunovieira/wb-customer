@@ -75,3 +75,7 @@ cloudflare_api_token: "{{ vault_cloudflare_api_token }}"
 
 # Preflight: build de Next + imagem Docker não cabe em pouco espaço.
 min_free_gb: 5
+
+# Motor de publicação nas redes. A tela de redes sociais usa isto só para levar
+# o operador até lá: conectar canal e nomear o cliente não têm rota pública.
+postiz_public_url: https://postiz.wbdigitalsolutions.com

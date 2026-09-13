@@ -621,3 +621,35 @@ export type CampaignDashboard = {
     }>
   }>
 }
+
+// ── Social: vínculo com o motor de publicação (Postiz) ──────────────────────
+
+/** Grupo do motor, já com o vínculo resolvido pelo backend. */
+export type SocialGroupView = {
+  id: string
+  name: string
+  /** Quantos canais estão conectados neste grupo. */
+  channels: number
+  /** Cliente que já ocupa o grupo; null quando está livre. */
+  linkedCustomerId: string | null
+  linkedCustomerName: string | null
+}
+
+export type SocialChannel = {
+  id: string
+  name: string
+  /** instagram | facebook | linkedin | tiktok | youtube… */
+  provider: string
+  /** Canal desativado no motor não publica. */
+  disabled: boolean
+  groupId: string | null
+}
+
+export type CustomerSocialChannels = {
+  /** Falso quando ninguém ligou o cliente a um grupo ainda. */
+  linked: boolean
+  groupId: string | null
+  /** null quando o grupo sumiu do motor depois de ligado. */
+  groupName: string | null
+  channels: SocialChannel[]
+}

@@ -49,6 +49,7 @@
     mode: "0600"
     content: |
       NEXT_PUBLIC_API_URL={{ public_api_url }}
+      NEXT_PUBLIC_POSTIZ_URL={{ postiz_public_url }}
 
 # ── Backend ───────────────────────────────────────────────────────────────────
 - name: Construir a imagem do backend
