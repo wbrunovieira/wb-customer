@@ -672,3 +672,23 @@ export type PublishedPost = {
     postizPostId: string
   }[]
 }
+
+/** Post na fila do motor, ou já publicado, dentro da janela consultada. */
+export type QueuedPost = {
+  id: string
+  content: string
+  publishAt: string
+  /** QUEUE | PUBLISHED | ERROR | DRAFT */
+  state: string
+  url: string | null
+  channelId: string
+  channelName: string
+  provider: string
+  group: string | null
+}
+
+export type SocialQueue = {
+  from: string
+  to: string
+  posts: QueuedPost[]
+}

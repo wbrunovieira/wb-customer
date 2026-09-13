@@ -7,6 +7,7 @@ import {
   SocialGroupsController,
   CustomerSocialGroupController,
   SocialPublicationsController,
+  SocialQueueController,
 } from '@/infra/controllers/social.controller'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
@@ -21,6 +22,8 @@ import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/us
 import { ISocialEngineGateway } from '@/domain/social/application/gateways/i-social-engine.gateway'
 import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/publish-social-post.use-case'
 import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
+import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get-social-queue.use-case'
+import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
 import { ISocialPublicationRepository } from '@/domain/social/application/repositories/i-social-publication.repository'
 import { PrismaSocialPublicationRepository } from '@/infra/database/prisma/repositories/social/prisma-social-publication.repository'
 import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz-social-engine.adapter'
@@ -41,6 +44,7 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     SocialGroupsController,
     CustomerSocialGroupController,
     SocialPublicationsController,
+    SocialQueueController,
   ],
   providers: [
     ValidateSocialContentUseCase,
@@ -51,6 +55,8 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     GetCustomerSocialChannelsUseCase,
     PublishSocialPostUseCase,
     ListSocialPublicationsUseCase,
+    GetSocialQueueUseCase,
+    CancelSocialPostUseCase,
     {
       provide: ISocialPublicationRepository,
       useClass: PrismaSocialPublicationRepository,

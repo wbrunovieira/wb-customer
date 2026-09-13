@@ -7,10 +7,12 @@ import {
   CustomerSocialChannels,
   PublishedPost,
   SocialGroupView,
+  SocialQueue,
 } from '@/lib/definitions'
 
 function revalidateSocial(customerId: string) {
   revalidatePath(`/customers/${customerId}/social`)
+  revalidatePath(`/customers/${customerId}/social/queue`)
   revalidatePath(`/customers/${customerId}`)
 }
 
@@ -111,6 +113,42 @@ export async function publishSocialPost(
       const body = err.body as { violations?: ContentViolation[] }
       return { message: err.message, violations: body.violations ?? [] }
     }
+    return { message: (err as Error).message }
+  }
+}
+
+/** A fila do motor para este cliente, na janela pedida. */
+export async function getSocialQueue(
+  customerId: string,
+  from: string,
+  to: string,
+): Promise<{ queue?: SocialQueue; message?: string }> {
+  try {
+    const params = new URLSearchParams({ from, to })
+    const queue = await apiServer.get<SocialQueue>(
+      `/api/v1/customers/${customerId}/social/queue?${params}`,
+    )
+    return { queue }
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
+/**
+ * Cancela um post da fila. Irreversível, e atinge todas as redes em que o post
+ * foi espelhado — quem chama precisa ter confirmado antes.
+ */
+export async function cancelSocialPost(
+  customerId: string,
+  postId: string,
+): Promise<{ message?: string }> {
+  try {
+    await apiServer.delete(
+      `/api/v1/customers/${customerId}/social/queue/${encodeURIComponent(postId)}`,
+    )
+    revalidateSocial(customerId)
+    return {}
+  } catch (err) {
     return { message: (err as Error).message }
   }
 }

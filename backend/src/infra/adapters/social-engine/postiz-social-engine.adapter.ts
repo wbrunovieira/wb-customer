@@ -3,8 +3,10 @@ import { ConfigService } from '@nestjs/config'
 import { Env } from '@/env/env'
 import {
   ISocialEngineGateway,
+  ListQueueInput,
   PublishInput,
   PublishedTarget,
+  QueuedPost,
   SocialChannel,
   SocialGroup,
 } from '@/domain/social/application/gateways/i-social-engine.gateway'
@@ -13,6 +15,21 @@ import {
 interface PostizGroup {
   id: string
   name: string
+}
+
+/** Item de GET /api/public/v1/posts. */
+interface PostizQueuedPost {
+  id: string
+  content: string
+  publishDate: string
+  state: string
+  releaseURL?: string | null
+  group?: string | null
+  integration?: {
+    id: string
+    name: string
+    providerIdentifier: string
+  } | null
 }
 
 /** Forma devolvida por POST /api/public/v1/posts: um item por canal. */
@@ -97,6 +114,33 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
     return created.map((c) => ({ channelId: c.integration, postId: c.postId }))
   }
 
+  async listQueue(input: ListQueueInput): Promise<QueuedPost[]> {
+    const params = new URLSearchParams({
+      startDate: input.from.toISOString(),
+      endDate: input.to.toISOString(),
+    })
+    // No motor o parâmetro chama 'customer' e filtra pelo grupo do cliente.
+    if (input.groupId) params.set('customer', input.groupId)
+
+    const res = await this.get<{ posts: PostizQueuedPost[] }>(`posts?${params}`)
+
+    return (res.posts ?? []).map((p) => ({
+      id: p.id,
+      content: stripHtml(p.content ?? ''),
+      publishAt: new Date(p.publishDate),
+      state: p.state,
+      url: p.releaseURL ?? null,
+      channelId: p.integration?.id ?? '',
+      channelName: p.integration?.name ?? '',
+      provider: p.integration?.providerIdentifier ?? 'desconhecido',
+      group: p.group ?? null,
+    }))
+  }
+
+  async cancelPost(postId: string): Promise<void> {
+    await this.request('DELETE', `posts/${encodeURIComponent(postId)}`)
+  }
+
   private async get<T>(path: string): Promise<T> {
     const resp = await fetch(`${this.baseUrl}/api/public/v1/${path}`, {
       headers: { Authorization: this.apiKey },
@@ -114,24 +158,49 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
   }
 
   private async post<T>(path: string, body: unknown): Promise<T> {
+    return this.request<T>('POST', path, body)
+  }
+
+  private async request<T>(
+    method: 'POST' | 'DELETE',
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
     const resp = await fetch(`${this.baseUrl}/api/public/v1/${path}`, {
-      method: 'POST',
+      method,
       headers: {
         Authorization: this.apiKey,
-        'Content-Type': 'application/json',
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
-      body: JSON.stringify(body),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     })
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '')
-      this.logger.error(`Postiz POST ${path} → ${resp.status} ${text.slice(0, 300)}`)
+      this.logger.error(`Postiz ${method} ${path} → ${resp.status} ${text.slice(0, 300)}`)
       // A mensagem do motor entra na exceção: quando ele reprova o post por
       // regra da rede (legenda longa demais, formato inválido), quem chamou
       // precisa ler o motivo, não um 500 mudo.
       throw new Error(`Postiz respondeu ${resp.status} em ${path}: ${text.slice(0, 300)}`)
     }
 
-    return (await resp.json()) as T
+    const text = await resp.text()
+    return (text ? JSON.parse(text) : undefined) as T
   }
+}
+
+/**
+ * Post nascido na tela do motor vem com HTML. Renderizar marcação vinda de fora
+ * seria porta de injeção, e a agenda só precisa do texto.
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim()
 }
