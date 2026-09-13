@@ -17,6 +17,10 @@ export class InMemoryCustomerRepository implements ICustomerRepository {
     return null
   }
 
+  async findByPostizGroupId(groupId: string): Promise<Customer | null> {
+    return this.items.find((c) => c.postizGroupId === groupId) ?? null
+  }
+
   async findMany(_params: FindManyCustomersParams): Promise<PaginatedCustomers> {
     return { items: [], total: 0 }
   }

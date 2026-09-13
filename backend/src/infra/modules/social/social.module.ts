@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import {
   SocialController,
   SocialAttributionController,
   SocialAttributionPanelController,
+  SocialGroupsController,
+  CustomerSocialGroupController,
 } from '@/infra/controllers/social.controller'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
@@ -11,6 +14,11 @@ import { ISocialAttributionLinkRepository } from '@/domain/social/application/re
 import { ISocialAttributionReportRepository } from '@/domain/social/application/repositories/i-social-attribution-report.repository'
 import { PrismaSocialAttributionLinkRepository } from '@/infra/database/prisma/repositories/social/prisma-social-attribution-link.repository'
 import { PrismaSocialAttributionReportRepository } from '@/infra/database/prisma/repositories/social/prisma-social-attribution-report.repository'
+import { ListSocialGroupsUseCase } from '@/domain/social/application/use-cases/list-social-groups.use-case'
+import { LinkCustomerSocialGroupUseCase } from '@/domain/social/application/use-cases/link-customer-social-group.use-case'
+import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/use-cases/get-customer-social-channels.use-case'
+import { ISocialEngineGateway } from '@/domain/social/application/gateways/i-social-engine.gateway'
+import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz-social-engine.adapter'
 
 /**
  * Domínio social. O que o Postiz não faz e por isso fica aqui: o validador das
@@ -20,15 +28,25 @@ import { PrismaSocialAttributionReportRepository } from '@/infra/database/prisma
  * ICustomerRepository vem do DatabaseModule, que é @Global.
  */
 @Module({
+  imports: [ConfigModule],
   controllers: [
     SocialController,
     SocialAttributionController,
     SocialAttributionPanelController,
+    SocialGroupsController,
+    CustomerSocialGroupController,
   ],
   providers: [
     ValidateSocialContentUseCase,
     CreateAttributionLinkUseCase,
     GetAttributionPanelUseCase,
+    ListSocialGroupsUseCase,
+    LinkCustomerSocialGroupUseCase,
+    GetCustomerSocialChannelsUseCase,
+    {
+      provide: ISocialEngineGateway,
+      useClass: PostizSocialEngineAdapter,
+    },
     {
       provide: ISocialAttributionLinkRepository,
       useClass: PrismaSocialAttributionLinkRepository,
@@ -38,6 +56,10 @@ import { PrismaSocialAttributionReportRepository } from '@/infra/database/prisma
       useClass: PrismaSocialAttributionReportRepository,
     },
   ],
-  exports: [ValidateSocialContentUseCase, ISocialAttributionLinkRepository],
+  exports: [
+    ValidateSocialContentUseCase,
+    ISocialAttributionLinkRepository,
+    ISocialEngineGateway,
+  ],
 })
 export class SocialModule {}

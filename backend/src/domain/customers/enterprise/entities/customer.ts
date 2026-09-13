@@ -15,6 +15,7 @@ export interface CustomerProps {
   status: CustomerStatus
   categoryId?: string | null
   driveFolderId?: string | null
+  postizGroupId?: string | null
   createdByUserId: string
   createdAt: Date
   updatedAt: Date
@@ -97,6 +98,11 @@ export class Customer extends AggregateRoot<CustomerProps> {
     return this.props.driveFolderId ?? null
   }
 
+  /** Grupo no Postiz onde os posts deste cliente são publicados. */
+  get postizGroupId(): string | null {
+    return this.props.postizGroupId ?? null
+  }
+
   get createdByUserId(): string {
     return this.props.createdByUserId
   }
@@ -134,6 +140,15 @@ export class Customer extends AggregateRoot<CustomerProps> {
     this.props.updatedAt = new Date()
 
     this.addDomainEvent(new CustomerUpdatedEvent(this.id.value, updatedByUserId))
+  }
+
+  /**
+   * Aponta o cliente para um grupo do Postiz. Passar null desfaz o vínculo — é
+   * o caminho para corrigir um apontamento errado sem apagar o cliente.
+   */
+  linkPostizGroup(groupId: string | null): void {
+    this.props.postizGroupId = groupId
+    this.props.updatedAt = new Date()
   }
 
   setDriveFolderId(folderId: string): void {
