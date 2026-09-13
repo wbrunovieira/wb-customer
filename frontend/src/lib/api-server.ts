@@ -8,6 +8,24 @@ type FetchOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
 }
 
+/**
+ * Erro que preserva o corpo da resposta.
+ *
+ * Existe porque algumas recusas carregam mais do que uma frase: o 422 do
+ * validador social devolve cada violação com trecho e posição, e jogar isso
+ * fora obrigaria a tela a dizer só "texto inválido".
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly body: unknown,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
 async function refreshAndRetry(): Promise<string | null> {
   const refreshToken = await getRefreshToken()
   if (!refreshToken) return null
@@ -52,7 +70,7 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, retry = tru
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.message ?? `HTTP ${res.status}`)
+    throw new ApiError(error.message ?? `HTTP ${res.status}`, res.status, error)
   }
 
   const text = await res.text()
