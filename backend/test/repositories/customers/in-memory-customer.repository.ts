@@ -21,6 +21,10 @@ export class InMemoryCustomerRepository implements ICustomerRepository {
     return this.items.find((c) => c.id.value === id && !c.isDeleted) ?? null
   }
 
+  async findByPostizGroupId(groupId: string): Promise<Customer | null> {
+    return this.items.find((c) => c.postizGroupId === groupId) ?? null
+  }
+
   async findByEmail(email: string): Promise<Customer | null> {
     return (
       this.items.find(

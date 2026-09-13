@@ -28,6 +28,13 @@ export class PrismaCustomerRepository implements ICustomerRepository {
     return raw ? CustomerMapper.toDomain(raw) : null
   }
 
+  async findByPostizGroupId(groupId: string): Promise<Customer | null> {
+    const raw = await this.prisma.customer.findFirst({
+      where: { postizGroupId: groupId, deletedAt: null },
+    })
+    return raw ? CustomerMapper.toDomain(raw) : null
+  }
+
   async findMany(params: FindManyCustomersParams): Promise<PaginatedCustomers> {
     const page = params.page ?? 1
     const limit = params.limit ?? 20

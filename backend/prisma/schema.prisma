@@ -104,6 +104,10 @@ model Customer {
   status          CustomerStatus @default(active)
   categoryId      String?        @map("category_id")
   driveFolderId   String?        @map("drive_folder_id")
+  // Grupo correspondente no Postiz, que é o motor de publicação. Único: um
+  // grupo pertence a um cliente só, senão dois clientes publicariam na mesma
+  // conta social sem ninguém perceber.
+  postizGroupId   String?        @unique @map("postiz_group_id")
   createdByUserId String         @map("created_by_user_id")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")

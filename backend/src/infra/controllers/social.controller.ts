@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   HttpCode,
@@ -7,7 +8,9 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common'
 import {
@@ -28,6 +31,25 @@ import { ValidateSocialContentUseCase } from '@/domain/social/application/use-ca
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
 import { GetAttributionPanelUseCase } from '@/domain/social/application/use-cases/get-attribution-panel.use-case'
 import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
+import { ListSocialGroupsUseCase } from '@/domain/social/application/use-cases/list-social-groups.use-case'
+import { LinkCustomerSocialGroupUseCase } from '@/domain/social/application/use-cases/link-customer-social-group.use-case'
+import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/use-cases/get-customer-social-channels.use-case'
+import { SocialEngineNotConfiguredError } from '@/domain/social/domain/exceptions/social-engine-not-configured.error'
+import { SocialGroupAlreadyLinkedError } from '@/domain/social/domain/exceptions/social-group-already-linked.error'
+
+/**
+ * Traduz a falha do domínio para HTTP. Motor fora do ar é 503 e não 500: o
+ * pedido está correto, a dependência é que não está lá.
+ */
+function toHttpError(error: Error): Error {
+  if (error instanceof SocialEngineNotConfiguredError) {
+    return new ServiceUnavailableException(error.message)
+  }
+  if (error instanceof SocialGroupAlreadyLinkedError) {
+    return new ConflictException(error.message)
+  }
+  return new NotFoundException(error.message)
+}
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -202,6 +224,153 @@ export class SocialAttributionPanelController {
     })
 
     if (result.isLeft()) throw new NotFoundException(result.value.message)
+
+    return result.value
+  }
+}
+
+
+// ── Vínculo com o motor de publicação ────────────────────────────────────────
+
+class LinkSocialGroupDto {
+  @ApiPropertyOptional({
+    example: 'clx9f2k1a0001abcd',
+    nullable: true,
+    description:
+      'Id do grupo no Postiz. Envie null para desfazer o vínculo. O id sai de GET /social/groups.',
+  })
+  groupId!: string | null
+}
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('social/groups')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialGroupsController {
+  constructor(private readonly listGroups: ListSocialGroupsUseCase) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Listar os grupos do motor de publicação, com o vínculo resolvido',
+    description:
+      'Cada grupo do Postiz é a conta de um cliente. A lista já diz qual cliente do wb-customer ocupa cada grupo e quantos canais estão conectados nele, que é o que permite ligar sem errar: grupo com cliente é ocupado, grupo sem cliente é candidato. Conectar a conta social e nomear o cliente continua sendo passo único na interface do Postiz — não há rota pública para isso (ver #1905).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Grupos disponíveis',
+    schema: {
+      example: {
+        groups: [
+          {
+            id: 'clx9f2k1a0001abcd',
+            name: 'Padaria do Zé',
+            channels: 2,
+            linkedCustomerId: '7b1e…',
+            linkedCustomerName: 'Padaria do Zé LTDA',
+          },
+          {
+            id: 'clx9f2k1a0002efgh',
+            name: 'Bar do João',
+            channels: 1,
+            linkedCustomerId: null,
+            linkedCustomerName: null,
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 503, description: 'POSTIZ_API_URL/POSTIZ_API_KEY não configurados' })
+  async list() {
+    const result = await this.listGroups.execute()
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+}
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class CustomerSocialGroupController {
+  constructor(
+    private readonly link: LinkCustomerSocialGroupUseCase,
+    private readonly channels: GetCustomerSocialChannelsUseCase,
+  ) {}
+
+  @Put('group')
+  @ApiOperation({
+    summary: 'Ligar (ou desligar) o cliente a um grupo do motor',
+    description:
+      'Define em qual conta os posts deste cliente saem. O vínculo é por id, não por nome: nome de grupo é editável no Postiz e casar por texto quebraria calado, publicando na conta errada. Um grupo pertence a um cliente só — ligar um grupo já ocupado responde 409. Desligar (groupId null) funciona mesmo com o motor fora do ar, para que um vínculo errado não fique preso durante um incidente.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente do wb-customer' })
+  @ApiBody({ type: LinkSocialGroupDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Vínculo gravado',
+    schema: {
+      example: {
+        customerId: '7b1e…',
+        postizGroupId: 'clx9f2k1a0001abcd',
+        groupName: 'Padaria do Zé',
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente ou grupo não encontrado' })
+  @ApiResponse({ status: 409, description: 'Grupo já pertence a outro cliente' })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  @HttpCode(HttpStatus.OK)
+  async linkGroup(
+    @Param('customerId') customerId: string,
+    @Body() body: LinkSocialGroupDto,
+  ) {
+    const result = await this.link.execute({
+      customerId,
+      groupId: body.groupId ?? null,
+    })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+
+  @Get('channels')
+  @ApiOperation({
+    summary: 'Redes em que este cliente publica hoje',
+    description:
+      'Decide se dá para agendar: sem canal conectado, agendar é encher fila que nunca sai. Cliente ainda não ligado responde linked=false com lista vazia, sem erro e sem depender do motor — é estado normal, não falha.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente do wb-customer' })
+  @ApiResponse({
+    status: 200,
+    description: 'Canais do grupo do cliente',
+    schema: {
+      example: {
+        linked: true,
+        groupId: 'clx9f2k1a0001abcd',
+        groupName: 'Padaria do Zé',
+        channels: [
+          {
+            id: 'int-1',
+            name: '@padariadoze',
+            provider: 'instagram',
+            disabled: false,
+            groupId: 'clx9f2k1a0001abcd',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  async listChannels(@Param('customerId') customerId: string) {
+    const result = await this.channels.execute({ customerId })
+
+    if (result.isLeft()) throw toHttpError(result.value)
 
     return result.value
   }

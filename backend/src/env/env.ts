@@ -35,6 +35,10 @@ export const envSchema = z.object({
   EVOLUTION_INSTANCE: z.string().optional(),
   EVOLUTION_WEBHOOK_SECRET: z.string().optional(),
   EVOLUTION_OWNER_ID: z.string().optional(),
+  // Postiz — motor de agendamento e publicação nas redes (decisão #1879).
+  // Opcional: sem elas o domínio social segue funcionando, só não publica.
+  POSTIZ_API_URL: z.string().url().optional(),
+  POSTIZ_API_KEY: z.string().optional(),
   // Internal security
   CRON_SECRET: z.string().optional(),
   INTERNAL_API_KEY: z.string().optional(),

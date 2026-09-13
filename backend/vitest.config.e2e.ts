@@ -21,6 +21,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/app.module': resolve(__dirname, 'src/app.module.ts'),
+      // Com a barra de propósito: '@' sozinho capturaria '@nestjs/...' também.
+      '@/': resolve(__dirname, 'src') + '/',
     },
   },
   test: {
