@@ -128,6 +128,7 @@ model Customer {
   campaigns        Campaign[]
   metaAdAccount    MetaAdAccount?
   attributionLinks SocialAttributionLink[]
+  socialPublications SocialPublication[]
 
   @@index([categoryId])
   @@map("customers")
@@ -1023,4 +1024,50 @@ model AdDailyMetric {
   @@index([campaignId])
   @@index([date])
   @@map("ad_daily_metrics")
+}
+
+/// Uma decisão de publicar, tomada aqui. O motor (Postiz) executa; isto guarda
+/// o que foi decidido e para onde foi, que é o que permite cruzar métrica e
+/// falha com o post depois.
+model SocialPublication {
+  id                String   @id @default(uuid())
+  customerId        String   @map("customer_id")
+  /// Grupo do Postiz no momento da publicação. Guardado mesmo sendo derivável:
+  /// o vínculo do cliente pode mudar depois e a auditoria não pode mudar junto.
+  postizGroupId     String   @map("postiz_group_id")
+  content           String
+  /// now | schedule
+  mode              String
+  scheduledFor      DateTime @map("scheduled_for")
+  /// Link rastreável que viajou no texto, quando houve.
+  attributionLinkId String?  @map("attribution_link_id")
+  creativeId        String?  @map("creative_id")
+  createdByUserId   String   @map("created_by_user_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  customer Customer                  @relation(fields: [customerId], references: [id])
+  targets  SocialPublicationTarget[]
+
+  @@index([customerId])
+  @@index([scheduledFor])
+  @@map("social_publications")
+}
+
+/// Uma rede de destino de uma publicação. O motor devolve um id de post por
+/// canal, então a chave de cruzamento é aqui, não na publicação.
+model SocialPublicationTarget {
+  id            String @id @default(uuid())
+  publicationId String @map("publication_id")
+  /// Canal no Postiz (integration id).
+  channelId     String @map("channel_id")
+  /// instagram | facebook | linkedin…
+  provider      String
+  /// Id do post no motor. É por aqui que a métrica reencontra este post.
+  postizPostId  String @map("postiz_post_id")
+
+  publication SocialPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId])
+  @@index([postizPostId])
+  @@map("social_publication_targets")
 }

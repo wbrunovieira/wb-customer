@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config'
 import { Env } from '@/env/env'
 import {
   ISocialEngineGateway,
+  PublishInput,
+  PublishedTarget,
   SocialChannel,
   SocialGroup,
 } from '@/domain/social/application/gateways/i-social-engine.gateway'
@@ -11,6 +13,13 @@ import {
 interface PostizGroup {
   id: string
   name: string
+}
+
+/** Forma devolvida por POST /api/public/v1/posts: um item por canal. */
+interface PostizCreatedPost {
+  postId: string
+  /** O motor devolve aqui o id do canal, com o nome 'integration'. */
+  integration: string
 }
 
 /** Forma devolvida por GET /api/public/v1/integrations. */
@@ -67,6 +76,27 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
     }))
   }
 
+  async publish(input: PublishInput): Promise<PublishedTarget[]> {
+    const body = {
+      type: input.mode,
+      date: input.date.toISOString(),
+      // Falso de propósito: encurtar reescreveria o wa.me e levaria embora o
+      // marcador de atribuição que viaja dentro dele.
+      shortLink: false,
+      tags: [],
+      posts: input.channelIds.map((id) => ({
+        integration: { id },
+        value: [{ content: input.content }],
+        // settings vazio: o Postiz preenche __type pelo provedor do canal.
+        settings: {},
+      })),
+    }
+
+    const created = await this.post<PostizCreatedPost[]>('posts', body)
+
+    return created.map((c) => ({ channelId: c.integration, postId: c.postId }))
+  }
+
   private async get<T>(path: string): Promise<T> {
     const resp = await fetch(`${this.baseUrl}/api/public/v1/${path}`, {
       headers: { Authorization: this.apiKey },
@@ -78,6 +108,28 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
       // Estourar é proposital: devolver lista vazia num fora do ar faria a tela
       // dizer "nenhum canal", que é indistinguível de canal nenhum conectado.
       throw new Error(`Postiz respondeu ${resp.status} em ${path}`)
+    }
+
+    return (await resp.json()) as T
+  }
+
+  private async post<T>(path: string, body: unknown): Promise<T> {
+    const resp = await fetch(`${this.baseUrl}/api/public/v1/${path}`, {
+      method: 'POST',
+      headers: {
+        Authorization: this.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '')
+      this.logger.error(`Postiz POST ${path} → ${resp.status} ${text.slice(0, 300)}`)
+      // A mensagem do motor entra na exceção: quando ele reprova o post por
+      // regra da rede (legenda longa demais, formato inválido), quem chamou
+      // precisa ler o motivo, não um 500 mudo.
+      throw new Error(`Postiz respondeu ${resp.status} em ${path}: ${text.slice(0, 300)}`)
     }
 
     return (await resp.json()) as T

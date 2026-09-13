@@ -21,6 +21,22 @@ export interface SocialChannel {
   groupId: string | null
 }
 
+export interface PublishInput {
+  /** Canais de destino. Vários numa chamada só cobrem o espelho entre redes. */
+  channelIds: string[]
+  content: string
+  /** 'now' publica já; 'schedule' guarda para a data. */
+  mode: 'now' | 'schedule'
+  /** O motor exige data mesmo em 'now'. */
+  date: Date
+}
+
+export interface PublishedTarget {
+  channelId: string
+  /** Id do post no motor. É por aqui que a métrica reencontra este post. */
+  postId: string
+}
+
 export abstract class ISocialEngineGateway {
   /**
    * Falso quando o motor não foi configurado. As rotas respondem sem quebrar,
@@ -36,4 +52,10 @@ export abstract class ISocialEngineGateway {
    * grupo na API do motor não é garantido entre versões, o campo do dono é.
    */
   abstract listChannels(): Promise<SocialChannel[]>
+
+  /**
+   * Entrega ao motor o que já foi decidido e conferido aqui. Devolve um id de
+   * post por canal — o motor cria um post por rede, não um post compartilhado.
+   */
+  abstract publish(input: PublishInput): Promise<PublishedTarget[]>
 }
