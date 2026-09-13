@@ -48,8 +48,17 @@ export default async function CustomerSocialPage({ params }: Props) {
 
         {linked && (
           <Link
-            href={`/customers/${id}/social/queue`}
+            href={`/customers/${id}/social/feed`}
             className="ml-auto rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-md transition-colors hover:bg-elevated hover:text-hi"
+          >
+            Publicados
+          </Link>
+        )}
+
+        {linked && (
+          <Link
+            href={`/customers/${id}/social/queue`}
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-md transition-colors hover:bg-elevated hover:text-hi"
           >
             Agenda
           </Link>

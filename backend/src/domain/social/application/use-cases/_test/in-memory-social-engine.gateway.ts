@@ -1,6 +1,7 @@
 import {
   ISocialEngineGateway,
   ListQueueInput,
+  PostMetrics,
   PublishInput,
   PublishedTarget,
   QueuedPost,
@@ -58,5 +59,14 @@ export class InMemorySocialEngineGateway implements ISocialEngineGateway {
   async cancelPost(postId: string): Promise<void> {
     this.canceled.push(postId)
     this.queue = this.queue.filter((p) => p.id !== postId)
+  }
+
+  /** Métrica por id de post; o que não estiver aqui volta como indisponível. */
+  public metrics: Record<string, PostMetrics> = {}
+  public metricsQueries: { postId: string; days: number }[] = []
+
+  async getPostMetrics(postId: string, days: number): Promise<PostMetrics> {
+    this.metricsQueries.push({ postId, days })
+    return this.metrics[postId] ?? { available: false, metrics: [] }
   }
 }

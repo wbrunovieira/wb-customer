@@ -4,6 +4,7 @@ import { Env } from '@/env/env'
 import {
   ISocialEngineGateway,
   ListQueueInput,
+  PostMetrics,
   PublishInput,
   PublishedTarget,
   QueuedPost,
@@ -15,6 +16,16 @@ import {
 interface PostizGroup {
   id: string
   name: string
+}
+
+/**
+ * Item de GET /api/public/v1/analytics/post/:postId. O motor devolve uma série
+ * por data; para um post ele traz um ponto por métrica.
+ */
+interface PostizAnalytics {
+  label: string
+  data?: { total: string; date: string }[]
+  percentageChange?: number
 }
 
 /** Item de GET /api/public/v1/posts. */
@@ -135,6 +146,28 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
       provider: p.integration?.providerIdentifier ?? 'desconhecido',
       group: p.group ?? null,
     }))
+  }
+
+  async getPostMetrics(postId: string, days: number): Promise<PostMetrics> {
+    const res = await this.get<PostizAnalytics[] | { missing: true }>(
+      `analytics/post/${encodeURIComponent(postId)}?date=${days}`,
+    )
+
+    // O motor responde { missing: true } quando perdeu o id do post na rede, e
+    // [] quando o post não publicou ou a rede não expõe métrica. Nos dois casos
+    // não há número para mostrar, e inventar zero seria mentir.
+    if (!Array.isArray(res) || res.length === 0) {
+      return { available: false, metrics: [] }
+    }
+
+    return {
+      available: true,
+      metrics: res.map((a) => ({
+        label: a.label,
+        total: Number(a.data?.[a.data.length - 1]?.total ?? 0),
+        percentageChange: a.percentageChange ?? 0,
+      })),
+    }
   }
 
   async cancelPost(postId: string): Promise<void> {

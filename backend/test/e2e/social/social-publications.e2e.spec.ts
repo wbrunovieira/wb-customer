@@ -38,6 +38,7 @@ const channel = (id: string, groupId: string | null, disabled = false): SocialCh
 
 const fakeEngine: ISocialEngineGateway = {
   isConfigured: () => true,
+  getPostMetrics: async () => ({ available: false, metrics: [] }),
   listQueue: async () => [],
   cancelPost: async () => {},
   listGroups: async () => [{ id: 'g1', name: 'Padaria' }],

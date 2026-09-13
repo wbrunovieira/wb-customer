@@ -6,6 +6,8 @@ import {
   ContentViolation,
   CustomerSocialChannels,
   PublishedPost,
+  PostMetrics,
+  SocialFeed,
   SocialGroupView,
   SocialQueue,
 } from '@/lib/definitions'
@@ -148,6 +150,43 @@ export async function cancelSocialPost(
     )
     revalidateSocial(customerId)
     return {}
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
+/** O que já foi publicado para este cliente, na janela pedida. */
+export async function getSocialFeed(
+  customerId: string,
+  from: string,
+  to: string,
+): Promise<{ feed?: SocialFeed; message?: string }> {
+  try {
+    const params = new URLSearchParams({ from, to })
+    const feed = await apiServer.get<SocialFeed>(
+      `/api/v1/customers/${customerId}/social/feed?${params}`,
+    )
+    return { feed }
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
+/**
+ * Métrica de um post, sob demanda.
+ *
+ * Uma chamada por post de propósito: o motor tem teto de 90 requisições por
+ * hora, e buscar tudo ao abrir o feed queimaria o teto sozinha.
+ */
+export async function getPostMetrics(
+  customerId: string,
+  postId: string,
+): Promise<{ metrics?: PostMetrics; message?: string }> {
+  try {
+    const metrics = await apiServer.get<PostMetrics>(
+      `/api/v1/customers/${customerId}/social/posts/${encodeURIComponent(postId)}/metrics`,
+    )
+    return { metrics }
   } catch (err) {
     return { message: (err as Error).message }
   }
