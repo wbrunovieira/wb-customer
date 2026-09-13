@@ -38,6 +38,8 @@ const channel = (id: string, groupId: string | null, disabled = false): SocialCh
 
 const fakeEngine: ISocialEngineGateway = {
   isConfigured: () => true,
+  listQueue: async () => [],
+  cancelPost: async () => {},
   listGroups: async () => [{ id: 'g1', name: 'Padaria' }],
   listChannels: async (): Promise<SocialChannel[]> => [
     channel('c-insta', 'g1'),

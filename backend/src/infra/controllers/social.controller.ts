@@ -3,6 +3,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -44,6 +45,8 @@ import { CustomerNotLinkedToGroupError } from '@/domain/social/domain/exceptions
 import { ContentRulesViolationError } from '@/domain/social/domain/exceptions/content-rules-violation.error'
 import { ChannelNotAvailableError } from '@/domain/social/domain/exceptions/channel-not-available.error'
 import { InvalidScheduleDateError } from '@/domain/social/domain/exceptions/invalid-schedule-date.error'
+import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get-social-queue.use-case'
+import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
 
 /**
  * Traduz a falha do domínio para HTTP. Motor fora do ar é 503 e não 500: o
@@ -540,6 +543,96 @@ export class SocialPublicationsController {
   @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
   async listAll(@Param('customerId') customerId: string) {
     const result = await this.list.execute({ customerId })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+}
+
+
+// ── Fila do motor ────────────────────────────────────────────────────────────
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/queue')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialQueueController {
+  constructor(
+    private readonly queue: GetSocialQueueUseCase,
+    private readonly cancel: CancelSocialPostUseCase,
+  ) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'O que está na fila deste cliente',
+    description:
+      'Lê a fila direto do motor, filtrada pelo grupo do cliente, e devolve em ordem cronológica. Mostra também o que foi criado direto no Postiz, que é o ponto: sem isto seria preciso abrir o motor para saber o que vai sair. A janela padrão é o mês à frente, que é o horizonte do plano editorial.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente' })
+  @ApiQuery({ name: 'from', required: false, description: 'Início da janela, ISO 8601. Padrão: hoje.' })
+  @ApiQuery({ name: 'to', required: false, description: 'Fim da janela, ISO 8601. Padrão: 30 dias à frente.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fila do cliente',
+    schema: {
+      example: {
+        from: '2026-09-13T00:00:00.000Z',
+        to: '2026-10-13T00:00:00.000Z',
+        posts: [
+          {
+            id: 'ckp1…',
+            content: 'Encomende sua peça pelo WhatsApp.',
+            publishAt: '2026-09-20T13:00:00.000Z',
+            state: 'QUEUE',
+            url: null,
+            channelId: 'int-instagram-1',
+            channelName: '@padariadoze',
+            provider: 'instagram',
+            group: 'grp-1',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Janela inválida' })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  @ApiResponse({ status: 409, description: 'Cliente ainda não ligado a um grupo do motor' })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  async list(
+    @Param('customerId') customerId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const result = await this.queue.execute({
+      customerId,
+      from: from ? new Date(from) : undefined,
+      to: to ? new Date(to) : undefined,
+    })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+
+  @Delete(':postId')
+  @ApiOperation({
+    summary: 'Cancelar um post da fila',
+    description:
+      'Apaga o post no motor. Irreversível, e atinge TODAS as redes em que ele foi espelhado — o motor resolve o grupo a partir do id e remove o grupo inteiro. Antes de apagar, confere que o post pertence ao grupo deste cliente: o motor aceitaria o id sozinho e apagaria post de qualquer cliente da organização.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente dono da fila' })
+  @ApiParam({ name: 'postId', description: 'Id do post no motor' })
+  @ApiResponse({ status: 200, description: 'Post cancelado', schema: { example: { postId: 'ckp1…' } } })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado, ou post fora da fila deste cliente' })
+  @ApiResponse({ status: 409, description: 'Cliente ainda não ligado a um grupo do motor' })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  async remove(
+    @Param('customerId') customerId: string,
+    @Param('postId') postId: string,
+  ) {
+    const result = await this.cancel.execute({ customerId, postId })
 
     if (result.isLeft()) throw toHttpError(result.value)
 

@@ -37,6 +37,8 @@ const channel = (id: string, groupId: string | null): SocialChannel => ({
 
 const fakeEngine: ISocialEngineGateway = {
   isConfigured: () => true,
+  listQueue: async () => [],
+  cancelPost: async () => {},
   publish: async () => [],
   listGroups: async (): Promise<SocialGroup[]> => [{ id: 'g1', name: 'Padaria' }],
   listChannels: async (): Promise<SocialChannel[]> => [

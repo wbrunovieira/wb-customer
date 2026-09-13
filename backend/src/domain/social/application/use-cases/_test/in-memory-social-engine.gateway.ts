@@ -1,7 +1,9 @@
 import {
   ISocialEngineGateway,
+  ListQueueInput,
   PublishInput,
   PublishedTarget,
+  QueuedPost,
   SocialChannel,
   SocialGroup,
 } from '../../gateways/i-social-engine.gateway'
@@ -36,5 +38,25 @@ export class InMemorySocialEngineGateway implements ISocialEngineGateway {
       channelId,
       postId: `post-${channelId}`,
     }))
+  }
+
+  /** Fila devolvida pelo motor; o teste monta o que quiser ver. */
+  public queue: QueuedPost[] = []
+  /** O que foi pedido ao motor, para conferir a janela. */
+  public queueQueries: ListQueueInput[] = []
+
+  async listQueue(input: ListQueueInput): Promise<QueuedPost[]> {
+    this.queueQueries.push(input)
+    return this.queue.filter(
+      (p) => p.publishAt >= input.from && p.publishAt <= input.to,
+    )
+  }
+
+  /** Ids removidos da fila, para o teste conferir o que foi cancelado. */
+  public canceled: string[] = []
+
+  async cancelPost(postId: string): Promise<void> {
+    this.canceled.push(postId)
+    this.queue = this.queue.filter((p) => p.id !== postId)
   }
 }
