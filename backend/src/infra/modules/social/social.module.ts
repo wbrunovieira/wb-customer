@@ -31,6 +31,8 @@ import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get
 import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
 import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
 import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
+import { ReconcileSocialPublicationsUseCase } from '@/domain/social/application/use-cases/reconcile-social-publications.use-case'
+import { SocialReconciliationSchedulerService } from '@/infra/scheduled/social-reconciliation-scheduler.service'
 import { ISocialPublicationRepository } from '@/domain/social/application/repositories/i-social-publication.repository'
 import { PrismaSocialPublicationRepository } from '@/infra/database/prisma/repositories/social/prisma-social-publication.repository'
 import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz-social-engine.adapter'
@@ -68,6 +70,8 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     CancelSocialPostUseCase,
     GetSocialFeedUseCase,
     GetPostMetricsUseCase,
+    ReconcileSocialPublicationsUseCase,
+    SocialReconciliationSchedulerService,
     {
       provide: ISocialPublicationRepository,
       useClass: PrismaSocialPublicationRepository,

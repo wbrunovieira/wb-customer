@@ -9,6 +9,7 @@ import {
   PostMetrics,
   SocialFeed,
   SocialGroupView,
+  SocialPublication,
   SocialQueue,
 } from '@/lib/definitions'
 
@@ -187,6 +188,26 @@ export async function getPostMetrics(
       `/api/v1/customers/${customerId}/social/posts/${encodeURIComponent(postId)}/metrics`,
     )
     return { metrics }
+  } catch (err) {
+    return { message: (err as Error).message }
+  }
+}
+
+/**
+ * O que este cliente mandou publicar, com o estado que a reconciliação gravou.
+ *
+ * O sino avisa no instante da falha, mas só a quem está com a tela aberta e só
+ * enquanto a aba viver. Isto é a memória: uma falha das 9h continua visível às
+ * 15h, para quem não estava lá.
+ */
+export async function getSocialPublications(
+  customerId: string,
+): Promise<{ publications?: SocialPublication[]; message?: string }> {
+  try {
+    const res = await apiServer.get<{ publications: SocialPublication[] }>(
+      `/api/v1/customers/${customerId}/social/publications`,
+    )
+    return { publications: res.publications }
   } catch (err) {
     return { message: (err as Error).message }
   }

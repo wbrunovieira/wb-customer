@@ -5,6 +5,32 @@ export interface SocialPublicationTargetRecord {
   provider: string
   /** Id do post no motor. */
   postizPostId: string
+  /** Estado espelhado do motor: QUEUE, PUBLISHED, ERROR, DRAFT. */
+  state?: string
+  failureReason?: string | null
+  publishedUrl?: string | null
+  lastCheckedAt?: Date | null
+}
+
+/** Um destino ainda sem desfecho, com o contexto para perguntar ao motor. */
+export interface ReconcilableTarget {
+  publicationId: string
+  customerId: string
+  /** Grupo do cliente no momento da publicação; é por ele que se lê a fila. */
+  postizGroupId: string
+  postizPostId: string
+  channelId: string
+  provider: string
+  state: string
+  scheduledFor: Date
+}
+
+export interface UpdateTargetStateInput {
+  postizPostId: string
+  state: string
+  failureReason?: string | null
+  publishedUrl?: string | null
+  checkedAt: Date
 }
 
 export interface SocialPublicationRecord {
@@ -32,4 +58,14 @@ export abstract class ISocialPublicationRepository {
   abstract findByCustomerId(customerId: string): Promise<StoredSocialPublication[]>
   /** Caminho de volta a partir do motor, usado pelas métricas e pelo webhook. */
   abstract findByPostizPostId(postId: string): Promise<StoredSocialPublication | null>
+
+  /**
+   * Destinos que ainda não têm desfecho (nem publicado, nem falhado).
+   *
+   * O motor não avisa quando falha — o webhook dele só dispara em sucesso —,
+   * então saber de uma falha depende de vir perguntar.
+   */
+  abstract findTargetsToReconcile(limit?: number): Promise<ReconcilableTarget[]>
+
+  abstract updateTargetState(input: UpdateTargetStateInput): Promise<void>
 }
