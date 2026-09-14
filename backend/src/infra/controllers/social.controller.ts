@@ -42,6 +42,9 @@ import { SocialEngineNotConfiguredError } from '@/domain/social/domain/exception
 import { SocialGroupAlreadyLinkedError } from '@/domain/social/domain/exceptions/social-group-already-linked.error'
 import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/publish-social-post.use-case'
 import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
+import { PublishSocialPostsBatchUseCase } from '@/domain/social/application/use-cases/publish-social-posts-batch.use-case'
+import { EmptyBatchError } from '@/domain/social/domain/exceptions/empty-batch.error'
+import { BatchTooLargeError } from '@/domain/social/domain/exceptions/batch-too-large.error'
 import { CustomerNotLinkedToGroupError } from '@/domain/social/domain/exceptions/customer-not-linked-to-group.error'
 import { ContentRulesViolationError } from '@/domain/social/domain/exceptions/content-rules-violation.error'
 import { ChannelNotAvailableError } from '@/domain/social/domain/exceptions/channel-not-available.error'
@@ -81,7 +84,9 @@ function toHttpError(error: Error): Error {
   }
   if (
     error instanceof ChannelNotAvailableError ||
-    error instanceof InvalidScheduleDateError
+    error instanceof InvalidScheduleDateError ||
+    error instanceof EmptyBatchError ||
+    error instanceof BatchTooLargeError
   ) {
     return new BadRequestException(error.message)
   }
@@ -455,6 +460,15 @@ class PublishSocialPostDto {
   creativeId?: string
 }
 
+class PublishBatchDto {
+  @ApiProperty({
+    type: [PublishSocialPostDto],
+    description:
+      'Os posts do calendário, na ordem. Cada um é conferido e publicado por conta própria.',
+  })
+  posts!: PublishSocialPostDto[]
+}
+
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/publications')
@@ -464,6 +478,7 @@ export class SocialPublicationsController {
   constructor(
     private readonly publish: PublishSocialPostUseCase,
     private readonly list: ListSocialPublicationsUseCase,
+    private readonly batch: PublishSocialPostsBatchUseCase,
   ) {}
 
   @Post()
@@ -516,6 +531,76 @@ export class SocialPublicationsController {
       scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : undefined,
       attributionLinkId: body.attributionLinkId ?? null,
       creativeId: body.creativeId ?? null,
+      createdByUserId: user.userId,
+    })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+
+  @Post('batch')
+  @ApiOperation({
+    summary: 'Agendar o calendário editorial de uma vez',
+    description:
+      'O mês tem cerca de 32 publicações; cadastrar uma a uma é trabalho suficiente para a pessoa desistir e voltar ao Business Suite. Como agentes operam este sistema, montar o mês inteiro numa chamada é o caso de uso real. UM ITEM RUIM NÃO DERRUBA O LOTE: cada post passa pelas regras da casa por conta própria, e a resposta diz item a item, pela posição enviada, o que entrou e o que não entrou. Publica em série de propósito — o motor aceita 90 requisições por hora, e disparar tudo de uma vez trocaria um lote lento por um lote recusado pela metade. Por isso também o teto de 40 posts por lote.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente dono das contas' })
+  @ApiBody({ type: PublishBatchDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Resultado item a item',
+    schema: {
+      example: {
+        total: 3,
+        scheduled: 2,
+        rejected: 1,
+        results: [
+          {
+            index: 0,
+            status: 'scheduled',
+            publicationId: '9c3a…',
+            scheduledFor: '2026-09-20T13:00:00.000Z',
+            targets: [
+              { channelId: 'int-instagram-1', provider: 'instagram', postizPostId: 'ckp1…' },
+            ],
+          },
+          {
+            index: 1,
+            status: 'rejected',
+            error: 'O texto fere as regras editoriais da casa.',
+            violations: [
+              {
+                ruleId: 'em-dash',
+                severity: 'block',
+                message: 'Travessão não é usado nos textos da casa.',
+                excerpt: 'Pão quentinho — a partir de R$ 5',
+                index: 14,
+              },
+            ],
+          },
+          { index: 2, status: 'scheduled', publicationId: '4f1b…' },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Lote vazio ou acima do limite de 40 posts' })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  async createBatch(
+    @Param('customerId') customerId: string,
+    @Body() body: PublishBatchDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const result = await this.batch.execute({
+      customerId,
+      items: (body.posts ?? []).map((post) => ({
+        content: post.content,
+        channelIds: post.channelIds ?? [],
+        mode: post.mode,
+        scheduledFor: post.scheduledFor ? new Date(post.scheduledFor) : undefined,
+        attributionLinkId: post.attributionLinkId ?? null,
+        creativeId: post.creativeId ?? null,
+      })),
       createdByUserId: user.userId,
     })
 

@@ -27,6 +27,7 @@ import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/us
 import { ISocialEngineGateway } from '@/domain/social/application/gateways/i-social-engine.gateway'
 import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/publish-social-post.use-case'
 import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
+import { PublishSocialPostsBatchUseCase } from '@/domain/social/application/use-cases/publish-social-posts-batch.use-case'
 import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get-social-queue.use-case'
 import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
 import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
@@ -66,6 +67,7 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     GetCustomerSocialChannelsUseCase,
     PublishSocialPostUseCase,
     ListSocialPublicationsUseCase,
+    PublishSocialPostsBatchUseCase,
     GetSocialQueueUseCase,
     CancelSocialPostUseCase,
     GetSocialFeedUseCase,
