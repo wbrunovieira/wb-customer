@@ -6,6 +6,7 @@ import { ContentViolation, Creative, SocialChannel } from '@/lib/definitions'
 import { publishSocialPost, validateSocialContent } from '@/app/actions/social'
 import { useToast } from '@/components/toast/toast-context'
 import LoadingDots from '@/components/ui/loading-dots'
+import { localInputToISO, timezoneLabel } from '@/lib/timezone'
 import CreativePicker from '../../../traffic/_components/creative-picker'
 import ChannelBadge from '../../_components/channel-badge'
 
@@ -106,9 +107,9 @@ export default function PostComposer({ customerId, channels }: Props) {
         content,
         channelIds: selected,
         mode,
-        // datetime-local vem no fuso de quem está na tela; o backend quer ISO.
-        scheduledFor:
-          mode === 'schedule' ? new Date(scheduledFor).toISOString() : undefined,
+        // Lido como horário de São Paulo, não do navegador: quem agenda de
+        // outro fuso marcaria outra hora, sem erro e sem aviso.
+        scheduledFor: mode === 'schedule' ? localInputToISO(scheduledFor) : undefined,
         creativeId: creative?.id ?? null,
       })
 
@@ -317,7 +318,8 @@ export default function PostComposer({ customerId, channels }: Props) {
               className={inputCls}
             />
             <p className="mt-1 text-xs text-lo">
-              No seu fuso. Precisa ser no futuro.
+              Horário de São Paulo ({timezoneLabel()}), não o do seu computador.
+              Precisa ser no futuro.
             </p>
           </div>
         )}
