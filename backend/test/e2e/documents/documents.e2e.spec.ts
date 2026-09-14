@@ -2,15 +2,18 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Test } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
 import request from 'supertest'
+import { PrismaClient } from '@prisma/client'
 import { setupE2E, teardownE2E } from '../../setup-e2e'
 import { AppModule } from '@/app.module'
 
 let app: INestApplication
 let adminToken: string
 let customerId: string
+let seedPrisma: PrismaClient
 
 beforeAll(async () => {
-  await setupE2E()
+  const { prisma } = await setupE2E()
+  seedPrisma = prisma
 
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
@@ -29,11 +32,20 @@ beforeAll(async () => {
     .send({ email: 'admin@doc.com', password: 'Admin123@' })
   adminToken = (login.body as { accessToken: string }).accessToken
 
-  const customerRes = await request(app.getHttpServer())
-    .post('/api/v1/customers')
-    .set('Authorization', `Bearer ${adminToken}`)
-    .send({ name: 'Acme Corp', email: 'acme@doc.com' })
-  customerId = (customerRes.body as { customerId: string }).customerId
+  // Semeado direto, como os outros E2E fazem. Criar pela rota passa por
+  // CreateCustomerUseCase, que cria pasta no Drive e estoura sem token do
+  // Google — deixando customerId indefinido e todo o resto respondendo 404.
+  // Este arquivo é sobre documentos; o Google não tem por que estar no caminho.
+  const customer = await seedPrisma.customer.create({
+    data: {
+      id: 'e2e-documents-customer',
+      name: 'Acme Corp',
+      email: 'acme@doc.com',
+      status: 'active',
+      createdByUserId: 'seed-user',
+    },
+  })
+  customerId = customer.id
 })
 
 afterAll(async () => {
