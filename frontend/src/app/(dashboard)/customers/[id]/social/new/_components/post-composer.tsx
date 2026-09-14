@@ -32,6 +32,13 @@ const SUPPORTED_MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'v
 /** Limite do carrossel do Instagram, a rede mais restritiva entre as que usamos. */
 const MAX_CAROUSEL = 10
 
+/** Mesma regra da galeria de criativos, para a prévia mostrar o que ela mostra. */
+function thumbFor(c: Creative): string | null {
+  if (c.thumbnailUrl) return c.thumbnailUrl
+  if (c.driveFileId) return `https://drive.google.com/thumbnail?id=${c.driveFileId}&sz=w600-h600`
+  return null
+}
+
 interface Props {
   customerId: string
   channels: SocialChannel[]
@@ -411,7 +418,7 @@ export default function PostComposer({ customerId, channels }: Props) {
       </div>
 
       {/* ── Preview ──────────────────────────────────────────────────────── */}
-      {selected.length > 0 && content.trim() !== '' && (
+      {selected.length > 0 && (content.trim() !== '' || creatives.length > 0) && (
         <div className="rounded-xl border border-border bg-surface p-6 flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-hi">Como vai sair</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -426,6 +433,44 @@ export default function PostComposer({ customerId, channels }: Props) {
                       <ChannelBadge provider={channel.provider} />
                       <span className="text-xs text-md line-clamp-1">{channel.name}</span>
                     </div>
+
+                    {creatives.length > 0 && (
+                      <div className="mt-2">
+                        {/* Em faixa e na ordem: é assim que o carrossel é visto,
+                            e a numeração deixa a ordem conferível sem contar. */}
+                        <div className="flex gap-1.5 overflow-x-auto pb-1">
+                          {creatives.map((c, i) => {
+                            const thumb = thumbFor(c)
+                            return (
+                              <div
+                                key={c.id}
+                                className="relative shrink-0"
+                                title={c.title}
+                              >
+                                {thumb ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={thumb}
+                                    alt={c.title}
+                                    className="h-24 w-24 rounded object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-24 w-24 items-center justify-center rounded bg-elevated p-1 text-center text-[10px] text-lo">
+                                    {c.title}
+                                  </div>
+                                )}
+                                {creatives.length > 1 && (
+                                  <span className="absolute right-1 top-1 rounded bg-black/60 px-1 text-[10px] font-medium text-white tabular-nums">
+                                    {i + 1}/{creatives.length}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     <p className="mt-2 whitespace-pre-wrap text-xs text-hi">
                       {content.slice(0, max)}
                     </p>
