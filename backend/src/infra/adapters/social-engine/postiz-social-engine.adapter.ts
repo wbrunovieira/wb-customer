@@ -6,6 +6,8 @@ import {
   ListQueueInput,
   PostMetrics,
   PublishInput,
+  UploadMediaInput,
+  UploadedMedia,
   PublishedTarget,
   QueuedPost,
   SocialChannel,
@@ -114,7 +116,14 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
       tags: [],
       posts: input.channelIds.map((id) => ({
         integration: { id },
-        value: [{ content: input.content }],
+        value: [
+          {
+            content: input.content,
+            // O motor espera { id, path } por item; o path é o que ele mesmo
+            // devolveu no upload.
+            image: (input.media ?? []).map((m) => ({ id: m.id, path: m.path })),
+          },
+        ],
         // settings vazio: o Postiz preenche __type pelo provedor do canal.
         settings: {},
       })),
@@ -146,6 +155,32 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
       provider: p.integration?.providerIdentifier ?? 'desconhecido',
       group: p.group ?? null,
     }))
+  }
+
+  async uploadMedia(input: UploadMediaInput): Promise<UploadedMedia> {
+    const form = new FormData()
+    form.append(
+      'file',
+      new Blob([new Uint8Array(input.buffer)], { type: input.mimeType }),
+      input.fileName,
+    )
+
+    // Sem Content-Type à mão de propósito: o fetch precisa gerar o boundary do
+    // multipart, e fixar o cabeçalho aqui quebraria o corpo.
+    const resp = await fetch(`${this.baseUrl}/api/public/v1/upload`, {
+      method: 'POST',
+      headers: { Authorization: this.apiKey },
+      body: form,
+    })
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '')
+      this.logger.error(`Postiz POST upload → ${resp.status} ${text.slice(0, 300)}`)
+      throw new Error(`Postiz respondeu ${resp.status} ao subir a mídia: ${text.slice(0, 300)}`)
+    }
+
+    const media = (await resp.json()) as { id: string; path: string }
+    return { id: media.id, path: media.path }
   }
 
   async getPostMetrics(postId: string, days: number): Promise<PostMetrics> {

@@ -14,6 +14,7 @@ import {
   Query,
   ServiceUnavailableException,
   UnprocessableEntityException,
+  UnsupportedMediaTypeException,
   UseGuards,
 } from '@nestjs/common'
 import {
@@ -47,6 +48,8 @@ import { ChannelNotAvailableError } from '@/domain/social/domain/exceptions/chan
 import { InvalidScheduleDateError } from '@/domain/social/domain/exceptions/invalid-schedule-date.error'
 import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get-social-queue.use-case'
 import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
+import { CreativeHasNoFileError } from '@/domain/social/domain/exceptions/creative-has-no-file.error'
+import { UnsupportedMediaTypeError } from '@/domain/social/domain/exceptions/unsupported-media-type.error'
 import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
 import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
 
@@ -60,9 +63,13 @@ function toHttpError(error: Error): Error {
   }
   if (
     error instanceof SocialGroupAlreadyLinkedError ||
-    error instanceof CustomerNotLinkedToGroupError
+    error instanceof CustomerNotLinkedToGroupError ||
+    error instanceof CreativeHasNoFileError
   ) {
     return new ConflictException(error.message)
+  }
+  if (error instanceof UnsupportedMediaTypeError) {
+    return new UnsupportedMediaTypeException(error.message)
   }
   if (error instanceof ContentRulesViolationError) {
     // 422 e não 400: o pedido está bem formado, o texto é que não passa. As
@@ -483,7 +490,14 @@ export class SocialPublicationsController {
   })
   @ApiResponse({ status: 400, description: 'Canal indisponível ou data de agendamento inválida' })
   @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
-  @ApiResponse({ status: 409, description: 'Cliente ainda não ligado a um grupo do motor' })
+  @ApiResponse({
+    status: 409,
+    description: 'Cliente ainda não ligado a um grupo, ou criativo sem arquivo enviado',
+  })
+  @ApiResponse({
+    status: 415,
+    description: 'Formato do criativo não aceito nas redes (use PNG, JPEG, GIF, WEBP ou MP4)',
+  })
   @ApiResponse({
     status: 422,
     description: 'Texto fere as regras editoriais; o corpo traz as violações com trecho e posição',

@@ -5,7 +5,16 @@ import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/cust
 import {
   ISocialEngineGateway,
   SocialChannel,
+  UploadedMedia,
 } from '../gateways/i-social-engine.gateway'
+import { ICreativeRepository } from '@/domain/creatives/application/repositories/i-creative.repository'
+import { IStorageAdapter } from '@/domain/documents/application/services/i-storage.adapter'
+import { CreativeNotFoundError } from '@/domain/creatives/domain/exceptions/creative-not-found.error'
+import { CreativeHasNoFileError } from '../../domain/exceptions/creative-has-no-file.error'
+import {
+  SUPPORTED_MEDIA_TYPES,
+  UnsupportedMediaTypeError,
+} from '../../domain/exceptions/unsupported-media-type.error'
 import { ISocialPublicationRepository } from '../repositories/i-social-publication.repository'
 import { ValidateSocialContentUseCase } from './validate-social-content.use-case'
 import { SocialEngineNotConfiguredError } from '../../domain/exceptions/social-engine-not-configured.error'
@@ -40,6 +49,9 @@ export interface PublishSocialPostResponse {
 }
 
 export type PublishSocialPostResult = Either<
+  | CreativeNotFoundError
+  | CreativeHasNoFileError
+  | UnsupportedMediaTypeError
   | CustomerNotFoundError
   | CustomerNotLinkedToGroupError
   | ContentRulesViolationError
@@ -67,6 +79,8 @@ export class PublishSocialPostUseCase {
     private readonly engine: ISocialEngineGateway,
     private readonly publications: ISocialPublicationRepository,
     private readonly validateContent: ValidateSocialContentUseCase,
+    private readonly creatives: ICreativeRepository,
+    private readonly storage: IStorageAdapter,
   ) {}
 
   async execute(req: PublishSocialPostRequest): Promise<PublishSocialPostResult> {
@@ -112,11 +126,18 @@ export class PublishSocialPostUseCase {
       return left(new ChannelNotAvailableError('', 'not-in-group'))
     }
 
+    // A mídia sobe antes do post porque o post a referencia por id do motor.
+    // Se a publicação falhar depois disto, fica um arquivo órfão lá — melhor do
+    // que um post publicado apontando para mídia que não existe.
+    const media = await this.resolveMedia(req)
+    if (media instanceof Error) return left(media)
+
     const published = await this.engine.publish({
       channelIds: chosen.map((c) => c.id),
       content: req.content,
       mode: req.mode,
       date,
+      media,
     })
 
     const targets = published.map((p) => ({
@@ -138,6 +159,49 @@ export class PublishSocialPostUseCase {
     })
 
     return right({ publicationId, scheduledFor: date, targets })
+  }
+
+  /**
+   * Leva a arte do criativo até o motor, quando há criativo escolhido.
+   *
+   * O arquivo mora no Drive e o motor não consegue buscá-lo de lá: ele valida a
+   * extensão do caminho e, quando configurado, exige que o caminho seja do
+   * próprio domínio. Então o conteúdo é baixado aqui e reenviado.
+   */
+  private async resolveMedia(
+    req: PublishSocialPostRequest,
+  ): Promise<
+    | UploadedMedia[]
+    | undefined
+    | CreativeNotFoundError
+    | CreativeHasNoFileError
+    | UnsupportedMediaTypeError
+  > {
+    if (!req.creativeId) return undefined
+
+    const creative = await this.creatives.findById(req.creativeId)
+    if (!creative || creative.customerId !== req.customerId || creative.isDeleted) {
+      return new CreativeNotFoundError(req.creativeId)
+    }
+
+    if (!creative.driveFileId) return new CreativeHasNoFileError(req.creativeId)
+
+    const mimeType = creative.mimeType
+    if (!mimeType || !SUPPORTED_MEDIA_TYPES.includes(mimeType as never)) {
+      // Recusa antes de baixar e subir: o motor rejeitaria no fim, depois de
+      // gastar o arquivo inteiro em duas transferências.
+      return new UnsupportedMediaTypeError(mimeType)
+    }
+
+    const buffer = await this.storage.downloadFile(creative.driveFileId)
+
+    const uploaded = await this.engine.uploadMedia({
+      fileName: mediaFileName(creative.title, mimeType),
+      mimeType,
+      buffer,
+    })
+
+    return [uploaded]
   }
 
   /**
@@ -165,4 +229,31 @@ export class PublishSocialPostUseCase {
 
     return req.scheduledFor
   }
+}
+
+
+/** Extensão por tipo, porque o motor valida a extensão do caminho da mídia. */
+const EXTENSION: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'video/mp4': 'mp4',
+}
+
+/**
+ * Nome do arquivo enviado ao motor. A extensão não é enfeite: o motor recusa o
+ * post quando o caminho da mídia não termina em extensão conhecida.
+ */
+function mediaFileName(title: string, mimeType: string): string {
+  const slug =
+    title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'criativo'
+
+  return `${slug}.${EXTENSION[mimeType] ?? 'png'}`
 }

@@ -85,6 +85,16 @@ export class GoogleDriveAdapter implements IStorageAdapter {
     }
   }
 
+  async downloadFile(fileId: string): Promise<Buffer> {
+    const auth = await this.getAuthClient()
+    const drive = google.drive({ version: 'v3', auth })
+    const res = await drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'arraybuffer' },
+    )
+    return Buffer.from(res.data as ArrayBuffer)
+  }
+
   async deleteFile(fileId: string): Promise<void> {
     const auth = await this.getAuthClient()
     const drive = google.drive({ version: 'v3', auth })

@@ -3,6 +3,8 @@ import {
   ListQueueInput,
   PostMetrics,
   PublishInput,
+  UploadMediaInput,
+  UploadedMedia,
   PublishedTarget,
   QueuedPost,
   SocialChannel,
@@ -68,5 +70,18 @@ export class InMemorySocialEngineGateway implements ISocialEngineGateway {
   async getPostMetrics(postId: string, days: number): Promise<PostMetrics> {
     this.metricsQueries.push({ postId, days })
     return this.metrics[postId] ?? { available: false, metrics: [] }
+  }
+
+  /** Mídias enviadas ao motor, para o teste conferir o que subiu. */
+  public uploads: UploadMediaInput[] = []
+  /** Costura para simular o motor recusando o arquivo. */
+  public failOnUpload: Error | null = null
+
+  async uploadMedia(input: UploadMediaInput): Promise<UploadedMedia> {
+    if (this.failOnUpload) throw this.failOnUpload
+
+    this.uploads.push(input)
+    const id = `media-${this.uploads.length}`
+    return { id, path: `https://motor.example/uploads/${id}.png` }
   }
 }

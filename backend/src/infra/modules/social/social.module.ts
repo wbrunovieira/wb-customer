@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+// Traz ICreativeRepository: publicar com a arte do criativo precisa lê-lo.
+// Sem ciclo — CreativesModule não conhece o social.
+import { CreativesModule } from '@/infra/modules/creatives/creatives.module'
 import {
   SocialController,
   SocialAttributionController,
@@ -40,7 +43,7 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
  * ICustomerRepository vem do DatabaseModule, que é @Global.
  */
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, CreativesModule],
   controllers: [
     SocialController,
     SocialAttributionController,

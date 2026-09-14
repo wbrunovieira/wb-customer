@@ -21,6 +21,23 @@ export interface SocialChannel {
   groupId: string | null
 }
 
+/** Mídia já hospedada no motor, pronta para ser referenciada num post. */
+export interface UploadedMedia {
+  id: string
+  /**
+   * Caminho devolvido pelo motor. Vai de volta exatamente como veio: ele valida
+   * a extensão e, quando RESTRICT_UPLOAD_DOMAINS está ligado, exige que o
+   * caminho seja do domínio dele. URL do Drive não passa nem serve.
+   */
+  path: string
+}
+
+export interface UploadMediaInput {
+  fileName: string
+  mimeType: string
+  buffer: Buffer
+}
+
 export interface PublishInput {
   /** Canais de destino. Vários numa chamada só cobrem o espelho entre redes. */
   channelIds: string[]
@@ -29,6 +46,8 @@ export interface PublishInput {
   mode: 'now' | 'schedule'
   /** O motor exige data mesmo em 'now'. */
   date: Date
+  /** Mídia já enviada ao motor, na ordem em que deve aparecer no post. */
+  media?: UploadedMedia[]
 }
 
 export interface PublishedTarget {
@@ -123,4 +142,12 @@ export abstract class ISocialEngineGateway {
    * de tela queimaria o teto sozinha.
    */
   abstract getPostMetrics(postId: string, days: number): Promise<PostMetrics>
+
+  /**
+   * Hospeda um arquivo no motor e devolve a referência que o post usa.
+   *
+   * O post referencia mídia por id do motor; mandar a URL de onde o arquivo
+   * mora hoje não funciona, porque ele valida extensão e domínio do caminho.
+   */
+  abstract uploadMedia(input: UploadMediaInput): Promise<UploadedMedia>
 }

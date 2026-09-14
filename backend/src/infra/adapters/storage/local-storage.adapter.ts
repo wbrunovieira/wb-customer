@@ -18,6 +18,17 @@ export class LocalStorageAdapter implements IStorageAdapter {
     }
   }
 
+  /**
+   * O adapter local nunca guardou bytes — devolve URLs de fachada. Estourar com
+   * o motivo é melhor do que devolver um buffer vazio, que viraria um upload de
+   * arquivo corrompido lá na frente, longe da causa.
+   */
+  async downloadFile(fileId: string): Promise<Buffer> {
+    throw new Error(
+      `Storage local não guarda conteúdo; não há bytes para "${fileId}". Use STORAGE_ADAPTER=google-drive para publicar mídia.`,
+    )
+  }
+
   async deleteFile(_fileId: string): Promise<void> {
     // Local adapter: nothing to delete
   }

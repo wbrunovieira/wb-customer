@@ -25,6 +25,9 @@ const LIMITS: Record<string, number> = {
 
 const DEFAULT_LIMIT = 2200
 
+/** O motor recusa qualquer outro formato; barrar aqui evita descobrir no envio. */
+const SUPPORTED_MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4']
+
 interface Props {
   customerId: string
   channels: SocialChannel[]
@@ -52,6 +55,11 @@ export default function PostComposer({ customerId, channels }: Props) {
   }, [channels, selected])
 
   const overLimit = limit !== null && content.length > limit
+  // Criativo sem arquivo, ou em formato recusado, trava o envio: o backend
+  // responderia 409/415, e descobrir isso depois do clique é tarde.
+  const mediaSupported =
+    !creative?.mimeType || SUPPORTED_MIME.includes(creative.mimeType)
+  const mediaBlocked = !!creative && (!creative.driveFileId || !mediaSupported)
   const blocking = violations?.some((v) => v.severity === 'block') ?? false
   const busy = isPublishing || isChecking
 
@@ -147,10 +155,23 @@ export default function PostComposer({ customerId, channels }: Props) {
           selectedCreative={creative}
         />
 
-        {creative && (
+        {creative && !creative.driveFileId && (
           <p className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
-            A imagem ainda não vai junto: hoje o post sai só com texto. O criativo
-            fica registrado como procedência da publicação.
+            Este criativo ainda não tem arquivo enviado. Envie a arte na tela de
+            criativos, ou publique só com texto escolhendo outro.
+          </p>
+        )}
+
+        {creative?.driveFileId && !mediaSupported && (
+          <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400">
+            Formato {creative.mimeType ?? 'desconhecido'} não é aceito nas redes.
+            Use PNG, JPEG, GIF, WEBP ou MP4.
+          </p>
+        )}
+
+        {creative?.driveFileId && mediaSupported && (
+          <p className="rounded-lg border border-border bg-canvas px-3 py-2 text-xs text-md">
+            A arte vai junto com o post e fica registrada como procedência.
           </p>
         )}
       </div>
@@ -337,7 +358,14 @@ export default function PostComposer({ customerId, channels }: Props) {
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={busy || blocking || overLimit || !content.trim() || selected.length === 0}
+          disabled={
+            busy ||
+            blocking ||
+            mediaBlocked ||
+            overLimit ||
+            !content.trim() ||
+            selected.length === 0
+          }
           className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
         >
           {isPublishing ? <LoadingDots /> : mode === 'now' ? 'Publicar agora' : 'Agendar'}
@@ -355,6 +383,12 @@ export default function PostComposer({ customerId, channels }: Props) {
         {blocking && (
           <span className="text-xs text-red-400">
             Corrija o que bloqueia antes de enviar.
+          </span>
+        )}
+
+        {!blocking && mediaBlocked && (
+          <span className="text-xs text-red-400">
+            Resolva o criativo, ou tire-o da seleção, antes de enviar.
           </span>
         )}
       </div>
