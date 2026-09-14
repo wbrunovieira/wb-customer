@@ -51,5 +51,8 @@ import { ICustomerRepository } from '@/domain/customers/application/repositories
     // Service bindings
     { provide: ICreativesFolderService, useClass: GoogleCreativesFolderService },
   ],
+  // Exportado para o SocialModule: publicar com a arte do criativo precisa
+  // ler o criativo, e o dono da ligação com o Prisma continua sendo este módulo.
+  exports: [ICreativeRepository],
 })
 export class CreativesModule {}

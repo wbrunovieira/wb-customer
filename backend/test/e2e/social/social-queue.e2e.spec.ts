@@ -48,6 +48,7 @@ let engineQueue = [
 
 const fakeEngine: ISocialEngineGateway = {
   isConfigured: () => true,
+  uploadMedia: async () => ({ id: 'media-1', path: 'https://motor.example/m.png' }),
   getPostMetrics: async () => ({ available: false, metrics: [] }),
   listGroups: async () => [{ id: 'g1', name: 'Padaria' }],
   listChannels: async () => [],

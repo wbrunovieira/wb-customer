@@ -18,6 +18,11 @@ export class FakeStorageAdapter implements IStorageAdapter {
     return result
   }
 
+  async downloadFile(fileId: string): Promise<Buffer> {
+    // Dublê: devolve bytes reconhecíveis, para o teste ver o que foi baixado.
+    return Buffer.from(`fake-bytes:${fileId}`)
+  }
+
   async deleteFile(fileId: string): Promise<void> {
     this.deletedFileIds.push(fileId)
     this.uploadedFiles = this.uploadedFiles.filter((f) => f.fileId !== fileId)
