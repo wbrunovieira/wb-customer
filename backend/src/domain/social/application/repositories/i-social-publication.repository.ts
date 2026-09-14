@@ -68,4 +68,15 @@ export abstract class ISocialPublicationRepository {
   abstract findTargetsToReconcile(limit?: number): Promise<ReconcilableTarget[]>
 
   abstract updateTargetState(input: UpdateTargetStateInput): Promise<void>
+
+  /**
+   * Destinos que já saíram, dentro de uma janela.
+   *
+   * A janela existe porque algumas métricas demoram a estabilizar: coletar só
+   * o dia anterior congelaria números que ainda iam mudar.
+   */
+  abstract findPublishedTargetsSince(
+    since: Date,
+    limit?: number,
+  ): Promise<ReconcilableTarget[]>
 }

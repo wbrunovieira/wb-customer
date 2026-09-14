@@ -55,6 +55,7 @@ import { CreativeHasNoFileError } from '@/domain/social/domain/exceptions/creati
 import { UnsupportedMediaTypeError } from '@/domain/social/domain/exceptions/unsupported-media-type.error'
 import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
 import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
+import { ListSocialPostMetricsUseCase } from '@/domain/social/application/use-cases/list-social-post-metrics.use-case'
 
 /**
  * Traduz a falha do domínio para HTTP. Motor fora do ar é 503 e não 500: o
@@ -848,6 +849,54 @@ export class SocialPostMetricsController {
       postId,
       days: days ? Number(days) : undefined,
     })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+}
+
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/metrics')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialStoredMetricsController {
+  constructor(private readonly metrics: ListSocialPostMetricsUseCase) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Números já coletados dos posts deste cliente',
+    description:
+      'Lê do nosso banco, não do motor — é o que permite montar comparação e série sem gastar as 90 requisições por hora que o motor concede. A coleta roda de madrugada e recolhe os últimos sete dias, porque algumas métricas demoram a estabilizar. Campo nulo significa que a rede não informou aquela métrica, o que é diferente de zero: o Instagram dá salvamento e alcance, o LinkedIn não.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente' })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas guardadas',
+    schema: {
+      example: {
+        metrics: [
+          {
+            postizPostId: 'ckp1…',
+            customerId: '7b1e…',
+            provider: 'instagram',
+            views: 3400,
+            reach: 2870,
+            likes: 154,
+            comments: 12,
+            shares: 8,
+            saves: 21,
+            collectedAt: '2026-09-14T07:00:00.000Z',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  async list(@Param('customerId') customerId: string) {
+    const result = await this.metrics.execute({ customerId })
 
     if (result.isLeft()) throw toHttpError(result.value)
 
