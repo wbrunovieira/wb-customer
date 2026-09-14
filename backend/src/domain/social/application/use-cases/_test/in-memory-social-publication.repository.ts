@@ -58,4 +58,24 @@ export class InMemorySocialPublicationRepository
       }
     }
   }
+
+  async findPublishedTargetsSince(since: Date, limit = 60): Promise<ReconcilableTarget[]> {
+    return this.items
+      .filter((p) => p.scheduledFor >= since)
+      .flatMap((p) =>
+        p.targets
+          .filter((t) => t.state === 'PUBLISHED')
+          .map((t) => ({
+            publicationId: p.id,
+            customerId: p.customerId,
+            postizGroupId: p.postizGroupId,
+            postizPostId: t.postizPostId,
+            channelId: t.channelId,
+            provider: t.provider,
+            state: t.state ?? 'PUBLISHED',
+            scheduledFor: p.scheduledFor,
+          })),
+      )
+      .slice(0, limit)
+  }
 }

@@ -95,6 +95,32 @@ export class PrismaSocialPublicationRepository
     }))
   }
 
+  async findPublishedTargetsSince(
+    since: Date,
+    limit = 60,
+  ): Promise<ReconcilableTarget[]> {
+    const rows = await this.prisma.socialPublicationTarget.findMany({
+      where: {
+        state: 'PUBLISHED',
+        publication: { scheduledFor: { gte: since } },
+      },
+      include: { publication: true },
+      orderBy: { publication: { scheduledFor: 'desc' } },
+      take: limit,
+    })
+
+    return rows.map((t) => ({
+      publicationId: t.publicationId,
+      customerId: t.publication.customerId,
+      postizGroupId: t.publication.postizGroupId,
+      postizPostId: t.postizPostId,
+      channelId: t.channelId,
+      provider: t.provider,
+      state: t.state,
+      scheduledFor: t.publication.scheduledFor,
+    }))
+  }
+
   async updateTargetState(input: UpdateTargetStateInput): Promise<void> {
     await this.prisma.socialPublicationTarget.updateMany({
       where: { postizPostId: input.postizPostId },

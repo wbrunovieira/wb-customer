@@ -1083,3 +1083,37 @@ model SocialPublicationTarget {
   @@index([state])
   @@map("social_publication_targets")
 }
+
+/// Métrica orgânica de um post, como a rede a reporta.
+///
+/// Tabela própria e não CreativePerformance de propósito: aquele modelo é de
+/// tráfego pago (impressões, cliques, gasto, ROAS) e não tem onde guardar
+/// alcance, salvamento ou compartilhamento. Encaixar orgânico ali perderia a
+/// maior parte do que a rede informa, e gasto zero tornaria as razões derivadas
+/// (CTR, CPA, ROAS) sem sentido.
+model SocialPostMetric {
+  id           String   @id @default(uuid())
+  /// Id do post no motor. É a chave que liga a métrica ao que publicamos.
+  postizPostId String   @unique @map("postiz_post_id")
+  customerId   String   @map("customer_id")
+  /// instagram | facebook | linkedin…
+  provider     String
+  /// Campos opcionais porque as redes divergem: o Instagram dá salvamento e
+  /// alcance, o LinkedIn não. Nulo significa "a rede não informou", que é
+  /// diferente de zero.
+  views        Int?
+  reach        Int?
+  likes        Int?
+  comments     Int?
+  shares       Int?
+  saves        Int?
+  /// O que a rede devolveu, inteiro. Rótulo novo ou rede nova não se perde só
+  /// porque ainda não virou coluna.
+  raw          Json
+  collectedAt  DateTime @default(now()) @map("collected_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([customerId])
+  @@index([provider])
+  @@map("social_post_metrics")
+}

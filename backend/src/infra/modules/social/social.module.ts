@@ -13,6 +13,7 @@ import {
   SocialQueueController,
   SocialFeedController,
   SocialPostMetricsController,
+  SocialStoredMetricsController,
 } from '@/infra/controllers/social.controller'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
@@ -33,6 +34,11 @@ import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/c
 import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
 import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
 import { ReconcileSocialPublicationsUseCase } from '@/domain/social/application/use-cases/reconcile-social-publications.use-case'
+import { SyncSocialMetricsUseCase } from '@/domain/social/application/use-cases/sync-social-metrics.use-case'
+import { ListSocialPostMetricsUseCase } from '@/domain/social/application/use-cases/list-social-post-metrics.use-case'
+import { ISocialPostMetricRepository } from '@/domain/social/application/repositories/i-social-post-metric.repository'
+import { PrismaSocialPostMetricRepository } from '@/infra/database/prisma/repositories/social/prisma-social-post-metric.repository'
+import { SocialMetricsSchedulerService } from '@/infra/scheduled/social-metrics-scheduler.service'
 import { SocialReconciliationSchedulerService } from '@/infra/scheduled/social-reconciliation-scheduler.service'
 import { ISocialPublicationRepository } from '@/domain/social/application/repositories/i-social-publication.repository'
 import { PrismaSocialPublicationRepository } from '@/infra/database/prisma/repositories/social/prisma-social-publication.repository'
@@ -57,6 +63,7 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     SocialQueueController,
     SocialFeedController,
     SocialPostMetricsController,
+    SocialStoredMetricsController,
   ],
   providers: [
     ValidateSocialContentUseCase,
@@ -74,6 +81,13 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     GetPostMetricsUseCase,
     ReconcileSocialPublicationsUseCase,
     SocialReconciliationSchedulerService,
+    SyncSocialMetricsUseCase,
+    ListSocialPostMetricsUseCase,
+    SocialMetricsSchedulerService,
+    {
+      provide: ISocialPostMetricRepository,
+      useClass: PrismaSocialPostMetricRepository,
+    },
     {
       provide: ISocialPublicationRepository,
       useClass: PrismaSocialPublicationRepository,
