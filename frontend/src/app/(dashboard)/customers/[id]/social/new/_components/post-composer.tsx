@@ -29,6 +29,9 @@ const DEFAULT_LIMIT = 2200
 /** O motor recusa qualquer outro formato; barrar aqui evita descobrir no envio. */
 const SUPPORTED_MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4']
 
+/** Limite do carrossel do Instagram, a rede mais restritiva entre as que usamos. */
+const MAX_CAROUSEL = 10
+
 interface Props {
   customerId: string
   channels: SocialChannel[]
@@ -42,7 +45,9 @@ export default function PostComposer({ customerId, channels }: Props) {
 
   const [selected, setSelected] = useState<string[]>([])
   const [content, setContent] = useState('')
-  const [creative, setCreative] = useState<Creative | null>(null)
+  // Lista, não um: carrossel é vários criativos, e a ORDEM é o que a pessoa vê
+  // ao deslizar — trocar a primeira imagem troca o post.
+  const [creatives, setCreatives] = useState<Creative[]>([])
   const [mode, setMode] = useState<'now' | 'schedule'>('schedule')
   const [scheduledFor, setScheduledFor] = useState('')
   const [violations, setViolations] = useState<ContentViolation[] | null>(null)
@@ -58,9 +63,11 @@ export default function PostComposer({ customerId, channels }: Props) {
   const overLimit = limit !== null && content.length > limit
   // Criativo sem arquivo, ou em formato recusado, trava o envio: o backend
   // responderia 409/415, e descobrir isso depois do clique é tarde.
-  const mediaSupported =
-    !creative?.mimeType || SUPPORTED_MIME.includes(creative.mimeType)
-  const mediaBlocked = !!creative && (!creative.driveFileId || !mediaSupported)
+  const semArquivo = creatives.filter((c) => !c.driveFileId)
+  const formatoRecusado = creatives.filter(
+    (c) => c.driveFileId && c.mimeType && !SUPPORTED_MIME.includes(c.mimeType),
+  )
+  const mediaBlocked = semArquivo.length > 0 || formatoRecusado.length > 0
   const blocking = violations?.some((v) => v.severity === 'block') ?? false
   const busy = isPublishing || isChecking
 
@@ -71,10 +78,29 @@ export default function PostComposer({ customerId, channels }: Props) {
   }
 
   function handleCreative(_id: string | null, picked: Creative | null) {
-    setCreative(picked)
+    if (!picked) return
+    if (creatives.some((c) => c.id === picked.id)) return
+    if (creatives.length >= MAX_CAROUSEL) return
+
+    setCreatives((prev) => [...prev, picked])
     // A legenda do criativo é ponto de partida, não imposição: só preenche
     // enquanto ninguém escreveu nada, para não apagar texto já digitado.
-    if (picked?.caption && content.trim() === '') setContent(picked.caption)
+    if (picked.caption && content.trim() === '') setContent(picked.caption)
+  }
+
+  function removeCreative(id: string) {
+    setCreatives((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  /** Mover é a única forma de corrigir a ordem sem recomeçar a seleção. */
+  function moveCreative(index: number, direction: -1 | 1) {
+    setCreatives((prev) => {
+      const next = [...prev]
+      const target = index + direction
+      if (target < 0 || target >= next.length) return prev
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
   }
 
   function handleCheck() {
@@ -110,7 +136,7 @@ export default function PostComposer({ customerId, channels }: Props) {
         // Lido como horário de São Paulo, não do navegador: quem agenda de
         // outro fuso marcaria outra hora, sem erro e sem aviso.
         scheduledFor: mode === 'schedule' ? localInputToISO(scheduledFor) : undefined,
-        creativeId: creative?.id ?? null,
+        creativeIds: creatives.map((c) => c.id),
       })
 
       if (res.violations) {
@@ -142,37 +168,96 @@ export default function PostComposer({ customerId, channels }: Props) {
       {/* ── Criativo ─────────────────────────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-surface p-6 flex flex-col gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-hi">Criativo</h2>
+          <h2 className="text-sm font-semibold text-hi">Criativos</h2>
           <p className="mt-1 text-xs text-lo">
-            Opcional. Serve para escrever a legenda a partir dele e registrar de onde
-            o post veio.
+            Opcional. Escolha mais de um para montar carrossel — a ordem da lista é a
+            ordem em que aparecem.
           </p>
         </div>
 
-        <CreativePicker
-          customerId={customerId}
-          value={creative?.id ?? null}
-          onChange={handleCreative}
-          selectedCreative={creative}
-        />
+        {creatives.length > 0 && (
+          <ol className="flex flex-col gap-2">
+            {creatives.map((c, i) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-3 rounded-lg border border-border bg-canvas px-3 py-2"
+              >
+                <span className="text-xs font-semibold text-lo tabular-nums">{i + 1}</span>
+                {c.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.thumbnailUrl} alt={c.title} className="h-10 w-10 rounded object-cover" />
+                ) : (
+                  <div className="h-10 w-10 rounded bg-elevated" />
+                )}
+                <span className="flex-1 text-sm text-hi line-clamp-1">{c.title}</span>
 
-        {creative && !creative.driveFileId && (
-          <p className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
-            Este criativo ainda não tem arquivo enviado. Envie a arte na tela de
-            criativos, ou publique só com texto escolhendo outro.
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveCreative(i, -1)}
+                    disabled={i === 0 || busy}
+                    aria-label="Subir"
+                    className="rounded px-1.5 py-0.5 text-xs text-lo hover:text-hi disabled:opacity-30"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveCreative(i, 1)}
+                    disabled={i === creatives.length - 1 || busy}
+                    aria-label="Descer"
+                    className="rounded px-1.5 py-0.5 text-xs text-lo hover:text-hi disabled:opacity-30"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeCreative(c.id)}
+                    disabled={busy}
+                    className="rounded px-2 py-0.5 text-xs text-lo transition-colors hover:text-red-400 disabled:opacity-30"
+                  >
+                    remover
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {creatives.length < MAX_CAROUSEL && (
+          <CreativePicker
+            customerId={customerId}
+            value={null}
+            onChange={handleCreative}
+            selectedCreative={null}
+          />
+        )}
+
+        {creatives.length >= MAX_CAROUSEL && (
+          <p className="text-xs text-lo">
+            Máximo de {MAX_CAROUSEL} imagens por post, que é o limite do Instagram.
           </p>
         )}
 
-        {creative?.driveFileId && !mediaSupported && (
+        {semArquivo.length > 0 && (
+          <p className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
+            Sem arquivo enviado: {semArquivo.map((c) => c.title).join(', ')}. Envie a
+            arte na tela de criativos, ou tire da seleção.
+          </p>
+        )}
+
+        {formatoRecusado.length > 0 && (
           <p className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400">
-            Formato {creative.mimeType ?? 'desconhecido'} não é aceito nas redes.
+            Formato não aceito nas redes: {formatoRecusado.map((c) => c.title).join(', ')}.
             Use PNG, JPEG, GIF, WEBP ou MP4.
           </p>
         )}
 
-        {creative?.driveFileId && mediaSupported && (
+        {creatives.length > 0 && !mediaBlocked && (
           <p className="rounded-lg border border-border bg-canvas px-3 py-2 text-xs text-md">
-            A arte vai junto com o post e fica registrada como procedência.
+            {creatives.length === 1
+              ? 'A arte vai junto com o post.'
+              : `As ${creatives.length} imagens vão no carrossel, nesta ordem.`}
           </p>
         )}
       </div>
@@ -390,7 +475,7 @@ export default function PostComposer({ customerId, channels }: Props) {
 
         {!blocking && mediaBlocked && (
           <span className="text-xs text-red-400">
-            Resolva o criativo, ou tire-o da seleção, antes de enviar.
+            Resolva os criativos apontados, ou tire-os da seleção, antes de enviar.
           </span>
         )}
       </div>

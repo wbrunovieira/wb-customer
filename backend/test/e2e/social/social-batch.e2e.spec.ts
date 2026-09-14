@@ -107,9 +107,20 @@ describe('Calendário em lote (E2E)', () => {
     await sendBatch([]).expect(400)
   })
 
-  it('recusa com 400 lote acima do teto', async () => {
-    // O teto existe por causa do limite de 90 requisições/hora do motor.
-    await sendBatch(Array.from({ length: 41 }, () => post('Encomende pelo WhatsApp'))).expect(400)
+  it('recusa com 400 lote acima do teto de requisições', async () => {
+    // O teto é medido em requisições ao motor, que concede 90 por hora.
+    await sendBatch(Array.from({ length: 71 }, () => post('Encomende pelo WhatsApp'))).expect(400)
+  })
+
+  it('conta as imagens no custo, e não só os posts', async () => {
+    // Vinte posts passariam por contagem; com cinco imagens cada, custam 120
+    // requisições e não cabem.
+    const comCarrossel = Array.from({ length: 20 }, () => ({
+      ...post('Carrossel da semana'),
+      creativeIds: ['c1', 'c2', 'c3', 'c4', 'c5'],
+    }))
+
+    await sendBatch(comCarrossel).expect(400)
   })
 
   it('agenda o lote inteiro e grava cada publicação', async () => {

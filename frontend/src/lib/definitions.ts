@@ -732,7 +732,8 @@ export type SocialPublication = {
   mode: 'now' | 'schedule'
   scheduledFor: string
   attributionLinkId: string | null
-  creativeId: string | null
+  /** Criativos do post, na ordem do carrossel. */
+  creativeIds: string[]
   createdByUserId: string
   createdAt: string
   targets: SocialPublicationTarget[]

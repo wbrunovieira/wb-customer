@@ -15,6 +15,10 @@ import {
   SUPPORTED_MEDIA_TYPES,
   UnsupportedMediaTypeError,
 } from '../../domain/exceptions/unsupported-media-type.error'
+import {
+  MAX_CAROUSEL_ITEMS,
+  TooManyCarouselItemsError,
+} from '../../domain/exceptions/too-many-carousel-items.error'
 import { ISocialPublicationRepository } from '../repositories/i-social-publication.repository'
 import { ValidateSocialContentUseCase } from './validate-social-content.use-case'
 import { SocialEngineNotConfiguredError } from '../../domain/exceptions/social-engine-not-configured.error'
@@ -32,7 +36,10 @@ export interface PublishSocialPostRequest {
   /** Obrigatório em 'schedule'; ignorado em 'now'. */
   scheduledFor?: Date
   attributionLinkId?: string | null
+  /** Um criativo. Mantido porque agentes já chamam assim. */
   creativeId?: string | null
+  /** Vários criativos, NA ORDEM do carrossel. Tem precedência sobre creativeId. */
+  creativeIds?: string[]
   createdByUserId: string
   /** Costura de teste; em produção é o relógio. */
   now?: Date
@@ -52,6 +59,7 @@ export type PublishSocialPostResult = Either<
   | CreativeNotFoundError
   | CreativeHasNoFileError
   | UnsupportedMediaTypeError
+  | TooManyCarouselItemsError
   | CustomerNotFoundError
   | CustomerNotLinkedToGroupError
   | ContentRulesViolationError
@@ -153,7 +161,7 @@ export class PublishSocialPostUseCase {
       mode: req.mode,
       scheduledFor: date,
       attributionLinkId: req.attributionLinkId ?? null,
-      creativeId: req.creativeId ?? null,
+      creativeIds: chosenCreativeIds(req),
       createdByUserId: req.createdByUserId,
       targets,
     })
@@ -177,31 +185,45 @@ export class PublishSocialPostUseCase {
     | CreativeHasNoFileError
     | UnsupportedMediaTypeError
   > {
-    if (!req.creativeId) return undefined
-
-    const creative = await this.creatives.findById(req.creativeId)
-    if (!creative || creative.customerId !== req.customerId || creative.isDeleted) {
-      return new CreativeNotFoundError(req.creativeId)
+    const ids = chosenCreativeIds(req)
+    if (ids.length === 0) return undefined
+    if (ids.length > MAX_CAROUSEL_ITEMS) {
+      return new TooManyCarouselItemsError(ids.length)
     }
 
-    if (!creative.driveFileId) return new CreativeHasNoFileError(req.creativeId)
+    // Duas passadas: confere TODOS antes de transferir QUALQUER um. Um formato
+    // inválido na quinta imagem não pode deixar quatro arquivos órfãos no motor.
+    const creatives = []
+    for (const id of ids) {
+      const creative = await this.creatives.findById(id)
+      if (!creative || creative.customerId !== req.customerId || creative.isDeleted) {
+        return new CreativeNotFoundError(id)
+      }
+      if (!creative.driveFileId) return new CreativeHasNoFileError(id)
 
-    const mimeType = creative.mimeType
-    if (!mimeType || !SUPPORTED_MEDIA_TYPES.includes(mimeType as never)) {
-      // Recusa antes de baixar e subir: o motor rejeitaria no fim, depois de
-      // gastar o arquivo inteiro em duas transferências.
-      return new UnsupportedMediaTypeError(mimeType)
+      const mimeType = creative.mimeType
+      if (!mimeType || !SUPPORTED_MEDIA_TYPES.includes(mimeType as never)) {
+        return new UnsupportedMediaTypeError(mimeType)
+      }
+
+      creatives.push({ creative, mimeType, driveFileId: creative.driveFileId })
     }
 
-    const buffer = await this.storage.downloadFile(creative.driveFileId)
+    const media: UploadedMedia[] = []
+    // Em ordem e em série: a ordem é o carrossel, e cada imagem custa uma
+    // requisição das noventa por hora que o motor concede.
+    for (const { creative, mimeType, driveFileId } of creatives) {
+      const buffer = await this.storage.downloadFile(driveFileId)
+      media.push(
+        await this.engine.uploadMedia({
+          fileName: mediaFileName(creative.title, mimeType),
+          mimeType,
+          buffer,
+        }),
+      )
+    }
 
-    const uploaded = await this.engine.uploadMedia({
-      fileName: mediaFileName(creative.title, mimeType),
-      mimeType,
-      buffer,
-    })
-
-    return [uploaded]
+    return media
   }
 
   /**
@@ -231,6 +253,15 @@ export class PublishSocialPostUseCase {
   }
 }
 
+
+/**
+ * Os criativos do pedido, na ordem. creativeIds tem precedência; creativeId
+ * segue aceito porque agentes já chamam assim.
+ */
+function chosenCreativeIds(req: PublishSocialPostRequest): string[] {
+  if (req.creativeIds?.length) return req.creativeIds
+  return req.creativeId ? [req.creativeId] : []
+}
 
 /** Extensão por tipo, porque o motor valida a extensão do caminho da mídia. */
 const EXTENSION: Record<string, string> = {

@@ -11,7 +11,10 @@ import { IStorageAdapter } from '@/domain/documents/application/services/i-stora
 import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/customer-not-found.error'
 import { CustomerNotLinkedToGroupError } from '../../domain/exceptions/customer-not-linked-to-group.error'
 import { EmptyBatchError } from '../../domain/exceptions/empty-batch.error'
-import { BatchTooLargeError, MAX_BATCH_SIZE } from '../../domain/exceptions/batch-too-large.error'
+import {
+  BatchTooLargeError,
+  MAX_BATCH_REQUESTS,
+} from '../../domain/exceptions/batch-too-large.error'
 
 describe('PublishSocialPostsBatchUseCase', () => {
   let engine: InMemorySocialEngineGateway
@@ -87,12 +90,43 @@ describe('PublishSocialPostsBatchUseCase', () => {
   it('recusa lote acima do teto, que existe por causa do limite do motor', async () => {
     const result = await sut.execute({
       customerId: 'customer-1',
-      items: Array.from({ length: MAX_BATCH_SIZE + 1 }, () => item()),
+      items: Array.from({ length: MAX_BATCH_REQUESTS + 1 }, () => item()),
       createdByUserId: 'user-1',
       now: NOW,
     })
 
     expect(result.value).toBeInstanceOf(BatchTooLargeError)
+  })
+
+  it('conta as imagens no custo, não só os posts', async () => {
+    // Com carrossel, um post custa uma chamada mais uma por imagem. Contar
+    // posts esconderia isso: vinte posts de cinco imagens são cento e vinte
+    // requisições num teto de noventa por hora.
+    const comCarrossel = Array.from({ length: 20 }, () =>
+      item({ creativeIds: ['c1', 'c2', 'c3', 'c4', 'c5'] }),
+    )
+
+    const result = await sut.execute({
+      customerId: 'customer-1',
+      items: comCarrossel,
+      createdByUserId: 'user-1',
+      now: NOW,
+    })
+
+    expect(result.value).toBeInstanceOf(BatchTooLargeError)
+    // A mensagem precisa dizer o custo, senão "divida o lote" não diz em quanto.
+    expect((result.value as Error).message).toContain('120')
+  })
+
+  it('aceita lote de texto até o teto de requisições', async () => {
+    const result = await sut.execute({
+      customerId: 'customer-1',
+      items: Array.from({ length: MAX_BATCH_REQUESTS }, () => item()),
+      createdByUserId: 'user-1',
+      now: NOW,
+    })
+
+    expect(result.isRight()).toBe(true)
   })
 
   it('agenda o lote inteiro quando tudo está certo', async () => {

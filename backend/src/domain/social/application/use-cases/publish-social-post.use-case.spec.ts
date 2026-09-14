@@ -10,6 +10,7 @@ import { IStorageAdapter } from '@/domain/documents/application/services/i-stora
 import { CreativeNotFoundError } from '@/domain/creatives/domain/exceptions/creative-not-found.error'
 import { CreativeHasNoFileError } from '../../domain/exceptions/creative-has-no-file.error'
 import { UnsupportedMediaTypeError } from '../../domain/exceptions/unsupported-media-type.error'
+import { TooManyCarouselItemsError } from '../../domain/exceptions/too-many-carousel-items.error'
 import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/customer-not-found.error'
 import { CustomerNotLinkedToGroupError } from '../../domain/exceptions/customer-not-linked-to-group.error'
 import { ContentRulesViolationError } from '../../domain/exceptions/content-rules-violation.error'
@@ -240,7 +241,7 @@ describe('PublishSocialPostUseCase', () => {
 
     const [saved] = await publications.findByCustomerId('customer-1')
     expect(saved.attributionLinkId).toBe('link-1')
-    expect(saved.creativeId).toBe('creative-1')
+    expect(saved.creativeIds).toEqual(['creative-1'])
   })
 
   it('não grava publicação quando o motor recusa a entrega', async () => {
@@ -348,6 +349,94 @@ describe('PublishSocialPostUseCase', () => {
 
       await expect(publish({ creativeId: 'creative-1' })).rejects.toThrow('subir a mídia')
       expect(publications.items).toHaveLength(0)
+    })
+  })
+
+  describe('carrossel', () => {
+    const arte = async (id: string, title = `Arte ${id}`) => {
+      const creative = makeCreative({ customerId: 'customer-1', title }, id)
+      creative.attachDriveFile({
+        driveFileId: `drive-${id}`,
+        driveViewUrl: 'https://drive/view',
+        driveDownloadUrl: 'https://drive/download',
+        mimeType: 'image/png',
+        sizeBytes: null,
+        thumbnailUrl: null,
+      })
+      await creatives.save(creative)
+      return creative
+    }
+
+    it('leva vários criativos no mesmo post', async () => {
+      await arte('c1')
+      await arte('c2')
+      await arte('c3')
+
+      const result = await publish({ creativeIds: ['c1', 'c2', 'c3'] })
+
+      expect(result.isRight()).toBe(true)
+      expect(engine.published[0].media).toHaveLength(3)
+    })
+
+    it('respeita a ordem escolhida, que é o que se vê ao deslizar', async () => {
+      await arte('c1', 'Primeira')
+      await arte('c2', 'Segunda')
+
+      await publish({ creativeIds: ['c2', 'c1'] })
+
+      expect(engine.uploads.map((u) => u.fileName)).toEqual(['segunda.png', 'primeira.png'])
+    })
+
+    it('grava os criativos usados, na ordem', async () => {
+      await arte('c1')
+      await arte('c2')
+
+      await publish({ creativeIds: ['c1', 'c2'] })
+
+      const [saved] = await publications.findByCustomerId('customer-1')
+      expect(saved.creativeIds).toEqual(['c1', 'c2'])
+    })
+
+    it('recusa mais imagens do que a rede aceita', async () => {
+      for (let i = 0; i < 11; i++) await arte(`c${i}`)
+
+      const result = await publish({
+        creativeIds: Array.from({ length: 11 }, (_, i) => `c${i}`),
+      })
+
+      expect(result.value).toBeInstanceOf(TooManyCarouselItemsError)
+    })
+
+    it('confere todos antes de transferir qualquer um', async () => {
+      // Um formato inválido na terceira imagem não pode deixar duas órfãs no motor.
+      await arte('c1')
+      await arte('c2')
+      const ruim = makeCreative({ customerId: 'customer-1' }, 'c3')
+      ruim.attachDriveFile({
+        driveFileId: 'drive-c3',
+        driveViewUrl: 'https://drive/view',
+        driveDownloadUrl: 'https://drive/download',
+        mimeType: 'application/pdf',
+        sizeBytes: null,
+        thumbnailUrl: null,
+      })
+      await creatives.save(ruim)
+
+      const result = await publish({ creativeIds: ['c1', 'c2', 'c3'] })
+
+      expect(result.value).toBeInstanceOf(UnsupportedMediaTypeError)
+      expect(engine.uploads).toHaveLength(0)
+      expect(downloaded).toEqual([])
+    })
+
+    it('creativeIds tem precedência sobre o creativeId antigo', async () => {
+      await arte('c1')
+      await arte('c2')
+
+      await publish({ creativeId: 'c1', creativeIds: ['c2'] })
+
+      expect(engine.uploads).toHaveLength(1)
+      expect(engine.uploads[0].fileName).toBe('arte-c2.png')
     })
   })
 })
