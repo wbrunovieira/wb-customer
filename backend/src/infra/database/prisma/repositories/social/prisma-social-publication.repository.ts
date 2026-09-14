@@ -16,7 +16,7 @@ type RawPublication = {
   mode: string
   scheduledFor: Date
   attributionLinkId: string | null
-  creativeId: string | null
+  creativeIds: string[]
   createdByUserId: string
   createdAt: Date
   targets: {
@@ -48,7 +48,7 @@ export class PrismaSocialPublicationRepository
         mode: record.mode,
         scheduledFor: record.scheduledFor,
         attributionLinkId: record.attributionLinkId ?? null,
-        creativeId: record.creativeId ?? null,
+        creativeIds: record.creativeIds ?? [],
         createdByUserId: record.createdByUserId,
         // Publicação e destinos nascem juntos: uma publicação sem destino não
         // significa nada, e gravar em duas etapas deixaria esse estado existir.
@@ -142,7 +142,7 @@ export class PrismaSocialPublicationRepository
       mode: raw.mode as 'now' | 'schedule',
       scheduledFor: raw.scheduledFor,
       attributionLinkId: raw.attributionLinkId,
-      creativeId: raw.creativeId,
+      creativeIds: raw.creativeIds,
       createdByUserId: raw.createdByUserId,
       createdAt: raw.createdAt,
       targets: raw.targets.map((t) => ({

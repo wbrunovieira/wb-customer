@@ -53,6 +53,7 @@ import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get
 import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
 import { CreativeHasNoFileError } from '@/domain/social/domain/exceptions/creative-has-no-file.error'
 import { UnsupportedMediaTypeError } from '@/domain/social/domain/exceptions/unsupported-media-type.error'
+import { TooManyCarouselItemsError } from '@/domain/social/domain/exceptions/too-many-carousel-items.error'
 import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
 import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
 import { ListSocialPostMetricsUseCase } from '@/domain/social/application/use-cases/list-social-post-metrics.use-case'
@@ -87,7 +88,8 @@ function toHttpError(error: Error): Error {
     error instanceof ChannelNotAvailableError ||
     error instanceof InvalidScheduleDateError ||
     error instanceof EmptyBatchError ||
-    error instanceof BatchTooLargeError
+    error instanceof BatchTooLargeError ||
+    error instanceof TooManyCarouselItemsError
   ) {
     return new BadRequestException(error.message)
   }
@@ -457,8 +459,19 @@ class PublishSocialPostDto {
   })
   attributionLinkId?: string
 
-  @ApiPropertyOptional({ example: 'creative-1', description: 'Criativo que originou o post.' })
+  @ApiPropertyOptional({
+    example: 'creative-1',
+    description: 'Um criativo. Mantido por compatibilidade; prefira creativeIds.',
+  })
   creativeId?: string
+
+  @ApiPropertyOptional({
+    example: ['creative-1', 'creative-2', 'creative-3'],
+    type: [String],
+    description:
+      'Criativos do carrossel, NA ORDEM em que devem aparecer — a ordem é conteúdo, não detalhe. Máximo de 10, que é o limite do Instagram. Cada imagem custa uma requisição do teto de 90/hora do motor, além da que cria o post.',
+  })
+  creativeIds?: string[]
 }
 
 class PublishBatchDto {
@@ -511,6 +524,10 @@ export class SocialPublicationsController {
     description: 'Cliente ainda não ligado a um grupo, ou criativo sem arquivo enviado',
   })
   @ApiResponse({
+    status: 400,
+    description: 'Mais de 10 imagens no mesmo post',
+  })
+  @ApiResponse({
     status: 415,
     description: 'Formato do criativo não aceito nas redes (use PNG, JPEG, GIF, WEBP ou MP4)',
   })
@@ -544,7 +561,7 @@ export class SocialPublicationsController {
   @ApiOperation({
     summary: 'Agendar o calendário editorial de uma vez',
     description:
-      'O mês tem cerca de 32 publicações; cadastrar uma a uma é trabalho suficiente para a pessoa desistir e voltar ao Business Suite. Como agentes operam este sistema, montar o mês inteiro numa chamada é o caso de uso real. UM ITEM RUIM NÃO DERRUBA O LOTE: cada post passa pelas regras da casa por conta própria, e a resposta diz item a item, pela posição enviada, o que entrou e o que não entrou. Publica em série de propósito — o motor aceita 90 requisições por hora, e disparar tudo de uma vez trocaria um lote lento por um lote recusado pela metade. Por isso também o teto de 40 posts por lote.',
+      'O mês tem cerca de 32 publicações; cadastrar uma a uma é trabalho suficiente para a pessoa desistir e voltar ao Business Suite. Como agentes operam este sistema, montar o mês inteiro numa chamada é o caso de uso real. UM ITEM RUIM NÃO DERRUBA O LOTE: cada post passa pelas regras da casa por conta própria, e a resposta diz item a item, pela posição enviada, o que entrou e o que não entrou. Publica em série de propósito — o motor aceita 90 requisições por hora, e disparar tudo de uma vez trocaria um lote lento por um lote recusado pela metade. O teto do lote é medido em REQUISIÇÕES, não em posts: cada post custa uma chamada mais uma por imagem, então um carrossel de cinco custa seis. Contar posts esconderia o custo real.',
   })
   @ApiParam({ name: 'customerId', description: 'Cliente dono das contas' })
   @ApiBody({ type: PublishBatchDto })
@@ -585,7 +602,11 @@ export class SocialPublicationsController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Lote vazio ou acima do limite de 40 posts' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Lote vazio, ou acima do limite de 70 requisições ao motor (posts mais as imagens de cada um)',
+  })
   @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
   async createBatch(
     @Param('customerId') customerId: string,
@@ -601,6 +622,7 @@ export class SocialPublicationsController {
         scheduledFor: post.scheduledFor ? new Date(post.scheduledFor) : undefined,
         attributionLinkId: post.attributionLinkId ?? null,
         creativeId: post.creativeId ?? null,
+        creativeIds: post.creativeIds,
       })),
       createdByUserId: user.userId,
     })

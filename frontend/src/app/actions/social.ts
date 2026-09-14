@@ -100,7 +100,10 @@ export async function publishSocialPost(
     channelIds: string[]
     mode: 'now' | 'schedule'
     scheduledFor?: string
+    /** Um criativo. Mantido por compatibilidade. */
     creativeId?: string | null
+    /** Criativos do carrossel, na ordem em que aparecem. */
+    creativeIds?: string[]
     attributionLinkId?: string | null
   },
 ): Promise<{ post?: PublishedPost; violations?: ContentViolation[]; message?: string }> {

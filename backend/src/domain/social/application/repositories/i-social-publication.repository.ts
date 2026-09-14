@@ -42,7 +42,8 @@ export interface SocialPublicationRecord {
   mode: 'now' | 'schedule'
   scheduledFor: Date
   attributionLinkId?: string | null
-  creativeId?: string | null
+  /** Criativos do post, na ordem do carrossel. */
+  creativeIds?: string[]
   createdByUserId: string
   createdAt?: Date
   targets: SocialPublicationTargetRecord[]

@@ -6,7 +6,10 @@ import { CustomerNotLinkedToGroupError } from '../../domain/exceptions/customer-
 import { RuleViolation } from '../services/content-rules'
 import { ContentRulesViolationError } from '../../domain/exceptions/content-rules-violation.error'
 import { EmptyBatchError } from '../../domain/exceptions/empty-batch.error'
-import { BatchTooLargeError, MAX_BATCH_SIZE } from '../../domain/exceptions/batch-too-large.error'
+import {
+  BatchTooLargeError,
+  MAX_BATCH_REQUESTS,
+} from '../../domain/exceptions/batch-too-large.error'
 import {
   PublishSocialPostRequest,
   PublishSocialPostUseCase,
@@ -74,8 +77,12 @@ export class PublishSocialPostsBatchUseCase {
     req: PublishSocialPostsBatchRequest,
   ): Promise<PublishSocialPostsBatchResult> {
     if (req.items.length === 0) return left(new EmptyBatchError())
-    if (req.items.length > MAX_BATCH_SIZE) {
-      return left(new BatchTooLargeError(req.items.length))
+
+    // Medido em requisições e não em posts: com carrossel, um post custa uma
+    // chamada mais uma por imagem, e contar posts esconderia o custo real.
+    const requests = req.items.reduce((sum, item) => sum + engineCost(item), 0)
+    if (requests > MAX_BATCH_REQUESTS) {
+      return left(new BatchTooLargeError(requests, req.items.length))
     }
 
     // Erro de cliente reprova o PEDIDO; erro de item reprova o ITEM. Sem esta
@@ -145,4 +152,10 @@ export class PublishSocialPostsBatchUseCase {
       return { index, status: 'rejected', error: (err as Error).message }
     }
   }
+}
+
+/** Uma chamada para criar o post, mais uma por imagem que sobe antes dele. */
+function engineCost(item: BatchItem): number {
+  const images = item.creativeIds?.length ?? (item.creativeId ? 1 : 0)
+  return 1 + images
 }

@@ -1041,7 +1041,9 @@ model SocialPublication {
   scheduledFor      DateTime @map("scheduled_for")
   /// Link rastreável que viajou no texto, quando houve.
   attributionLinkId String?  @map("attribution_link_id")
-  creativeId        String?  @map("creative_id")
+  /// Criativos do post, NA ORDEM. Ordem de carrossel é conteúdo, não detalhe:
+  /// trocar a primeira imagem troca o que a pessoa vê antes de deslizar.
+  creativeIds       String[] @map("creative_ids")
   createdByUserId   String   @map("created_by_user_id")
   createdAt         DateTime @default(now()) @map("created_at")
 
