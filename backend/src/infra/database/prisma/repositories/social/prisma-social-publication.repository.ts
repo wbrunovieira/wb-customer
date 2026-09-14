@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import {
   ISocialPublicationRepository,
+  ReconcilableTarget,
   SocialPublicationRecord,
   StoredSocialPublication,
+  UpdateTargetStateInput,
 } from '@/domain/social/application/repositories/i-social-publication.repository'
 import { PrismaService } from '../../prisma.service'
 
@@ -21,8 +23,15 @@ type RawPublication = {
     channelId: string
     provider: string
     postizPostId: string
+    state: string
+    failureReason: string | null
+    publishedUrl: string | null
+    lastCheckedAt: Date | null
   }[]
 }
+
+/** Estados sem volta: chegaram ao fim e não precisam ser perguntados de novo. */
+const TERMINAL_STATES = ['PUBLISHED', 'ERROR']
 
 @Injectable()
 export class PrismaSocialPublicationRepository
@@ -66,6 +75,38 @@ export class PrismaSocialPublicationRepository
     return raw ? this.toRecord(raw) : null
   }
 
+  async findTargetsToReconcile(limit = 200): Promise<ReconcilableTarget[]> {
+    const rows = await this.prisma.socialPublicationTarget.findMany({
+      where: { state: { notIn: TERMINAL_STATES } },
+      include: { publication: true },
+      orderBy: { publication: { scheduledFor: 'asc' } },
+      take: limit,
+    })
+
+    return rows.map((t) => ({
+      publicationId: t.publicationId,
+      customerId: t.publication.customerId,
+      postizGroupId: t.publication.postizGroupId,
+      postizPostId: t.postizPostId,
+      channelId: t.channelId,
+      provider: t.provider,
+      state: t.state,
+      scheduledFor: t.publication.scheduledFor,
+    }))
+  }
+
+  async updateTargetState(input: UpdateTargetStateInput): Promise<void> {
+    await this.prisma.socialPublicationTarget.updateMany({
+      where: { postizPostId: input.postizPostId },
+      data: {
+        state: input.state,
+        failureReason: input.failureReason ?? null,
+        publishedUrl: input.publishedUrl ?? null,
+        lastCheckedAt: input.checkedAt,
+      },
+    })
+  }
+
   private toRecord(raw: RawPublication): StoredSocialPublication {
     return {
       id: raw.id,
@@ -82,6 +123,10 @@ export class PrismaSocialPublicationRepository
         channelId: t.channelId,
         provider: t.provider,
         postizPostId: t.postizPostId,
+        state: t.state,
+        failureReason: t.failureReason,
+        publishedUrl: t.publishedUrl,
+        lastCheckedAt: t.lastCheckedAt,
       })),
     }
   }

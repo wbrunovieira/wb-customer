@@ -1064,10 +1064,22 @@ model SocialPublicationTarget {
   provider      String
   /// Id do post no motor. É por aqui que a métrica reencontra este post.
   postizPostId  String @map("postiz_post_id")
+  /// Estado espelhado do motor: QUEUE, PUBLISHED, ERROR, DRAFT.
+  /// Gravado aqui porque aviso em memória não sobrevive a reload, e uma falha
+  /// às 9h da terça precisa continuar visível às 15h.
+  state         String  @default("QUEUE")
+  /// Motivo que o motor deu ao falhar.
+  failureReason String? @map("failure_reason")
+  /// Link do post na rede, quando saiu.
+  publishedUrl  String? @map("published_url")
+  /// Última vez que a reconciliação olhou para este destino.
+  lastCheckedAt DateTime? @map("last_checked_at")
 
   publication SocialPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
 
   @@index([publicationId])
   @@index([postizPostId])
+  /// A reconciliação varre por estado; sem índice ela lê a tabela inteira.
+  @@index([state])
   @@map("social_publication_targets")
 }

@@ -2,7 +2,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
 import { Customer } from '@/lib/definitions'
-import { getCustomerSocialChannels, listSocialGroups } from '@/app/actions/social'
+import {
+  getCustomerSocialChannels,
+  getSocialPublications,
+  listSocialGroups,
+} from '@/app/actions/social'
 import SocialGroupForm from './_components/social-group-form'
 import ChannelBadge from './_components/channel-badge'
 
@@ -21,10 +25,11 @@ export async function generateMetadata({ params }: Props) {
 export default async function CustomerSocialPage({ params }: Props) {
   const { id } = await params
 
-  const [customer, groupsResult, channelsResult] = await Promise.all([
+  const [customer, groupsResult, channelsResult, publicationsResult] = await Promise.all([
     apiServer.get<Customer>(`/api/v1/customers/${id}`).catch(() => null),
     listSocialGroups(),
     getCustomerSocialChannels(id),
+    getSocialPublications(id),
   ])
 
   if (!customer) notFound()
@@ -36,6 +41,20 @@ export default async function CustomerSocialPage({ params }: Props) {
   // A mensagem do backend já diz o que falta (503 nomeia as variáveis
   // ausentes). Repassar isso é mais útil do que "erro ao carregar".
   const engineProblem = groupsResult.message ?? channelsResult.message ?? null
+
+  // Falha gravada pela reconciliação. O sino avisa na hora, mas some no reload
+  // e só alcança quem está com a tela aberta; isto é o que sobrevive.
+  const failures = (publicationsResult.publications ?? []).flatMap((p) =>
+    p.targets
+      .filter((t) => t.state === 'ERROR')
+      .map((t) => ({
+        key: t.postizPostId,
+        provider: t.provider,
+        reason: t.failureReason,
+        content: p.content,
+        scheduledFor: p.scheduledFor,
+      })),
+  )
 
   return (
     <div className="mx-auto max-w-2xl flex flex-col gap-6">
@@ -92,6 +111,43 @@ export default async function CustomerSocialPage({ params }: Props) {
           </span>
         )}
       </div>
+
+      {failures.length > 0 && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+          <h2 className="text-sm font-semibold text-red-400">
+            {failures.length === 1
+              ? '1 post não saiu'
+              : `${failures.length} posts não saíram`}
+          </h2>
+          <ul className="mt-2 flex flex-col gap-2">
+            {failures.slice(0, 3).map((f) => (
+              <li key={f.key} className="text-xs text-md">
+                <span className="text-hi">
+                  {new Date(f.scheduledFor).toLocaleString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>{' '}
+                — {f.provider}
+                {f.reason ? `: ${f.reason}` : ''}
+                <span className="block text-lo line-clamp-1">{f.content}</span>
+              </li>
+            ))}
+          </ul>
+          {failures.length > 3 && (
+            <p className="mt-2 text-xs text-lo">e mais {failures.length - 3}.</p>
+          )}
+          <Link
+            href={`/customers/${id}/social/feed`}
+            className="mt-3 inline-flex text-xs text-accent hover:underline"
+          >
+            Ver o histórico
+          </Link>
+        </div>
+      )}
 
       {engineProblem ? (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-6">

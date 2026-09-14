@@ -711,3 +711,29 @@ export type SocialFeed = {
   to: string
   posts: QueuedPost[]
 }
+
+/** Destino de uma publicação, com o estado que a reconciliação grava. */
+export type SocialPublicationTarget = {
+  channelId: string
+  provider: string
+  postizPostId: string
+  /** QUEUE | PUBLISHED | ERROR | DRAFT — espelhado do motor, e durável. */
+  state: string
+  failureReason: string | null
+  publishedUrl: string | null
+  lastCheckedAt: string | null
+}
+
+export type SocialPublication = {
+  id: string
+  customerId: string
+  postizGroupId: string
+  content: string
+  mode: 'now' | 'schedule'
+  scheduledFor: string
+  attributionLinkId: string | null
+  creativeId: string | null
+  createdByUserId: string
+  createdAt: string
+  targets: SocialPublicationTarget[]
+}
