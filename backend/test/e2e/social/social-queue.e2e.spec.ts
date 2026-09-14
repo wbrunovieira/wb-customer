@@ -48,6 +48,7 @@ let engineQueue = [
 
 const fakeEngine: ISocialEngineGateway = {
   isConfigured: () => true,
+  getPostMetrics: async () => ({ available: false, metrics: [] }),
   listGroups: async () => [{ id: 'g1', name: 'Padaria' }],
   listChannels: async () => [],
   publish: async () => [],

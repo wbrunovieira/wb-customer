@@ -8,6 +8,8 @@ import {
   CustomerSocialGroupController,
   SocialPublicationsController,
   SocialQueueController,
+  SocialFeedController,
+  SocialPostMetricsController,
 } from '@/infra/controllers/social.controller'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
 import { CreateAttributionLinkUseCase } from '@/domain/social/application/use-cases/create-attribution-link.use-case'
@@ -24,6 +26,8 @@ import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/
 import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
 import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get-social-queue.use-case'
 import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
+import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
+import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
 import { ISocialPublicationRepository } from '@/domain/social/application/repositories/i-social-publication.repository'
 import { PrismaSocialPublicationRepository } from '@/infra/database/prisma/repositories/social/prisma-social-publication.repository'
 import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz-social-engine.adapter'
@@ -45,6 +49,8 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     CustomerSocialGroupController,
     SocialPublicationsController,
     SocialQueueController,
+    SocialFeedController,
+    SocialPostMetricsController,
   ],
   providers: [
     ValidateSocialContentUseCase,
@@ -57,6 +63,8 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     ListSocialPublicationsUseCase,
     GetSocialQueueUseCase,
     CancelSocialPostUseCase,
+    GetSocialFeedUseCase,
+    GetPostMetricsUseCase,
     {
       provide: ISocialPublicationRepository,
       useClass: PrismaSocialPublicationRepository,

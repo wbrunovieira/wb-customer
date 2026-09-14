@@ -47,6 +47,8 @@ import { ChannelNotAvailableError } from '@/domain/social/domain/exceptions/chan
 import { InvalidScheduleDateError } from '@/domain/social/domain/exceptions/invalid-schedule-date.error'
 import { GetSocialQueueUseCase } from '@/domain/social/application/use-cases/get-social-queue.use-case'
 import { CancelSocialPostUseCase } from '@/domain/social/application/use-cases/cancel-social-post.use-case'
+import { GetSocialFeedUseCase } from '@/domain/social/application/use-cases/get-social-feed.use-case'
+import { GetPostMetricsUseCase } from '@/domain/social/application/use-cases/get-post-metrics.use-case'
 
 /**
  * Traduz a falha do domínio para HTTP. Motor fora do ar é 503 e não 500: o
@@ -633,6 +635,120 @@ export class SocialQueueController {
     @Param('postId') postId: string,
   ) {
     const result = await this.cancel.execute({ customerId, postId })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+}
+
+
+// ── Feed e resultado ─────────────────────────────────────────────────────────
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/feed')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialFeedController {
+  constructor(private readonly feed: GetSocialFeedUseCase) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'O que já foi publicado para este cliente',
+    description:
+      'A agenda olhando para trás. Traz só o que saiu — publicado ou falhado —, do mais recente para o mais antigo; rascunho e post ainda na fila pertencem à agenda. Falha entra junto com sucesso de propósito: um post que não saiu é a notícia mais importante aqui, e escondê-lo faria o silêncio parecer sucesso. Métricas não vêm nesta resposta: são uma chamada por post, sob demanda, porque a API do motor tem teto de 90 requisições por hora.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente' })
+  @ApiQuery({ name: 'from', required: false, description: 'Início da janela, ISO 8601. Padrão: 30 dias atrás.' })
+  @ApiQuery({ name: 'to', required: false, description: 'Fim da janela, ISO 8601. Padrão: agora.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Publicações do período',
+    schema: {
+      example: {
+        from: '2026-08-14T12:00:00.000Z',
+        to: '2026-09-13T12:00:00.000Z',
+        posts: [
+          {
+            id: 'ckp1…',
+            content: 'Encomende sua peça pelo WhatsApp.',
+            publishAt: '2026-09-12T13:00:00.000Z',
+            state: 'PUBLISHED',
+            url: 'https://www.instagram.com/p/abc123/',
+            channelId: 'int-instagram-1',
+            channelName: '@padariadoze',
+            provider: 'instagram',
+            group: 'grp-1',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Janela inválida' })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado' })
+  @ApiResponse({ status: 409, description: 'Cliente ainda não ligado a um grupo do motor' })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  async list(
+    @Param('customerId') customerId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const result = await this.feed.execute({
+      customerId,
+      from: from ? new Date(from) : undefined,
+      to: to ? new Date(to) : undefined,
+    })
+
+    if (result.isLeft()) throw toHttpError(result.value)
+
+    return result.value
+  }
+}
+
+@ApiTags('Social')
+@ApiBearerAuth()
+@Controller('customers/:customerId/social/posts/:postId/metrics')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'employee')
+export class SocialPostMetricsController {
+  constructor(private readonly metrics: GetPostMetricsUseCase) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Como este post se saiu na rede',
+    description:
+      'Uma chamada por post, sob demanda. O teto da API pública do motor é de 90 requisições por hora, então buscar a métrica de um mês inteiro a cada abertura do feed queimaria o teto sozinha — ingestão em lote é outro assunto (#1554). Responde available=false quando não há o que mostrar: post que não chegou a publicar, ou rede que não expõe métrica por post. Ausência de dado não é zero.',
+  })
+  @ApiParam({ name: 'customerId', description: 'Cliente dono do post' })
+  @ApiParam({ name: 'postId', description: 'Id do post no motor' })
+  @ApiQuery({ name: 'days', required: false, type: Number, description: 'Janela em dias (padrão 30).' })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas do post',
+    schema: {
+      example: {
+        available: true,
+        metrics: [
+          { label: 'Reach', total: 1240, percentageChange: 12 },
+          { label: 'Likes', total: 87, percentageChange: -3 },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Cliente não encontrado, ou post fora da fila deste cliente' })
+  @ApiResponse({ status: 409, description: 'Cliente ainda não ligado a um grupo do motor' })
+  @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
+  async get(
+    @Param('customerId') customerId: string,
+    @Param('postId') postId: string,
+    @Query('days') days?: string,
+  ) {
+    const result = await this.metrics.execute({
+      customerId,
+      postId,
+      days: days ? Number(days) : undefined,
+    })
 
     if (result.isLeft()) throw toHttpError(result.value)
 

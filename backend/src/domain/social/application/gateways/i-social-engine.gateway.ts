@@ -61,6 +61,24 @@ export interface ListQueueInput {
   to: Date
 }
 
+/** Uma métrica de um post, como a rede a reporta. */
+export interface PostMetric {
+  /** Views, Reach, Likes… o rótulo vem do motor, que vem da rede. */
+  label: string
+  total: number
+  percentageChange: number
+}
+
+export interface PostMetrics {
+  /**
+   * Falso quando não há o que mostrar: o post não chegou a publicar, ou a rede
+   * não expõe métrica por post. Distinguir isso de "zero" importa — zero é um
+   * resultado, ausência é falta de dado.
+   */
+  available: boolean
+  metrics: PostMetric[]
+}
+
 export abstract class ISocialEngineGateway {
   /**
    * Falso quando o motor não foi configurado. As rotas respondem sem quebrar,
@@ -96,4 +114,13 @@ export abstract class ISocialEngineGateway {
    * motor resolve o grupo a partir do id e remove o grupo inteiro.
    */
   abstract cancelPost(postId: string): Promise<void>
+
+  /**
+   * Métrica de um post já publicado.
+   *
+   * Uma chamada por post, de propósito: a API pública do motor tem teto de 90
+   * requisições por hora, e buscar a métrica de um mês inteiro a cada abertura
+   * de tela queimaria o teto sozinha.
+   */
+  abstract getPostMetrics(postId: string, days: number): Promise<PostMetrics>
 }

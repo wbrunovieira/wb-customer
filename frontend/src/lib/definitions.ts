@@ -692,3 +692,22 @@ export type SocialQueue = {
   to: string
   posts: QueuedPost[]
 }
+
+/** Uma métrica de um post, como a rede reporta. */
+export type PostMetric = {
+  label: string
+  total: number
+  percentageChange: number
+}
+
+export type PostMetrics = {
+  /** Falso quando não há o que mostrar: não publicou, ou a rede não informa. */
+  available: boolean
+  metrics: PostMetric[]
+}
+
+export type SocialFeed = {
+  from: string
+  to: string
+  posts: QueuedPost[]
+}
