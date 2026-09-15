@@ -18,9 +18,12 @@ export async function setupE2E() {
   const schemaUrl = `${baseUrl}?schema=${schemaName}`
 
   process.env.DATABASE_URL = schemaUrl
-  // Force local adapters so E2E tests don't require Google credentials
-  process.env.STORAGE_ADAPTER = 'local'
-  process.env.CALENDAR_ADAPTER = 'mock'
+  // STORAGE_ADAPTER e CALENDAR_ADAPTER NÃO são definidos aqui: seria tarde.
+  // ConfigModule.forRoot() lê o .env no import do app.module, antes deste
+  // beforeAll, então uma atribuição aqui não muda o que o app já leu. Ficam em
+  // vitest.config.e2e.ts, que entra em vigor antes de qualquer import.
+  // DATABASE_URL é exceção: o PrismaService resolve a URL na conexão, não no
+  // import, então esta atribuição ainda alcança.
 
   prisma = new PrismaClient({
     datasources: { db: { url: schemaUrl } },

@@ -27,6 +27,15 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // Definido aqui, e não no setup-e2e, porque ConfigModule.forRoot() lê o
+    // .env quando o app.module é IMPORTADO — antes de qualquer beforeAll. Uma
+    // atribuição a process.env depois disso chega tarde e não tem efeito: o
+    // .env local aponta para google-drive e os testes passavam a depender de
+    // credencial do Google que não existe.
+    env: {
+      STORAGE_ADAPTER: 'local',
+      CALENDAR_ADAPTER: 'mock',
+    },
     root: './',
     include: ['test/e2e/**/*.e2e.spec.ts'],
     hookTimeout: 30000,
