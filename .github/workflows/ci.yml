@@ -36,7 +36,7 @@ jobs:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v5
@@ -83,7 +83,7 @@ jobs:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/wb_customer_test
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v5
@@ -104,7 +104,7 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v5
