@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
 import { Customer } from '@/lib/definitions'
-import { getSocialFeed } from '@/app/actions/social'
+import { getCustomerSocialChannels, getSocialFeed } from '@/app/actions/social'
 import ChannelBadge from '../_components/channel-badge'
 import PostMetricsPanel from './_components/post-metrics'
 
@@ -43,10 +43,14 @@ export default async function SocialFeedPage({ params, searchParams }: Props) {
   const to = new Date()
   const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000)
 
-  const [customer, result] = await Promise.all([
+  // Consultado à parte porque devolve linked:false SEM erro e sem tocar no
+  // motor: é o que distingue "ainda não ligaram" de "o motor falhou".
+  const [customer, result, channelsResult] = await Promise.all([
     apiServer.get<Customer>(`/api/v1/customers/${id}`).catch(() => null),
     getSocialFeed(id, from.toISOString(), to.toISOString()),
+    getCustomerSocialChannels(id),
   ])
+  const linkState = channelsResult.data
 
   if (!customer) notFound()
 
@@ -95,7 +99,18 @@ export default async function SocialFeedPage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {result.message ? (
+      {!linkState?.linked ? (
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <h2 className="text-sm font-semibold text-hi">Falta ligar o cliente a um grupo</h2>
+          <p className="mt-2 text-sm text-md">Sem grupo, não há histórico para mostrar.</p>
+          <Link
+            href={`/customers/${id}/social`}
+            className="mt-3 inline-flex text-sm text-accent hover:underline"
+          >
+            Ligar agora
+          </Link>
+        </div>
+      ) : result.message ? (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-6">
           <h2 className="text-sm font-semibold text-amber-400">Não deu para ler o histórico</h2>
           <p className="mt-2 text-sm text-md">{result.message}</p>
