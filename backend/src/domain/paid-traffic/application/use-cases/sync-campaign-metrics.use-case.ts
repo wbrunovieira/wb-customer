@@ -9,7 +9,12 @@ import { IAdPlatformAdapter } from '../services/i-ad-platform.adapter'
 
 export interface SyncCampaignMetricsRequest {
   campaignId: string
+  /** Intervalo explícito. Quando ausente, usa a janela recente padrão. */
   dateRange?: { since: string; until: string }
+  /** Quantos dias para trás recoletar. Padrão 7. */
+  days?: number
+  /** Costura de teste; em produção é o relógio. */
+  now?: Date
 }
 
 export interface SyncCampaignMetricsResponse {
@@ -18,11 +23,30 @@ export interface SyncCampaignMetricsResponse {
 
 export type SyncCampaignMetricsResult = Either<Error, SyncCampaignMetricsResponse>
 
-function yesterdayRange(): { since: string; until: string } {
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  const iso = yesterday.toISOString().slice(0, 10)
-  return { since: iso, until: iso }
+/**
+ * Quantos dias recoletar por padrão.
+ *
+ * Algumas métricas da Meta chegam com até 48h de atraso. Buscar só o dia
+ * anterior congelava números que ainda iam subir, e o painel passava a mostrar
+ * menos do que aconteceu — sem nunca se corrigir, porque aquele dia jamais era
+ * perguntado de novo.
+ *
+ * Sete dias cobrem as 48h com folga e não custam nada a mais: o adapter recebe
+ * um intervalo e devolve as linhas de cada dia, então a janela inteira é UMA
+ * chamada, igual a pedir um dia só.
+ */
+const DEFAULT_DAYS = 7
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+/** Janela que termina ontem — hoje ainda está acontecendo e não fecha. */
+function recentRange(days: number, now: Date): { since: string; until: string } {
+  const until = new Date(now.getTime() - MS_PER_DAY)
+  const since = new Date(until.getTime() - (days - 1) * MS_PER_DAY)
+  return { since: iso(since), until: iso(until) }
+}
+
+function iso(date: Date): string {
+  return date.toISOString().slice(0, 10)
 }
 
 @Injectable()
@@ -72,7 +96,10 @@ export class SyncCampaignMetricsUseCase {
     }
 
     // 6. Call adapter.syncMetrics
-    const dateRange = req.dateRange ?? yesterdayRange()
+    // A gravação é upsert por (anúncio, dia), então recoletar um dia já
+    // gravado corrige o número em vez de duplicar a linha.
+    const dateRange =
+      req.dateRange ?? recentRange(req.days ?? DEFAULT_DAYS, req.now ?? new Date())
     const results = await this.adapter.syncMetrics({
       adAccountId: adAccount.adAccountId,
       adIds: metaAdIds,

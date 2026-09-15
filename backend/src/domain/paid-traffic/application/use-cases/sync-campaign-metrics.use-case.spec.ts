@@ -147,4 +147,89 @@ describe('SyncCampaignMetricsUseCase', () => {
     expect(result.isLeft()).toBe(true)
     expect((result.value as Error).message).toContain('ghost-id')
   })
+
+  describe('janela de coleta', () => {
+    const NOW = new Date('2026-09-15T10:00:00.000Z')
+
+    async function givenPublishedCampaignWithAd() {
+      const campaign = makeCampaign(
+        { customerId: 'customer-1', publishStatus: 'published' },
+        'campaign-1',
+      )
+      await campaignRepo.save(campaign)
+      await metaAdAccountRepo.save(
+        makeMetaAdAccount({ customerId: 'customer-1', adAccountId: 'act_123' }),
+      )
+      await adSetRepo.save(makeAdSet({ campaignId: 'campaign-1' }, 'adset-1'))
+      // Restaurado com props explícitas, como o teste acima faz: alcançar
+      // props privadas por índice quebraria na primeira refatoração.
+      await adRepo.save(
+        Ad.restore(
+          {
+            adSetId: 'adset-1',
+            name: 'Test Ad',
+            status: 'active',
+            publishStatus: 'published',
+            callToAction: 'LEARN_MORE',
+            metaAdId: 'meta-ad-1',
+            metaCreativeId: 'meta-creative-1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          new UniqueEntityID('ad-1'),
+        ),
+      )
+    }
+
+    it('pede sete dias por padrão, e não só o dia anterior', async () => {
+      // Métrica da Meta chega com até 48h de atraso: pedir só ontem congelava
+      // número que ainda ia subir, e aquele dia nunca mais era perguntado.
+      await givenPublishedCampaignWithAd()
+
+      await sut.execute({ campaignId: 'campaign-1', now: NOW })
+
+      const chamada = (adapter.syncMetrics as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(chamada.dateRange).toEqual({ since: '2026-09-08', until: '2026-09-14' })
+    })
+
+    it('termina ontem, porque hoje ainda está acontecendo', async () => {
+      await givenPublishedCampaignWithAd()
+
+      await sut.execute({ campaignId: 'campaign-1', now: NOW })
+
+      const chamada = (adapter.syncMetrics as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(chamada.dateRange.until).toBe('2026-09-14')
+    })
+
+    it('a janela inteira é uma única chamada ao adapter', async () => {
+      // Sete dias não custam sete chamadas: o adapter recebe o intervalo.
+      await givenPublishedCampaignWithAd()
+
+      await sut.execute({ campaignId: 'campaign-1', now: NOW })
+
+      expect(adapter.syncMetrics).toHaveBeenCalledTimes(1)
+    })
+
+    it('respeita a janela pedida explicitamente', async () => {
+      await givenPublishedCampaignWithAd()
+
+      await sut.execute({
+        campaignId: 'campaign-1',
+        dateRange: { since: '2026-01-01', until: '2026-01-31' },
+        now: NOW,
+      })
+
+      const chamada = (adapter.syncMetrics as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(chamada.dateRange).toEqual({ since: '2026-01-01', until: '2026-01-31' })
+    })
+
+    it('aceita outra quantidade de dias', async () => {
+      await givenPublishedCampaignWithAd()
+
+      await sut.execute({ campaignId: 'campaign-1', days: 2, now: NOW })
+
+      const chamada = (adapter.syncMetrics as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(chamada.dateRange).toEqual({ since: '2026-09-13', until: '2026-09-14' })
+    })
+  })
 })
