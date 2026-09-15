@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
 import { Customer, QueuedPost } from '@/lib/definitions'
-import { getSocialQueue } from '@/app/actions/social'
+import { getCustomerSocialChannels, getSocialQueue } from '@/app/actions/social'
 import ChannelBadge from '../_components/channel-badge'
 import CancelPostButton from './_components/cancel-post-button'
 
@@ -59,10 +59,14 @@ export default async function SocialQueuePage({ params, searchParams }: Props) {
   from.setHours(0, 0, 0, 0)
   const to = new Date(from.getTime() + days * 24 * 60 * 60 * 1000)
 
-  const [customer, result] = await Promise.all([
+  // Consultado à parte porque devolve linked:false SEM erro e sem tocar no
+  // motor: é o que distingue "ainda não ligaram" de "o motor falhou".
+  const [customer, result, channelsResult] = await Promise.all([
     apiServer.get<Customer>(`/api/v1/customers/${id}`).catch(() => null),
     getSocialQueue(id, from.toISOString(), to.toISOString()),
+    getCustomerSocialChannels(id),
   ])
+  const linkState = channelsResult.data
 
   if (!customer) notFound()
 
@@ -112,7 +116,18 @@ export default async function SocialQueuePage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      {result.message ? (
+      {!linkState?.linked ? (
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <h2 className="text-sm font-semibold text-hi">Falta ligar o cliente a um grupo</h2>
+          <p className="mt-2 text-sm text-md">Sem grupo, não há fila para mostrar.</p>
+          <Link
+            href={`/customers/${id}/social`}
+            className="mt-3 inline-flex text-sm text-accent hover:underline"
+          >
+            Ligar agora
+          </Link>
+        </div>
+      ) : result.message ? (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-6">
           <h2 className="text-sm font-semibold text-amber-400">Não deu para ler a fila</h2>
           <p className="mt-2 text-sm text-md">{result.message}</p>
