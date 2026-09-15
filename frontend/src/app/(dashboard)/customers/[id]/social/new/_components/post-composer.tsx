@@ -27,19 +27,27 @@ function thumbFor(c: Creative): string | null {
 interface Props {
   customerId: string
   channels: SocialChannel[]
+  /** Criativo já escolhido, quando se chega aqui pela galeria. */
+  initialCreatives?: Creative[]
 }
 
-export default function PostComposer({ customerId, channels }: Props) {
+export default function PostComposer({
+  customerId,
+  channels,
+  initialCreatives = [],
+}: Props) {
   const { success, error: toastError } = useToast()
   const router = useRouter()
   const [isPublishing, startPublishing] = useTransition()
   const [isChecking, startChecking] = useTransition()
 
   const [selected, setSelected] = useState<string[]>([])
-  const [content, setContent] = useState('')
+  // Legenda do primeiro criativo como ponto de partida, mesma regra de quando
+  // se escolhe pela galeria: preenche, não impõe.
+  const [content, setContent] = useState(initialCreatives[0]?.caption ?? '')
   // Lista, não um: carrossel é vários criativos, e a ORDEM é o que a pessoa vê
   // ao deslizar — trocar a primeira imagem troca o post.
-  const [creatives, setCreatives] = useState<Creative[]>([])
+  const [creatives, setCreatives] = useState<Creative[]>(initialCreatives)
   const [mode, setMode] = useState<'now' | 'schedule'>('schedule')
   const [scheduledFor, setScheduledFor] = useState('')
   const [violations, setViolations] = useState<ContentViolation[] | null>(null)
