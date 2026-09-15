@@ -158,20 +158,39 @@ export default function CreativeCard({ creative, customerId }: Props) {
             </div>
           )}
 
-          <div className="mt-auto pt-3 flex items-center justify-between border-t border-border">
-            <UploadCreativeFile customerId={customerId} creativeId={creative.id} hasFile={!!creative.driveFileId} />
-            <div className="flex items-center gap-1">
-              <Link
-                href={`/customers/${customerId}/creatives/${creative.id}`}
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-hi transition-colors hover:bg-elevated"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                Editar
-              </Link>
-              <DeleteCreativeButton customerId={customerId} creativeId={creative.id} title={creative.title} />
+          {/* Publicar ganha a própria linha: é a ação que fecha o ciclo
+              criativo → publicação, e com quatro rótulos na mesma linha o
+              "Excluir" ficava cortado na borda do card. */}
+          <div className="mt-auto pt-3 flex flex-col gap-2 border-t border-border">
+            <Link
+              href={`/customers/${customerId}/social/new?creative=${creative.id}`}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent/90"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+              Publicar
+            </Link>
+
+            {/* flex-wrap resolve um corte que já existia antes do botão
+                Publicar: com "Substituir", "Editar" e "Excluir" na mesma
+                linha, o último ficava cortado na borda do card. */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <UploadCreativeFile customerId={customerId} creativeId={creative.id} hasFile={!!creative.driveFileId} />
+              <div className="flex items-center gap-1">
+                <Link
+                  href={`/customers/${customerId}/creatives/${creative.id}`}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-hi transition-colors hover:bg-elevated"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Editar
+                </Link>
+                <DeleteCreativeButton customerId={customerId} creativeId={creative.id} title={creative.title} />
+              </div>
             </div>
           </div>
         </div>

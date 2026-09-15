@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
-import { Customer } from '@/lib/definitions'
+import { Creative, Customer } from '@/lib/definitions'
 import { getCustomerSocialChannels } from '@/app/actions/social'
 import PostComposer from './_components/post-composer'
 
 type Props = {
   params: Promise<{ id: string }>
+  /** ?creative=<id> — chegou pela galeria, com a arte já escolhida. */
+  searchParams: Promise<{ creative?: string }>
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -15,12 +17,20 @@ export async function generateMetadata({ params }: Props) {
   return { title: `${customer?.name ?? 'Cliente'} — Novo post` }
 }
 
-export default async function NewSocialPostPage({ params }: Props) {
+export default async function NewSocialPostPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { creative: creativeId } = await searchParams
 
-  const [customer, channelsResult] = await Promise.all([
+  const [customer, channelsResult, creative] = await Promise.all([
     apiServer.get<Customer>(`/api/v1/customers/${id}`).catch(() => null),
     getCustomerSocialChannels(id),
+    // Criativo apagado ou de outro cliente não derruba a tela: o composer
+    // simplesmente abre vazio, como se tivesse sido aberto pelo menu.
+    creativeId
+      ? apiServer
+          .get<Creative>(`/api/v1/customers/${id}/creatives/${creativeId}`)
+          .catch(() => null)
+      : Promise.resolve(null),
   ])
 
   if (!customer) notFound()
@@ -90,7 +100,11 @@ export default async function NewSocialPostPage({ params }: Props) {
           </Link>
         </div>
       ) : (
-        <PostComposer customerId={id} channels={channels} />
+        <PostComposer
+          customerId={id}
+          channels={channels}
+          initialCreatives={creative ? [creative] : []}
+        />
       )}
     </div>
   )
