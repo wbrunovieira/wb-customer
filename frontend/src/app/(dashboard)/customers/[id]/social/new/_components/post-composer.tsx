@@ -7,24 +7,9 @@ import { publishSocialPost, validateSocialContent } from '@/app/actions/social'
 import { useToast } from '@/components/toast/toast-context'
 import LoadingDots from '@/components/ui/loading-dots'
 import { localInputToISO, timezoneLabel } from '@/lib/timezone'
+import { limitFor, strictestLimit } from '@/lib/social-limits'
 import CreativePicker from '../../../traffic/_components/creative-picker'
 import ChannelBadge from '../../_components/channel-badge'
-
-/**
- * Limite de caracteres por rede. Contar contra o menor limite entre as redes
- * escolhidas é o que evita escrever 3.000 caracteres e descobrir no envio que
- * o Instagram corta em 2.200.
- */
-const LIMITS: Record<string, number> = {
-  instagram: 2200,
-  facebook: 63206,
-  linkedin: 3000,
-  tiktok: 2200,
-  youtube: 5000,
-  threads: 500,
-}
-
-const DEFAULT_LIMIT = 2200
 
 /** O motor recusa qualquer outro formato; barrar aqui evita descobrir no envio. */
 const SUPPORTED_MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4']
@@ -61,11 +46,13 @@ export default function PostComposer({ customerId, channels }: Props) {
 
   const publishable = channels.filter((c) => !c.disabled)
 
-  const limit = useMemo(() => {
-    const picked = channels.filter((c) => selected.includes(c.id))
-    if (picked.length === 0) return null
-    return Math.min(...picked.map((c) => LIMITS[c.provider] ?? DEFAULT_LIMIT))
-  }, [channels, selected])
+  const limit = useMemo(
+    () =>
+      strictestLimit(
+        channels.filter((c) => selected.includes(c.id)).map((c) => c.provider),
+      ),
+    [channels, selected],
+  )
 
   const overLimit = limit !== null && content.length > limit
   // Criativo sem arquivo, ou em formato recusado, trava o envio: o backend
@@ -425,7 +412,7 @@ export default function PostComposer({ customerId, channels }: Props) {
             {channels
               .filter((c) => selected.includes(c.id))
               .map((channel) => {
-                const max = LIMITS[channel.provider] ?? DEFAULT_LIMIT
+                const max = limitFor(channel.provider)
                 const cut = content.length > max
                 return (
                   <div key={channel.id} className="rounded-lg border border-border bg-canvas p-3">

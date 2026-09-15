@@ -97,7 +97,7 @@ jobs:
 
   # ── Frontend: o build do Next também type-checa. Não há suíte de testes aqui. ──
   frontend:
-    name: Frontend (build)
+    name: Frontend (test · build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -113,6 +113,10 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      # Antes do build: teste que só roda depois do build é teste que a pessoa
+      # espera dois minutos para ver falhar.
+      - name: Unit (Vitest) — frontend
+        run: pnpm test
       - name: Build (next build)
         run: pnpm build
         env:
