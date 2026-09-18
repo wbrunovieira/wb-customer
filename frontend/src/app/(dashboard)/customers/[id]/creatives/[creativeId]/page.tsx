@@ -99,6 +99,17 @@ export default async function CreativeDetailPage({ params }: Props) {
         </Link>
         <span className="text-lo">/</span>
         <span className="text-hi font-medium truncate max-w-xs">{creative.title}</span>
+
+        <Link
+          href={`/customers/${id}/social/new?creative=${creative.id}`}
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent/90"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+          Publicar
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
