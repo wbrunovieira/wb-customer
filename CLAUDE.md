@@ -34,6 +34,7 @@ pnpm vitest run src/domain/customers/use-cases/create-customer.spec.ts
 ### Frontend (`/frontend`)
 ```bash
 pnpm dev              # Start Next.js dev server
+pnpm test             # Run unit tests (Vitest, logic only — no jsdom yet)
 pnpm build            # Build for production (also type-checks)
 pnpm start            # Start production server
 ```
@@ -73,9 +74,9 @@ backend/src/
 - **Adapters toggle via env**: `STORAGE_ADAPTER=local|google-drive`, `CALENDAR_ADAPTER=mock|google-calendar`.
 
 **Domains:**
-`auth`, `customers`, `documents`, `meetings`, `tasks`, `creatives`, `paid-traffic`, `activities` (comms log), plus `WhatsApp`/`Gmail`/`GoTo` adapters.
+`auth`, `customers`, `documents`, `meetings`, `tasks`, `creatives`, `paid-traffic`, `activities` (comms log), `social` (publishing + attribution), plus `WhatsApp`/`Gmail`/`GoTo` adapters.
 
-**External integrations:** Google Drive/Calendar/Gmail, Meta Marketing API, GoTo Connect (VoIP + transcription), Evolution API (WhatsApp).
+**External integrations:** Google Drive/Calendar/Gmail, Meta Marketing API, GoTo Connect (VoIP + transcription), Evolution API (WhatsApp), Postiz (social publishing engine).
 
 ### Frontend — Next.js App Router (React 19 + Tailwind 4)
 
@@ -89,6 +90,7 @@ frontend/src/
 │   │   ├── tasks/         # Kanban/calendar/gantt views
 │   │   ├── traffic/       # Paid ads dashboard
 │   │   ├── creatives/     # Media/creative management
+│   │   │                  #   (customers/[id]/social/* — link, composer, queue, feed)
 │   │   ├── meetings/      # Calendar + Meet integration
 │   │   └── documents/     # Drive-backed document management
 │   ├── api/events/        # SSE endpoint for real-time notifications
@@ -110,6 +112,44 @@ frontend/src/
 - React Hook Form + Zod for form validation.
 - SSE (`/api/events`) for real-time notifications — no WebSocket.
 - `@dnd-kit` for drag-and-drop (task board, sortable lists).
+
+## Social publishing (Postiz as the engine)
+
+The system decides; Postiz executes. Composing, validating, scheduling, attribution
+and results live here — publishing to the networks is delegated.
+
+**Consume it over HTTP only, never copy its code.** Postiz is AGPL; copying would
+impose AGPL on this repository. The API base is `/api/public/v1` and the key goes
+in `Authorization` raw, without `Bearer`.
+
+**The engine allows 90 requests/hour.** This constrains real design decisions, so
+don't undo them casually:
+- a post costs 1 request, plus 1 per image — batches are capped by *request cost*,
+  not post count, and publish serially
+- per-post metrics are fetched on demand (one click, one request), never in bulk on
+  page load; a daily cron ingests them into `social_post_metrics`
+
+**Its webhook fires only on success.** Every failure path in its workflow returns
+before the webhook is sent, so a post that failed is knowable only by asking. That
+is what `SocialReconciliationSchedulerService` does every 15 minutes, and why the
+failure state is stored rather than only pushed over SSE.
+
+**Two things have no public route:** creating a client group and connecting a social
+account. Both stay a one-off step per customer in the Postiz UI (see issue #1905).
+
+**Rules that must not drift:**
+- house editorial rules run *before* the engine, never after — validating afterwards
+  validates what already went out
+- the customer ↔ group link is an id in a unique column, never a name match; group
+  names are editable in the engine and matching by text fails silently into the
+  wrong account
+- carousel order is content: the chosen order is what uploads and what is stored
+- acting on a post by id always verifies the post belongs to that customer's group —
+  the engine would accept a bare id and act on any post in the organisation
+
+**Env:** `POSTIZ_API_URL`, `POSTIZ_API_KEY` (backend, optional — without them the
+social routes answer 503 instead of crashing); `NEXT_PUBLIC_POSTIZ_URL` (frontend,
+only to link the operator to the engine for that one-off step).
 
 ## Conventions
 
