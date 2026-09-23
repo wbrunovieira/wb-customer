@@ -32,13 +32,17 @@
   failed_when: false
   changed_when: false
 
+# splitlines(), não split('\n'): num bloco dobrado (>-) o YAML não processa
+# escapes, então o Jinja receberia os dois caracteres barra-n, o split não
+# acharia nada, o arquivo inteiro viraria um pedaço só e o match ancorado no
+# começo não casaria — devolvendo vazio sem erro nenhum.
 - name: Preservar a chave do Postiz escrita à mão no servidor
   ansible.builtin.set_fact:
     postiz_api_key_no_servidor: >-
-      {{ (env_atual.content | default('') | b64decode).split('\n')
+      {{ (env_atual.content | default('') | b64decode).splitlines()
          | select('match', '^POSTIZ_API_KEY=')
          | map('regex_replace', '^POSTIZ_API_KEY=', '')
-         | first | default('', true) | trim }}
+         | list | first | default('', true) | trim }}
 
 - name: Avisar quando a chave ainda não foi escrita
   ansible.builtin.debug:
