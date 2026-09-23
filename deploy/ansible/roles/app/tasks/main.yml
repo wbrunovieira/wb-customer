@@ -15,6 +15,39 @@
 # O backend alcança o banco pelo NOME DO CONTAINER, na rede compartilhada.
 # host.docker.internal não serve: o Postgres publica só em 127.0.0.1 e esse nome
 # resolve para o gateway da bridge (172.17.x), que não alcança o loopback do host.
+# A chave do Postiz NÃO vem do vault, por decisão do Bruno em 23/09/2026.
+# Ela é escrita à mão no servidor, uma vez, e o deploy a preserva.
+#
+# Isto existe porque o .env é gerado inteiro a cada deploy: sem preservar, um
+# valor escrito à mão sobreviveria até o próximo deploy e sumiria sozinho,
+# derrubando as rotas sociais para 503 num dia em que ninguém mexeu em nada.
+#
+# Consequência a lembrar: se a chave for trocada no Postiz, ela precisa ser
+# reescrita no servidor. O deploy preserva o que está lá, não busca o valor
+# correto — ele não tem como saber que envelheceu.
+- name: Ler o .env atual do backend (não existe no primeiro deploy)
+  ansible.builtin.slurp:
+    src: "{{ app_dir }}/backend/.env"
+  register: env_atual
+  failed_when: false
+  changed_when: false
+
+- name: Preservar a chave do Postiz escrita à mão no servidor
+  ansible.builtin.set_fact:
+    postiz_api_key_no_servidor: >-
+      {{ (env_atual.content | default('') | b64decode).split('\n')
+         | select('match', '^POSTIZ_API_KEY=')
+         | map('regex_replace', '^POSTIZ_API_KEY=', '')
+         | first | default('', true) | trim }}
+
+- name: Avisar quando a chave ainda não foi escrita
+  ansible.builtin.debug:
+    msg: >-
+      POSTIZ_API_KEY vazia no servidor. As rotas sociais vão responder 503
+      dizendo o que falta. Escreva a chave em {{ app_dir }}/backend/.env e rode
+      o deploy de novo — a partir daí ela é preservada.
+  when: postiz_api_key_no_servidor | length == 0
+
 - name: Escrever backend/.env
   ansible.builtin.copy:
     dest: "{{ app_dir }}/backend/.env"
@@ -41,7 +74,7 @@
       EVOLUTION_API_KEY={{ evolution_api_key }}
       EVOLUTION_INSTANCE={{ evolution_instance }}
       POSTIZ_API_URL={{ postiz_api_url }}
-      POSTIZ_API_KEY={{ postiz_api_key }}
+      POSTIZ_API_KEY={{ postiz_api_key_no_servidor }}
       CRON_SECRET={{ cron_secret }}
       INTERNAL_API_KEY={{ internal_api_key }}
 
