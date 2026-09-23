@@ -16,7 +16,7 @@ export class InMemorySocialEngineGateway implements ISocialEngineGateway {
   public groups: SocialGroup[] = []
   public channels: SocialChannel[] = []
 
-  isConfigured(): boolean {
+  async isConfigured(): Promise<boolean> {
     return this.configured
   }
 

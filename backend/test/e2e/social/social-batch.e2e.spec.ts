@@ -25,7 +25,7 @@ const CUSTOMER = 'e2e-batch-customer'
 const FUTURE = '2027-02-10T13:00:00.000Z'
 
 const fakeEngine: ISocialEngineGateway = {
-  isConfigured: () => true,
+  isConfigured: async () => true,
   listGroups: async () => [{ id: 'g1', name: 'Padaria' }],
   listChannels: async () => [
     { id: 'c1', name: '@padariadoze', provider: 'instagram', disabled: false, groupId: 'g1' },

@@ -104,7 +104,7 @@ export class PublishSocialPostUseCase {
       return left(new ContentRulesViolationError(validation.value.violations))
     }
 
-    if (!this.engine.isConfigured()) {
+    if (!(await this.engine.isConfigured())) {
       return left(new SocialEngineNotConfiguredError())
     }
 

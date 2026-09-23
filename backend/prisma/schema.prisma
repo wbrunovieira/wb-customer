@@ -1119,3 +1119,21 @@ model SocialPostMetric {
   @@index([provider])
   @@map("social_post_metrics")
 }
+
+// ─────────────────────────────────────────
+// Credenciais do motor de publicação (Postiz).
+//
+// Ficam no banco, e não no .env, para que um agente possa cadastrá-las pela API
+// — sem SSH em produção, que é acesso que nenhum agente deve ter. O .env segue
+// valendo como fallback de bootstrap: o banco ganha quando os dois existem.
+// ─────────────────────────────────────────
+
+model SocialEngineConfig {
+  id        String   @id @default("social-engine-singleton")
+  apiUrl    String   @map("api_url")
+  apiKey    String   @map("api_key")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("social_engine_config")
+}

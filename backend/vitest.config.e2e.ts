@@ -35,6 +35,10 @@ export default defineConfig({
     env: {
       STORAGE_ADAPTER: 'local',
       CALENDAR_ADAPTER: 'mock',
+      // Principal de máquina dos E2E. Precisa estar aqui, e não no beforeAll,
+      // pelo mesmo motivo dos dois acima: o ConfigModule lê o ambiente no
+      // import do app.module.
+      INTERNAL_API_KEY: 'e2e-internal-key-test',
     },
     root: './',
     include: ['test/e2e/**/*.e2e.spec.ts'],

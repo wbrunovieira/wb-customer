@@ -59,7 +59,7 @@ export class ReconcileSocialPublicationsUseCase {
   async execute(
     req: ReconcileSocialPublicationsRequest = {},
   ): Promise<ReconcileSocialPublicationsResult> {
-    if (!this.engine.isConfigured()) {
+    if (!(await this.engine.isConfigured())) {
       return right({ checked: 0, transitions: [] })
     }
 

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Env } from '@/env/env'
+import { ISocialEngineConfigRepository } from '@/domain/social/application/repositories/i-social-engine-config.repository'
 import {
   ISocialEngineGateway,
   ListQueueInput,
@@ -71,19 +72,38 @@ interface PostizIntegration {
 export class PostizSocialEngineAdapter implements ISocialEngineGateway {
   private readonly logger = new Logger(PostizSocialEngineAdapter.name)
 
-  constructor(private readonly config: ConfigService<Env, true>) {}
+  constructor(
+    private readonly config: ConfigService<Env, true>,
+    private readonly configRepo: ISocialEngineConfigRepository,
+  ) {}
 
-  private get baseUrl(): string {
-    const url = this.config.get('POSTIZ_API_URL', { infer: true }) ?? ''
-    return url.replace(/\/+$/, '')
+  /**
+   * Banco primeiro, .env como fallback de bootstrap.
+   *
+   * A ordem importa. O .env é o que existe antes de alguém conseguir cadastrar
+   * qualquer coisa; o banco é o que um agente consegue escrever pela API. Se o
+   * env ganhasse, um cadastro feito pela API seria ignorado em silêncio num
+   * servidor que ainda tivesse a variável antiga — e a pessoa veria a chave
+   * cadastrada na tela enquanto o motor continuava usando outra.
+   *
+   * Um erro do banco sobe em vez de virar fallback: cair no .env quando o banco
+   * está fora esconderia a causa e publicaria com credencial que ninguém
+   * escolheu.
+   */
+  private async creds(): Promise<{ baseUrl: string; apiKey: string }> {
+    const gravado = await this.configRepo.find()
+
+    const url =
+      gravado?.apiUrl ?? this.config.get('POSTIZ_API_URL', { infer: true }) ?? ''
+    const key =
+      gravado?.apiKey ?? this.config.get('POSTIZ_API_KEY', { infer: true }) ?? ''
+
+    return { baseUrl: url.replace(/\/+$/, ''), apiKey: key }
   }
 
-  private get apiKey(): string {
-    return this.config.get('POSTIZ_API_KEY', { infer: true }) ?? ''
-  }
-
-  isConfigured(): boolean {
-    return Boolean(this.baseUrl && this.apiKey)
+  async isConfigured(): Promise<boolean> {
+    const { baseUrl, apiKey } = await this.creds()
+    return Boolean(baseUrl && apiKey)
   }
 
   async listGroups(): Promise<SocialGroup[]> {
@@ -166,9 +186,10 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
 
     // Sem Content-Type à mão de propósito: o fetch precisa gerar o boundary do
     // multipart, e fixar o cabeçalho aqui quebraria o corpo.
-    const resp = await fetch(`${this.baseUrl}/api/public/v1/upload`, {
+    const { baseUrl, apiKey } = await this.creds()
+    const resp = await fetch(`${baseUrl}/api/public/v1/upload`, {
       method: 'POST',
-      headers: { Authorization: this.apiKey },
+      headers: { Authorization: apiKey },
       body: form,
     })
 
@@ -209,8 +230,9 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
   }
 
   private async get<T>(path: string): Promise<T> {
-    const resp = await fetch(`${this.baseUrl}/api/public/v1/${path}`, {
-      headers: { Authorization: this.apiKey },
+    const { baseUrl, apiKey } = await this.creds()
+    const resp = await fetch(`${baseUrl}/api/public/v1/${path}`, {
+      headers: { Authorization: apiKey },
     })
 
     if (!resp.ok) {
@@ -233,10 +255,11 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
     path: string,
     body?: unknown,
   ): Promise<T> {
-    const resp = await fetch(`${this.baseUrl}/api/public/v1/${path}`, {
+    const { baseUrl, apiKey } = await this.creds()
+    const resp = await fetch(`${baseUrl}/api/public/v1/${path}`, {
       method,
       headers: {
-        Authorization: this.apiKey,
+        Authorization: apiKey,
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,

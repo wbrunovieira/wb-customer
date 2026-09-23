@@ -48,7 +48,7 @@ export class CancelSocialPostUseCase {
     const groupId = customer.postizGroupId
     if (!groupId) return left(new CustomerNotLinkedToGroupError(req.customerId))
 
-    if (!this.engine.isConfigured()) {
+    if (!(await this.engine.isConfigured())) {
       return left(new SocialEngineNotConfiguredError())
     }
 

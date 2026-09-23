@@ -43,6 +43,12 @@ import { SocialReconciliationSchedulerService } from '@/infra/scheduled/social-r
 import { ISocialPublicationRepository } from '@/domain/social/application/repositories/i-social-publication.repository'
 import { PrismaSocialPublicationRepository } from '@/infra/database/prisma/repositories/social/prisma-social-publication.repository'
 import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz-social-engine.adapter'
+import { SocialEngineConfigController } from '@/infra/controllers/social-engine-config.controller'
+import { SaveSocialEngineConfigUseCase } from '@/domain/social/application/use-cases/save-social-engine-config.use-case'
+import { GetSocialEngineConfigStatusUseCase } from '@/domain/social/application/use-cases/get-social-engine-config-status.use-case'
+import { TestSocialEngineConfigUseCase } from '@/domain/social/application/use-cases/test-social-engine-config.use-case'
+import { ISocialEngineConfigRepository } from '@/domain/social/application/repositories/i-social-engine-config.repository'
+import { PrismaSocialEngineConfigRepository } from '@/infra/database/prisma/repositories/social/prisma-social-engine-config.repository'
 
 /**
  * Domínio social. O que o Postiz não faz e por isso fica aqui: o validador das
@@ -64,6 +70,7 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     SocialFeedController,
     SocialPostMetricsController,
     SocialStoredMetricsController,
+    SocialEngineConfigController,
   ],
   providers: [
     ValidateSocialContentUseCase,
@@ -84,6 +91,13 @@ import { PostizSocialEngineAdapter } from '@/infra/adapters/social-engine/postiz
     SyncSocialMetricsUseCase,
     ListSocialPostMetricsUseCase,
     SocialMetricsSchedulerService,
+    SaveSocialEngineConfigUseCase,
+    GetSocialEngineConfigStatusUseCase,
+    TestSocialEngineConfigUseCase,
+    {
+      provide: ISocialEngineConfigRepository,
+      useClass: PrismaSocialEngineConfigRepository,
+    },
     {
       provide: ISocialPostMetricRepository,
       useClass: PrismaSocialPostMetricRepository,

@@ -115,7 +115,7 @@ export abstract class ISocialEngineGateway {
    * Falso quando o motor não foi configurado. As rotas respondem sem quebrar,
    * dizendo o que falta, em vez de estourar erro de conexão.
    */
-  abstract isConfigured(): boolean
+  abstract isConfigured(): Promise<boolean>
 
   abstract listGroups(): Promise<SocialGroup[]>
 

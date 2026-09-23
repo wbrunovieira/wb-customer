@@ -70,7 +70,7 @@ export class SyncSocialMetricsUseCase {
   ) {}
 
   async execute(req: SyncSocialMetricsRequest = {}): Promise<SyncSocialMetricsResult> {
-    if (!this.engine.isConfigured()) {
+    if (!(await this.engine.isConfigured())) {
       return right({ asked: 0, collected: 0, unavailable: 0 })
     }
 
