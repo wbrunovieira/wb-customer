@@ -40,6 +40,8 @@
       EVOLUTION_API_URL={{ evolution_api_url }}
       EVOLUTION_API_KEY={{ evolution_api_key }}
       EVOLUTION_INSTANCE={{ evolution_instance }}
+      POSTIZ_API_URL={{ postiz_api_url }}
+      POSTIZ_API_KEY={{ postiz_api_key }}
       CRON_SECRET={{ cron_secret }}
       INTERNAL_API_KEY={{ internal_api_key }}
 

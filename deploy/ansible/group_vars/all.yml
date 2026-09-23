@@ -79,3 +79,10 @@ min_free_gb: 5
 # Motor de publicação nas redes. A tela de redes sociais usa isto só para levar
 # o operador até lá: conectar canal e nomear o cliente não têm rota pública.
 postiz_public_url: https://postiz.wbdigitalsolutions.com
+
+# API do motor, usada pelo backend para publicar.
+postiz_api_url: https://postiz.wbdigitalsolutions.com
+# Padrão vazio de propósito: sem a chave, as rotas sociais respondem 503
+# dizendo o que falta, em vez de o deploy quebrar. Quando vault_postiz_api_key
+# existir no vault, ela é usada.
+postiz_api_key: "{{ vault_postiz_api_key | default('') }}"
