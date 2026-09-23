@@ -82,7 +82,6 @@ postiz_public_url: https://postiz.wbdigitalsolutions.com
 
 # API do motor, usada pelo backend para publicar.
 postiz_api_url: https://postiz.wbdigitalsolutions.com
-# Padrão vazio de propósito: sem a chave, as rotas sociais respondem 503
-# dizendo o que falta, em vez de o deploy quebrar. Quando vault_postiz_api_key
-# existir no vault, ela é usada.
-postiz_api_key: "{{ vault_postiz_api_key | default('') }}"
+# A chave da API NÃO fica aqui nem no vault: é escrita à mão no servidor e
+# preservada pelo deploy (ver roles/app/tasks/main.yml). Decisão do Bruno em
+# 23/09/2026, para o segredo não depender do vault nem passar pelo repositório.
