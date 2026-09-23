@@ -58,17 +58,51 @@
   changed_when: false
   timeout: 30
 
-- name: "Preflight | abortar se alguma porta nossa já está ocupada"
+# "Ocupada" não basta: depois do primeiro deploy as nossas portas estão SEMPRE
+# ocupadas — por nós. A checagem anterior não olhava o dono e por isso reprovava
+# todo redeploy, tornando este playbook inutilizável fora da primeira subida.
+#
+# O que interessa é colisão com OUTRO serviço da máquina compartilhada. Então o
+# dono é identificado: container cujo nome é do projeto, ou processo rodando de
+# dentro do app_dir (o frontend sob PM2). Porta sem dono identificável conta
+# como de terceiro — na dúvida, aborta.
+- name: "Preflight | identificar quem ocupa cada porta nossa"
+  ansible.builtin.shell: |
+    for port in {{ frontend_port }} {{ backend_port }} {{ db_port }}; do
+      linha=$(ss -ltnp | awk -v p=":$port\$" '$4 ~ p {print; exit}')
+      [ -z "$linha" ] && continue
+      pid=$(printf '%s' "$linha" | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2)
+      if [ -z "$pid" ]; then echo "$port"; continue; fi
+      exe=$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)
+      cwd=$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)
+      case "$exe" in
+        */docker-proxy)
+          nome=$(docker ps --format '{{ "{{" }}.Names{{ "}}" }} {{ "{{" }}.Ports{{ "}}" }}' \
+                 | grep -E ":$port->" | awk '{print $1}' | head -1)
+          case "$nome" in
+            wb-customer*|wb_customer*) : ;;
+            *) echo "$port" ;;
+          esac
+          ;;
+        *)
+          case "$cwd" in
+            {{ app_dir }}*) : ;;
+            *) echo "$port" ;;
+          esac
+          ;;
+      esac
+    done
+  register: preflight_conflitos
+  changed_when: false
+  timeout: 30
+
+- name: "Preflight | abortar se uma porta nossa é de outro serviço"
   ansible.builtin.fail:
     msg: >-
-      ❌ Porta {{ item }} já está em uso neste servidor por outro serviço.
-      Escolha outra em group_vars/all.yml. Em escuta agora:
-      {{ preflight_ports.stdout_lines | join(' ') }}
-  when: item | string in preflight_ports.stdout_lines
-  loop:
-    - "{{ frontend_port }}"
-    - "{{ backend_port }}"
-    - "{{ db_port }}"
+      ❌ Porta(s) {{ preflight_conflitos.stdout_lines | join(', ') }} em uso por
+      serviço que não é do wb-customer. Escolha outra em group_vars/all.yml.
+      Em escuta agora: {{ preflight_ports.stdout_lines | join(' ') }}
+  when: preflight_conflitos.stdout_lines | length > 0
 
 - name: "Preflight | espaço em disco"
   ansible.builtin.shell: >
