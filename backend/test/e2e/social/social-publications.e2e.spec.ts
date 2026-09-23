@@ -37,7 +37,7 @@ const channel = (id: string, groupId: string | null, disabled = false): SocialCh
 })
 
 const fakeEngine: ISocialEngineGateway = {
-  isConfigured: () => true,
+  isConfigured: async () => true,
   uploadMedia: async () => ({ id: 'media-1', path: 'https://motor.example/m.png' }),
   getPostMetrics: async () => ({ available: false, metrics: [] }),
   listQueue: async () => [],

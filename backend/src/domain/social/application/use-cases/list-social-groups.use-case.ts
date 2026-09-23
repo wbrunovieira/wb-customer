@@ -37,7 +37,7 @@ export class ListSocialGroupsUseCase {
   ) {}
 
   async execute(): Promise<ListSocialGroupsResult> {
-    if (!this.engine.isConfigured()) {
+    if (!(await this.engine.isConfigured())) {
       return left(new SocialEngineNotConfiguredError())
     }
 

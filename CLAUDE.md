@@ -147,9 +147,23 @@ account. Both stay a one-off step per customer in the Postiz UI (see issue #1905
 - acting on a post by id always verifies the post belongs to that customer's group —
   the engine would accept a bare id and act on any post in the organisation
 
-**Env:** `POSTIZ_API_URL`, `POSTIZ_API_KEY` (backend, optional — without them the
-social routes answer 503 instead of crashing); `NEXT_PUBLIC_POSTIZ_URL` (frontend,
-only to link the operator to the engine for that one-off step).
+**Credentials live in the database, not in env.** Register them with
+`POST /api/v1/admin/social-engine` — it takes effect immediately, with no deploy
+and no SSH, so an agent can configure the system on its own. `GET` returns a
+`keyFingerprint`, never the key; `POST /test` proves the key authenticates
+without revealing it (and costs 1 of the 90 requests/hour, so it is never called
+on page load).
+
+The route accepts a **machine principal**: header `x-api-key: $INTERNAL_API_KEY`,
+which the guard maps to the role `agent` — deliberately not `admin`, so the key
+opens only routes that declare `@Roles(..., 'agent')` instead of becoming a master
+key for everything an admin can do.
+
+**Env:** `POSTIZ_API_URL`, `POSTIZ_API_KEY` remain as a bootstrap fallback only —
+**the database wins when both exist**, otherwise a registration made through the
+API would be silently ignored on a server that still carried the old variable.
+`NEXT_PUBLIC_POSTIZ_URL` (frontend, only to link the operator to the engine for
+that one-off step).
 
 ## Conventions
 

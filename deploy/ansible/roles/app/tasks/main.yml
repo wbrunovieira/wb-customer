@@ -16,7 +16,10 @@
 # host.docker.internal não serve: o Postgres publica só em 127.0.0.1 e esse nome
 # resolve para o gateway da bridge (172.17.x), que não alcança o loopback do host.
 # A chave do Postiz NÃO vem do vault, por decisão do Bruno em 23/09/2026.
-# Ela é escrita à mão no servidor, uma vez, e o deploy a preserva.
+# O objetivo era que um agente conseguisse cadastrá-la sem vault — e isto aqui
+# sozinho não resolvia isso, porque exigiria SSH em produção. Quem resolve é
+# POST /api/v1/admin/social-engine, que grava no banco e aceita principal de
+# máquina. O .env ficou como fallback de bootstrap, e o banco tem precedência.
 #
 # Isto existe porque o .env é gerado inteiro a cada deploy: sem preservar, um
 # valor escrito à mão sobreviveria até o próximo deploy e sumiria sozinho,
@@ -47,9 +50,11 @@
 - name: Avisar quando a chave ainda não foi escrita
   ansible.builtin.debug:
     msg: >-
-      POSTIZ_API_KEY vazia no servidor. As rotas sociais vão responder 503
-      dizendo o que falta. Escreva a chave em {{ app_dir }}/backend/.env e rode
-      o deploy de novo — a partir daí ela é preservada.
+      POSTIZ_API_KEY vazia no .env. Isto é só o fallback de bootstrap: o
+      caminho normal agora é cadastrar pela API, em
+      POST /api/v1/admin/social-engine, que grava no banco, vale na hora e tem
+      precedência sobre esta variável. Só haverá 503 nas rotas sociais se o
+      banco também estiver sem credencial.
   when: postiz_api_key_no_servidor | length == 0
 
 - name: Escrever backend/.env
