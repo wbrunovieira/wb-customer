@@ -50,7 +50,7 @@ const fakeEngine: ISocialEngineGateway = {
     channel('c-outro', 'g-outro'),
   ],
   publish: async (input: PublishInput): Promise<PublishedTarget[]> =>
-    input.channelIds.map((channelId) => ({ channelId, postId: `postiz-${channelId}` })),
+    input.channels.map((channel) => ({ channelId: channel.id, postId: `postiz-${channel.id}` })),
 }
 
 const auth = () => ({ Authorization: `Bearer ${employeeToken}` })

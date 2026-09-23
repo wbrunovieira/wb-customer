@@ -141,7 +141,7 @@ export class PublishSocialPostUseCase {
     if (media instanceof Error) return left(media)
 
     const published = await this.engine.publish({
-      channelIds: chosen.map((c) => c.id),
+      channels: chosen.map((c) => ({ id: c.id, provider: c.provider })),
       content: req.content,
       mode: req.mode,
       date,

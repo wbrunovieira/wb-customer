@@ -37,9 +37,9 @@ export class InMemorySocialEngineGateway implements ISocialEngineGateway {
     if (this.failOnPublish) throw this.failOnPublish
 
     this.published.push(input)
-    return input.channelIds.map((channelId) => ({
-      channelId,
-      postId: `post-${channelId}`,
+    return input.channels.map((channel) => ({
+      channelId: channel.id,
+      postId: `post-${channel.id}`,
     }))
   }
 

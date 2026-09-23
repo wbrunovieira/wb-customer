@@ -193,8 +193,21 @@ describe('PublishSocialPostUseCase', () => {
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     expect(engine.published).toHaveLength(1)
-    expect(engine.published[0].channelIds).toEqual(['c1', 'c2'])
+    expect(engine.published[0].channels.map((c) => c.id)).toEqual(['c1', 'c2'])
     expect(result.value.targets).toHaveLength(2)
+  })
+
+  it('leva o provedor junto do canal, porque o motor valida por rede', async () => {
+    // O Instagram exige post_type nas configurações do post; Facebook e
+    // LinkedIn não. Sem saber a rede de cada canal, o adapter mandava o mesmo
+    // objeto vazio para todos, e o Instagram recusava o post na validação.
+    const result = await publish({ channelIds: ['c1', 'c2'] })
+
+    if (result.isLeft()) throw new Error('não deveria falhar')
+    expect(engine.published[0].channels).toEqual([
+      { id: 'c1', provider: 'instagram' },
+      { id: 'c2', provider: 'facebook' },
+    ])
   })
 
   it('guarda o id de post de cada canal, que é a volta para as métricas', async () => {

@@ -31,9 +31,9 @@ const fakeEngine: ISocialEngineGateway = {
     { id: 'c1', name: '@padariadoze', provider: 'instagram', disabled: false, groupId: 'g1' },
   ],
   publish: async (input: PublishInput) =>
-    input.channelIds.map((channelId) => ({
-      channelId,
-      postId: `postiz-${channelId}-${Math.random().toString(36).slice(2, 8)}`,
+    input.channels.map((channel) => ({
+      channelId: channel.id,
+      postId: `postiz-${channel.id}-${Math.random().toString(36).slice(2, 8)}`,
     })),
   listQueue: async () => [],
   cancelPost: async () => {},
