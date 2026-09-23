@@ -38,9 +38,21 @@ export interface UploadMediaInput {
   buffer: Buffer
 }
 
+/**
+ * Canal de destino com a rede a que pertence.
+ *
+ * O provedor viaja junto porque o motor valida as configurações do post contra
+ * o DTO daquela rede: o Instagram EXIGE post_type, Facebook e LinkedIn não.
+ * Mandar um objeto vazio fazia o Instagram recusar o post na validação.
+ */
+export interface PublishTarget {
+  id: string
+  provider: string
+}
+
 export interface PublishInput {
   /** Canais de destino. Vários numa chamada só cobrem o espelho entre redes. */
-  channelIds: string[]
+  channels: PublishTarget[]
   content: string
   /** 'now' publica já; 'schedule' guarda para a data. */
   mode: 'now' | 'schedule'

@@ -114,8 +114,8 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
       // marcador de atribuição que viaja dentro dele.
       shortLink: false,
       tags: [],
-      posts: input.channelIds.map((id) => ({
-        integration: { id },
+      posts: input.channels.map((channel) => ({
+        integration: { id: channel.id },
         value: [
           {
             content: input.content,
@@ -124,8 +124,7 @@ export class PostizSocialEngineAdapter implements ISocialEngineGateway {
             image: (input.media ?? []).map((m) => ({ id: m.id, path: m.path })),
           },
         ],
-        // settings vazio: o Postiz preenche __type pelo provedor do canal.
-        settings: {},
+        settings: settingsFor(channel.provider),
       })),
     }
 
@@ -271,4 +270,20 @@ function stripHtml(html: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .trim()
+}
+
+/**
+ * Configurações do post por rede.
+ *
+ * O motor preenche __type com o provedor do canal e valida este objeto contra o
+ * DTO daquela rede. O Instagram declara post_type como obrigatório; Facebook e
+ * LinkedIn declaram tudo opcional. Mandar {} para todos fazia o Instagram — a
+ * rede principal — recusar o post na validação, com 400 e sem explicação óbvia.
+ *
+ * post_type aceita só 'post' ou 'story'. Reel não é um valor: no Instagram,
+ * vídeo vertical vira Reel por decisão da própria rede.
+ */
+function settingsFor(provider: string): Record<string, unknown> {
+  if (provider === 'instagram') return { post_type: 'post' }
+  return {}
 }
