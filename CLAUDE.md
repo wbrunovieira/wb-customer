@@ -159,6 +159,13 @@ which the guard maps to the role `agent` — deliberately not `admin`, so the ke
 opens only routes that declare `@Roles(..., 'agent')` instead of becoming a master
 key for everything an admin can do.
 
+**The whole social domain declares it**, publishing included: an agent runs the
+customer's account end to end (Bruno's decision, 2026-09-24). Publishing acts on
+the customer's account and goes out in public, so this is a deliberate grant, not
+an oversight — widen it no further without asking. Everything else stays on a
+person's JWT; `/admin/meta-config` in particular still does, because the same
+controller creates real ad accounts in the BM.
+
 **Env:** `POSTIZ_API_URL`, `POSTIZ_API_KEY` remain as a bootstrap fallback only —
 **the database wins when both exist**, otherwise a registration made through the
 API would be silently ignored on a server that still carried the old variable.

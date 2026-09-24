@@ -28,7 +28,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger'
-import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
+import { ApiKeyOrJwtGuard } from '@/infra/auth/guards/api-key-or-jwt.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { ValidateSocialContentUseCase } from '@/domain/social/application/use-cases/validate-social-content.use-case'
@@ -111,8 +111,8 @@ class ValidateContentDto {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('social')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialController {
   constructor(private readonly validateContent: ValidateSocialContentUseCase) {}
 
@@ -177,8 +177,8 @@ class CreateAttributionLinkDto {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/attribution-links')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialAttributionController {
   constructor(private readonly createLink: CreateAttributionLinkUseCase) {}
 
@@ -228,8 +228,8 @@ export class SocialAttributionController {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/attribution-panel')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialAttributionPanelController {
   constructor(private readonly panel: GetAttributionPanelUseCase) {}
 
@@ -290,8 +290,8 @@ class LinkSocialGroupDto {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('social/groups')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialGroupsController {
   constructor(private readonly listGroups: ListSocialGroupsUseCase) {}
 
@@ -338,8 +338,8 @@ export class SocialGroupsController {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class CustomerSocialGroupController {
   constructor(
     private readonly link: LinkCustomerSocialGroupUseCase,
@@ -486,8 +486,8 @@ class PublishBatchDto {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/publications')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialPublicationsController {
   constructor(
     private readonly publish: PublishSocialPostUseCase,
@@ -680,8 +680,8 @@ export class SocialPublicationsController {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/queue')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialQueueController {
   constructor(
     private readonly queue: GetSocialQueueUseCase,
@@ -770,8 +770,8 @@ export class SocialQueueController {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/feed')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialFeedController {
   constructor(private readonly feed: GetSocialFeedUseCase) {}
 
@@ -831,8 +831,8 @@ export class SocialFeedController {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/posts/:postId/metrics')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialPostMetricsController {
   constructor(private readonly metrics: GetPostMetricsUseCase) {}
 
@@ -882,8 +882,8 @@ export class SocialPostMetricsController {
 @ApiTags('Social')
 @ApiBearerAuth()
 @Controller('customers/:customerId/social/metrics')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+@Roles('admin', 'employee', 'agent')
 export class SocialStoredMetricsController {
   constructor(private readonly metrics: ListSocialPostMetricsUseCase) {}
 
