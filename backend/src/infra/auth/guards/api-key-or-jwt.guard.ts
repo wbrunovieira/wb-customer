@@ -37,7 +37,15 @@ export class ApiKeyOrJwtGuard extends AuthGuard('jwt') implements CanActivate {
       esperada.length > 0 &&
       comparaEmTempoConstante(apresentada, esperada)
     ) {
-      req.user = { sub: 'machine:internal-api-key', role: 'agent' }
+      // userId, e não sub: é a forma que o jwt.strategy devolve e que
+      // @CurrentUser() entrega aos controllers. Com 'sub' o user.userId ficava
+      // undefined e ia parar em created_by_user_id, que é obrigatório — o
+      // primeiro post do agente teria estourado na gravação, depois de já ter
+      // sido entregue ao motor.
+      //
+      // O identificador fica registrado nos dados: quem olhar depois consegue
+      // distinguir o que foi criado por agente do que foi criado por pessoa.
+      req.user = { userId: 'machine:internal-api-key', role: 'agent' }
       return true
     }
 

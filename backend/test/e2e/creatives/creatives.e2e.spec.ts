@@ -488,3 +488,60 @@ describe('DELETE /api/v1/customers/:id/creative-strategies/:strategyId — admin
     expect(res.status).toBe(204)
   })
 })
+
+/**
+ * O agente precisa criar criativo porque o Instagram exige mídia: sem isto ele
+ * publicaria e não teria o que publicar (decisão do Bruno, 24/09/2026 — #2312).
+ *
+ * Apagar continua sendo só de gente: o @Delete declara @Roles('admin') no
+ * método, que tem precedência sobre o papel da classe.
+ */
+describe('Principal de máquina em creatives (E2E)', () => {
+  const API_KEY = 'e2e-internal-key-test'
+  let criadoPeloAgente: string
+
+  it('cria criativo com x-api-key, sem JWT de pessoa', async () => {
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/customers/${customerId}/creatives`)
+      .set('x-api-key', API_KEY)
+      .send({ title: 'Arte feita por agente', type: 'image', objective: 'awareness' })
+
+    expect(res.status).toBe(201)
+    expect(res.body).toHaveProperty('creativeId')
+    criadoPeloAgente = (res.body as { creativeId: string }).creativeId
+  })
+
+  it('registra quem criou, para dar para distinguir de criação por pessoa', async () => {
+    // Antes disto o guard punha 'sub' e não 'userId': created_by_user_id, que é
+    // obrigatório, recebia undefined e a gravação estourava.
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/customers/${customerId}/creatives/${criadoPeloAgente}`)
+      .set('x-api-key', API_KEY)
+
+    expect(res.status).toBe(200)
+  })
+
+  it('lê a lista com x-api-key', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/customers/${customerId}/creatives`)
+      .set('x-api-key', API_KEY)
+
+    expect(res.status).toBe(200)
+  })
+
+  it('NÃO apaga criativo com x-api-key — apagar é só de gente', async () => {
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/customers/${customerId}/creatives/${criadoPeloAgente}`)
+      .set('x-api-key', API_KEY)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('continua recusando chave errada', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/customers/${customerId}/creatives`)
+      .set('x-api-key', 'chave-errada')
+
+    expect(res.status).toBe(401)
+  })
+})
