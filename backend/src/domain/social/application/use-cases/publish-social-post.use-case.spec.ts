@@ -15,6 +15,8 @@ import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/cust
 import { CustomerNotLinkedToGroupError } from '../../domain/exceptions/customer-not-linked-to-group.error'
 import { ContentRulesViolationError } from '../../domain/exceptions/content-rules-violation.error'
 import { SocialEngineNotConfiguredError } from '../../domain/exceptions/social-engine-not-configured.error'
+import { SocialEngineFailureError } from '../../domain/exceptions/social-engine-failure.error'
+import { MediaRequiredError } from '../../domain/exceptions/media-required.error'
 import { ChannelNotAvailableError } from '../../domain/exceptions/channel-not-available.error'
 import { InvalidScheduleDateError } from '../../domain/exceptions/invalid-schedule-date.error'
 
@@ -38,6 +40,23 @@ describe('PublishSocialPostUseCase', () => {
     disabled: over.disabled ?? false,
     groupId: over.groupId === undefined ? 'g1' : over.groupId,
   })
+
+  // O Instagram recusa post sem mídia, então todo teste que publica nele
+  // precisa de arte. Antes isto passava porque o dublê do motor não conhecia a
+  // regra — os testes exercitavam um cenário que a Meta nunca aceitaria.
+  const comArte = async (id = 'creative-1') => {
+    const creative = makeCreative({ customerId: 'customer-1', title: 'Arte da semana' }, id)
+    creative.attachDriveFile({
+      driveFileId: 'drive-1',
+      driveViewUrl: 'https://drive/view',
+      driveDownloadUrl: 'https://drive/download',
+      mimeType: 'image/png',
+      sizeBytes: null,
+      thumbnailUrl: null,
+    })
+    await creatives.save(creative)
+    return creative
+  }
 
   const publish = (over: Partial<Parameters<PublishSocialPostUseCase['execute']>[0]> = {}) =>
     sut.execute({
@@ -160,6 +179,44 @@ describe('PublishSocialPostUseCase', () => {
     expect(result.value).toBeInstanceOf(ChannelNotAvailableError)
   })
 
+  it('recusa post no Instagram sem mídia — regra da Meta, não do motor', async () => {
+    const result = await publish()
+
+    expect(result.isLeft()).toBe(true)
+    expect(result.value).toBeInstanceOf(MediaRequiredError)
+  })
+
+  it('recusa antes de falar com o motor, para não gastar requisição do teto', async () => {
+    // O teto é de 90/hora e é compartilhado com quem publica de verdade. Mandar
+    // um post que já se sabe que será recusado gasta uma delas à toa.
+    await publish()
+
+    expect(engine.published).toHaveLength(0)
+    expect(engine.uploads).toHaveLength(0)
+  })
+
+  it('a mensagem diz qual rede e o que enviar', async () => {
+    const result = await publish()
+
+    const msg = (result.value as Error).message
+    expect(msg).toContain('instagram')
+    expect(msg).toContain('creativeId')
+  })
+
+  it('aceita texto puro no Facebook, que não exige mídia', async () => {
+    const result = await publish({ channelIds: ['c2'] })
+
+    expect(result.isRight()).toBe(true)
+  })
+
+  it('basta um canal exigir mídia para o post inteiro ser recusado', async () => {
+    // O post é um só, espelhado entre redes: publicar no Facebook e falhar no
+    // Instagram deixaria o cliente com metade do espelho.
+    const result = await publish({ channelIds: ['c1', 'c2'] })
+
+    expect(result.value).toBeInstanceOf(MediaRequiredError)
+  })
+
   it('recusa agendamento sem data', async () => {
     const result = await publish({ scheduledFor: undefined })
 
@@ -173,7 +230,8 @@ describe('PublishSocialPostUseCase', () => {
   })
 
   it('agenda para a data pedida', async () => {
-    const result = await publish()
+    await comArte()
+    const result = await publish({ creativeId: 'creative-1' })
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     expect(result.value.scheduledFor).toEqual(FUTURE)
@@ -181,15 +239,17 @@ describe('PublishSocialPostUseCase', () => {
   })
 
   it('publica já com mode now, usando o relógio', async () => {
-    const result = await publish({ mode: 'now', scheduledFor: undefined })
+    await comArte()
+    const result = await publish({ creativeId: 'creative-1', mode: 'now', scheduledFor: undefined })
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     expect(result.value.scheduledFor).toEqual(NOW)
   })
 
   it('entrega vários canais numa chamada só', async () => {
+    await comArte()
     // É assim que o espelho entre redes sai junto.
-    const result = await publish({ channelIds: ['c1', 'c2'] })
+    const result = await publish({ channelIds: ['c1', 'c2'], creativeId: 'creative-1' })
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     expect(engine.published).toHaveLength(1)
@@ -198,10 +258,11 @@ describe('PublishSocialPostUseCase', () => {
   })
 
   it('leva o provedor junto do canal, porque o motor valida por rede', async () => {
+    await comArte()
     // O Instagram exige post_type nas configurações do post; Facebook e
     // LinkedIn não. Sem saber a rede de cada canal, o adapter mandava o mesmo
     // objeto vazio para todos, e o Instagram recusava o post na validação.
-    const result = await publish({ channelIds: ['c1', 'c2'] })
+    const result = await publish({ channelIds: ['c1', 'c2'], creativeId: 'creative-1' })
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     expect(engine.published[0].channels).toEqual([
@@ -211,7 +272,8 @@ describe('PublishSocialPostUseCase', () => {
   })
 
   it('guarda o id de post de cada canal, que é a volta para as métricas', async () => {
-    const result = await publish({ channelIds: ['c1', 'c2'] })
+    await comArte()
+    const result = await publish({ channelIds: ['c1', 'c2'], creativeId: 'creative-1' })
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     const saved = await publications.findByPostizPostId('post-c2')
@@ -220,7 +282,8 @@ describe('PublishSocialPostUseCase', () => {
   })
 
   it('guarda a rede de cada destino', async () => {
-    const result = await publish({ channelIds: ['c1', 'c2'] })
+    await comArte()
+    const result = await publish({ channelIds: ['c1', 'c2'], creativeId: 'creative-1' })
 
     if (result.isLeft()) throw new Error('não deveria falhar')
     expect(result.value.targets.map((t) => t.provider).sort()).toEqual([
@@ -230,7 +293,8 @@ describe('PublishSocialPostUseCase', () => {
   })
 
   it('guarda o grupo usado, para a auditoria não mudar quando o vínculo mudar', async () => {
-    await publish()
+    await comArte()
+    await publish({ creativeId: 'creative-1' })
 
     const [saved] = await publications.findByCustomerId('customer-1')
     expect(saved.postizGroupId).toBe('g1')
@@ -259,9 +323,19 @@ describe('PublishSocialPostUseCase', () => {
 
   it('não grava publicação quando o motor recusa a entrega', async () => {
     // Gravar aqui criaria um post que existe no wb-customer e não na rede.
-    engine.failOnPublish = new Error('Postiz respondeu 400')
+    await comArte()
+    engine.failOnPublish = new Error(
+      'Postiz respondeu 400 em posts: {"message":"Should have at least one media"}',
+    )
 
-    await expect(publish()).rejects.toThrow('Postiz respondeu 400')
+    const result = await publish({ creativeId: 'creative-1' })
+
+    // Erro do motor volta como recusa com o motivo DELE, não como 500 genérico:
+    // a mensagem é o que diz a quem integra o que corrigir, e antes disto ela
+    // ficava só no log do servidor.
+    expect(result.isLeft()).toBe(true)
+    expect(result.value).toBeInstanceOf(SocialEngineFailureError)
+    expect((result.value as Error).message).toContain('at least one media')
     expect(publications.items).toHaveLength(0)
   })
 
@@ -281,7 +355,9 @@ describe('PublishSocialPostUseCase', () => {
     }
 
     it('não sobe nada quando não há criativo escolhido', async () => {
-      await publish()
+      // No Facebook, que aceita texto puro — no Instagram a recusa por falta de
+      // mídia vem antes e o teste não provaria nada sobre upload.
+      await publish({ channelIds: ['c2'] })
 
       expect(engine.uploads).toHaveLength(0)
     })

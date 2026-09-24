@@ -28,7 +28,8 @@ const fakeEngine: ISocialEngineGateway = {
   isConfigured: async () => true,
   listGroups: async () => [{ id: 'g1', name: 'Padaria' }],
   listChannels: async () => [
-    { id: 'c1', name: '@padariadoze', provider: 'instagram', disabled: false, groupId: 'g1' },
+    // facebook: o Instagram exige mídia e este E2E é sobre o lote, não a rede.
+    { id: 'c1', name: '@padariadoze', provider: 'facebook', disabled: false, groupId: 'g1' },
   ],
   publish: async (input: PublishInput) =>
     input.channels.map((channel) => ({

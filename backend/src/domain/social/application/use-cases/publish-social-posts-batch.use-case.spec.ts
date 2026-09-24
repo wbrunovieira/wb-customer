@@ -47,7 +47,10 @@ describe('PublishSocialPostsBatchUseCase', () => {
     engine = new InMemorySocialEngineGateway()
     engine.groups = [{ id: 'g1', name: 'Padaria' }]
     engine.channels = [
-      { id: 'c1', name: 'canal', provider: 'instagram', disabled: false, groupId: 'g1' },
+      // facebook e não instagram: o Instagram exige mídia e estes testes são
+      // sobre o lote, não sobre a rede. Com instagram aqui todo item cairia na
+      // regra de mídia e o que se quer testar ficaria sem exercício.
+      { id: 'c1', name: 'canal', provider: 'facebook', disabled: false, groupId: 'g1' },
     ]
 
     customers = new InMemoryCustomerRepository()

@@ -26,6 +26,8 @@ import { CustomerNotLinkedToGroupError } from '../../domain/exceptions/customer-
 import { ContentRulesViolationError } from '../../domain/exceptions/content-rules-violation.error'
 import { ChannelNotAvailableError } from '../../domain/exceptions/channel-not-available.error'
 import { InvalidScheduleDateError } from '../../domain/exceptions/invalid-schedule-date.error'
+import { MediaRequiredError } from '../../domain/exceptions/media-required.error'
+import { SocialEngineFailureError } from '../../domain/exceptions/social-engine-failure.error'
 
 export interface PublishSocialPostRequest {
   customerId: string
@@ -134,19 +136,40 @@ export class PublishSocialPostUseCase {
       return left(new ChannelNotAvailableError('', 'not-in-group'))
     }
 
+    // Regra da casa, antes do motor: o Instagram recusa post sem mídia. Saber
+    // disto aqui evita gastar 1 das 90 requisições/hora para receber de volta
+    // um "Should have at least one media" que já era previsível.
+    const exigemMidia = chosen.filter((c) =>
+      PROVIDERS_REQUIRING_MEDIA.has(c.provider),
+    )
+    if (exigemMidia.length > 0 && chosenCreativeIds(req).length === 0) {
+      return left(new MediaRequiredError(exigemMidia.map((c) => c.provider)))
+    }
+
     // A mídia sobe antes do post porque o post a referencia por id do motor.
     // Se a publicação falhar depois disto, fica um arquivo órfão lá — melhor do
     // que um post publicado apontando para mídia que não existe.
     const media = await this.resolveMedia(req)
     if (media instanceof Error) return left(media)
 
-    const published = await this.engine.publish({
-      channels: chosen.map((c) => ({ id: c.id, provider: c.provider })),
-      content: req.content,
-      mode: req.mode,
-      date,
-      media,
-    })
+    let published
+    try {
+      published = await this.engine.publish({
+        channels: chosen.map((c) => ({ id: c.id, provider: c.provider })),
+        content: req.content,
+        mode: req.mode,
+        date,
+        media,
+      })
+    } catch (err) {
+      // A mensagem do motor sobe junto. Sem isto vira 500 genérico e o motivo
+      // fica só no log — quem integra não teria como saber o que corrigir.
+      return left(
+        new SocialEngineFailureError(
+          err instanceof Error ? err.message : String(err),
+        ),
+      )
+    }
 
     const targets = published.map((p) => ({
       channelId: p.channelId,
@@ -258,6 +281,14 @@ export class PublishSocialPostUseCase {
  * Os criativos do pedido, na ordem. creativeIds tem precedência; creativeId
  * segue aceito porque agentes já chamam assim.
  */
+/**
+ * Redes que recusam post sem imagem ou vídeo.
+ *
+ * Instagram é regra da API da Meta ("Should have at least one media"), não do
+ * motor. Facebook e LinkedIn aceitam só texto e por isso ficam de fora.
+ */
+const PROVIDERS_REQUIRING_MEDIA = new Set(['instagram'])
+
 function chosenCreativeIds(req: PublishSocialPostRequest): string[] {
   if (req.creativeIds?.length) return req.creativeIds
   return req.creativeId ? [req.creativeId] : []
