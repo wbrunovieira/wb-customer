@@ -32,7 +32,7 @@ export class InMemorySocialPublicationRepository
     return this.items
       .flatMap((p) =>
         p.targets
-          .filter((t) => !['PUBLISHED', 'ERROR'].includes(t.state ?? 'QUEUE'))
+          .filter((t) => !['PUBLISHED', 'ERROR', 'CANCELED'].includes(t.state ?? 'QUEUE'))
           .map((t) => ({
             publicationId: p.id,
             customerId: p.customerId,
