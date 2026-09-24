@@ -27,7 +27,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { JwtAuthGuard } from '@/infra/auth/guards/jwt-auth.guard'
+import { ApiKeyOrJwtGuard } from '@/infra/auth/guards/api-key-or-jwt.guard'
 import { RolesGuard } from '@/infra/auth/guards/roles.guard'
 import { Roles } from '@/infra/auth/decorators/roles.decorator'
 import { CurrentUser } from '@/infra/auth/decorators/current-user.decorator'
@@ -115,8 +115,12 @@ function toHttp(c: Creative) {
 @ApiTags('Creatives')
 @ApiBearerAuth()
 @Controller('customers/:customerId/creatives')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'employee')
+@UseGuards(ApiKeyOrJwtGuard, RolesGuard)
+// 'agent' entra por decisão do Bruno em 24/09/2026: o Instagram exige mídia, a
+// mídia vem de um criativo, e sem isto o agente publicaria mas não teria o que
+// publicar. Apagar criativo NÃO entra — o @Delete abaixo declara @Roles('admin')
+// no método, que tem precedência sobre esta linha.
+@Roles('admin', 'employee', 'agent')
 export class CreativesController {
   constructor(
     private readonly createCreative: CreateCreativeUseCase,
