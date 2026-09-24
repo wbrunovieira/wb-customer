@@ -31,7 +31,9 @@ const FUTURE = '2027-01-15T13:00:00.000Z'
 const channel = (id: string, groupId: string | null, disabled = false): SocialChannel => ({
   id,
   name: `canal ${id}`,
-  provider: id.includes('face') ? 'facebook' : 'instagram',
+  // facebook por padrão: o Instagram exige mídia e estes testes são sobre a
+  // camada HTTP da publicação, não sobre a regra de cada rede.
+  provider: id.includes('insta') ? 'instagram' : 'facebook',
   disabled,
   groupId,
 })
@@ -46,6 +48,10 @@ const fakeEngine: ISocialEngineGateway = {
   listChannels: async (): Promise<SocialChannel[]> => [
     channel('c-insta', 'g1'),
     channel('c-face', 'g1'),
+    // Segundo canal sem exigência de mídia: os testes que publicam de verdade
+    // são sobre espelhar entre redes e listar, não sobre a regra do Instagram
+    // (essa está coberta nos unitários do use-case).
+    channel('c-linked', 'g1'),
     channel('c-off', 'g1', true),
     channel('c-outro', 'g-outro'),
   ],
@@ -161,7 +167,7 @@ describe('Publicação nas redes (E2E)', () => {
   it('agenda em vários canais e grava um id de post por canal', async () => {
     const res = await publish(LINKED, {
       content: 'Encomende sua peça pelo WhatsApp. [ref: K7MQ2A]',
-      channelIds: ['c-insta', 'c-face'],
+      channelIds: ['c-linked', 'c-face'],
       mode: 'schedule',
       scheduledFor: FUTURE,
       attributionLinkId: null,
@@ -170,7 +176,7 @@ describe('Publicação nas redes (E2E)', () => {
     expect(res.body.targets).toHaveLength(2)
     expect(res.body.targets.map((t: { postizPostId: string }) => t.postizPostId).sort()).toEqual([
       'postiz-c-face',
-      'postiz-c-insta',
+      'postiz-c-linked',
     ])
 
     const saved = await seedPrisma.socialPublication.findUnique({

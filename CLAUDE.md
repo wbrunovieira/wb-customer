@@ -146,6 +146,13 @@ account. Both stay a one-off step per customer in the Postiz UI (see issue #1905
 - carousel order is content: the chosen order is what uploads and what is stored
 - acting on a post by id always verifies the post belongs to that customer's group —
   the engine would accept a bare id and act on any post in the organisation
+- Instagram refuses a post with no image or video (Meta's rule, not the engine's), so
+  `PROVIDERS_REQUIRING_MEDIA` rejects it here first — a request the outcome of which is
+  already known must never spend one of the 90 requests/hour, which are shared with
+  whoever is publishing for real
+- an engine refusal surfaces as 502 **carrying the engine's own message**. It was a bare
+  500 once: the reason sat in the server log in plain text while the caller got
+  "Internal server error" and had no way to know what to fix
 
 **Credentials live in the database, not in env.** Register them with
 `POST /api/v1/admin/social-engine` — it takes effect immediately, with no deploy

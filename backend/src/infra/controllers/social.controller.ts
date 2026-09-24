@@ -13,6 +13,7 @@ import {
   Put,
   Query,
   ServiceUnavailableException,
+  BadGatewayException,
   UnprocessableEntityException,
   UnsupportedMediaTypeException,
   UseGuards,
@@ -39,6 +40,8 @@ import { ListSocialGroupsUseCase } from '@/domain/social/application/use-cases/l
 import { LinkCustomerSocialGroupUseCase } from '@/domain/social/application/use-cases/link-customer-social-group.use-case'
 import { GetCustomerSocialChannelsUseCase } from '@/domain/social/application/use-cases/get-customer-social-channels.use-case'
 import { SocialEngineNotConfiguredError } from '@/domain/social/domain/exceptions/social-engine-not-configured.error'
+import { MediaRequiredError } from '@/domain/social/domain/exceptions/media-required.error'
+import { SocialEngineFailureError } from '@/domain/social/domain/exceptions/social-engine-failure.error'
 import { SocialGroupAlreadyLinkedError } from '@/domain/social/domain/exceptions/social-group-already-linked.error'
 import { PublishSocialPostUseCase } from '@/domain/social/application/use-cases/publish-social-post.use-case'
 import { ListSocialPublicationsUseCase } from '@/domain/social/application/use-cases/list-social-publications.use-case'
@@ -66,6 +69,12 @@ function toHttpError(error: Error): Error {
   if (error instanceof SocialEngineNotConfiguredError) {
     return new ServiceUnavailableException(error.message)
   }
+  // 502 e não 500: o pedido estava bem formado e quem falhou foi o motor, um
+  // sistema a jusante. A mensagem dele vai junto — ela é o que diz o que
+  // corrigir, e antes disto ficava só no log do servidor.
+  if (error instanceof SocialEngineFailureError) {
+    return new BadGatewayException(error.message)
+  }
   if (
     error instanceof SocialGroupAlreadyLinkedError ||
     error instanceof CustomerNotLinkedToGroupError ||
@@ -89,7 +98,8 @@ function toHttpError(error: Error): Error {
     error instanceof InvalidScheduleDateError ||
     error instanceof EmptyBatchError ||
     error instanceof BatchTooLargeError ||
-    error instanceof TooManyCarouselItemsError
+    error instanceof TooManyCarouselItemsError ||
+    error instanceof MediaRequiredError
   ) {
     return new BadRequestException(error.message)
   }
@@ -534,6 +544,15 @@ export class SocialPublicationsController {
   @ApiResponse({
     status: 422,
     description: 'Texto fere as regras editoriais; o corpo traz as violações com trecho e posição',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Instagram exige pelo menos uma imagem ou vídeo; envie creativeId ou creativeIds',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'O motor recusou ou não respondeu; o corpo traz o motivo que ele deu',
   })
   @ApiResponse({ status: 503, description: 'Motor de publicação não configurado' })
   async create(
