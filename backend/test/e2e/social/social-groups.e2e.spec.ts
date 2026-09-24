@@ -189,3 +189,53 @@ describe('Vínculo com o motor de publicação (E2E)', () => {
       .expect(404)
   })
 })
+
+/**
+ * O agente administra a conta por inteiro, publicação inclusive (decisão do
+ * Bruno, 24/09/2026 — issue #2301). Antes disso o principal de máquina abria só
+ * a rota de configuração do motor, e as rotas sociais respondiam 401.
+ */
+describe('Principal de máquina nas rotas sociais (E2E)', () => {
+  const API_KEY = 'e2e-internal-key-test'
+
+  it('lista grupos com x-api-key, sem JWT de pessoa', async () => {
+    const resp = await request(app.getHttpServer())
+      .get('/api/v1/social/groups')
+      .set('x-api-key', API_KEY)
+      .expect(200)
+
+    expect(resp.body.groups).toHaveLength(1)
+    expect(resp.body.groups[0]).toMatchObject({ id: 'g1', name: 'Padaria' })
+  })
+
+  it('lê canais do cliente com x-api-key', async () => {
+    await request(app.getHttpServer())
+      .get(`/api/v1/customers/${CUSTOMER}/social/channels`)
+      .set('x-api-key', API_KEY)
+      .expect(200)
+  })
+
+  it('vincula o cliente ao grupo com x-api-key — é escrita, não só leitura', async () => {
+    await request(app.getHttpServer())
+      .put(`/api/v1/customers/${OTHER}/social/group`)
+      .set('x-api-key', API_KEY)
+      .send({ groupId: 'g1' })
+      .expect(200)
+
+    const salvo = await seedPrisma.customer.findUnique({ where: { id: OTHER } })
+    expect(salvo?.postizGroupId).toBe('g1')
+  })
+
+  it('continua recusando chave errada', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/social/groups')
+      .set('x-api-key', 'chave-errada')
+      .expect(401)
+  })
+
+  it('continua recusando quem não apresenta nada', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/social/groups')
+      .expect(401)
+  })
+})
