@@ -68,6 +68,8 @@
           Backend  : {{ back_health.status | default('sem resposta') }}
           Banco    : {{ db_container }} em 127.0.0.1:{{ db_port }}
 
-          Falta fazer à mão: conectar o Google em /admin/google — o token fica
-          no banco e não migra do desenvolvimento (issue #1562).
+          Numa instalação nova, falta conectar o Google em /admin/google — o
+          token fica no banco e não migra do desenvolvimento (issue #1562).
+          Já conectado em produção em 24/09/2026; se este resumo aparecer num
+          servidor onde já há token, ignore esta linha.
           ================================
