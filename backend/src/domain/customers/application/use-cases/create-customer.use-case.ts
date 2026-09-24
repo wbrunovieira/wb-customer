@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { Either, left, right } from '@/core/either'
 import { ICustomerRepository } from '../repositories/i-customer.repository'
 import { ICustomerActivityRepository } from '../repositories/i-customer-activity.repository'
@@ -31,6 +31,8 @@ export type CreateCustomerResult = Either<
 
 @Injectable()
 export class CreateCustomerUseCase {
+  private readonly logger = new Logger(CreateCustomerUseCase.name)
+
   constructor(
     private readonly customerRepo: ICustomerRepository,
     private readonly activityRepo: ICustomerActivityRepository,
@@ -62,8 +64,26 @@ export class CreateCustomerUseCase {
       createdByUserId: request.createdByUserId,
     })
 
-    const folderId = await this.folderService.createFolder(request.name)
-    customer.setDriveFolderId(folderId)
+    // A pasta no Drive é desejável, não condição para o cliente existir.
+    //
+    // Antes daqui uma falha do Drive derrubava o cadastro inteiro com 500: sem
+    // o Google conectado, nenhum cliente podia ser criado — e o motivo não
+    // aparecia na tela, só no log do servidor. Um CRM que recusa cadastrar
+    // cliente porque uma integração de armazenamento está fora troca um
+    // problema pequeno por um total.
+    //
+    // Quem ficar sem pasta fica com driveFolderId nulo, que é o mesmo estado de
+    // antes de o Drive existir — dá para criar depois, sem migração.
+    try {
+      const folderId = await this.folderService.createFolder(request.name)
+      customer.setDriveFolderId(folderId)
+    } catch (err) {
+      this.logger.warn(
+        `Cliente "${request.name}" criado sem pasta no Drive: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      )
+    }
 
     await this.customerRepo.save(customer)
 

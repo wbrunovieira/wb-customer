@@ -104,4 +104,39 @@ describe('CreateCustomerUseCase', () => {
       expect(result.value).toBeInstanceOf(CustomerCategoryNotFoundError)
     }
   })
+
+  it('cria o cliente mesmo quando o Drive está fora, sem pasta', async () => {
+    // Em produção isto derrubava o cadastro inteiro com 500: sem o Google
+    // conectado, nenhum cliente podia ser criado, e a tela só dizia
+    // "Internal server error".
+    folderService.createFolder = async () => {
+      throw new Error('Google token not configured — connect Google account first')
+    }
+
+    const result = await sut.execute({
+      name: 'Acme Corp',
+      email: 'contact@acme.com',
+      createdByUserId: 'user-1',
+    })
+
+    expect(result.isRight()).toBe(true)
+    expect(customerRepo.items).toHaveLength(1)
+    expect(customerRepo.items[0].name).toBe('Acme Corp')
+    // Sem pasta é o mesmo estado de antes de o Drive existir; dá para criar depois.
+    expect(customerRepo.items[0].driveFolderId).toBeFalsy()
+  })
+
+  it('registra a atividade de criação mesmo sem o Drive', async () => {
+    folderService.createFolder = async () => {
+      throw new Error('Drive fora do ar')
+    }
+
+    await sut.execute({
+      name: 'Acme Corp',
+      email: 'contact@acme.com',
+      createdByUserId: 'user-1',
+    })
+
+    expect(activityRepo.items).toHaveLength(1)
+  })
 })
