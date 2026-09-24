@@ -39,6 +39,22 @@ const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
 ]
 
+/**
+ * Para onde o callback do Google devolve o usuário depois de autorizar.
+ *
+ * Existe separada para ser testável: o callback em volta fala com o Google e
+ * com o banco, e o que quebrou em produção foi só a montagem desta URL.
+ *
+ * Sem FRONTEND_URL o destino é localhost, que é o certo em desenvolvimento e em
+ * produção vira ERR_CONNECTION_REFUSED numa tela em branco — logo DEPOIS de o
+ * token ter sido salvo com sucesso, o que faz parecer que a conexão falhou
+ * quando ela tinha funcionado.
+ */
+export function adminGoogleRedirect(base?: string): string {
+  const raiz = (base ?? 'http://localhost:3000').replace(/\/+$/, '')
+  return `${raiz}/admin/google?connected=1`
+}
+
 @ApiTags('Google OAuth')
 @Controller('google')
 export class GoogleOAuthController {
@@ -128,7 +144,9 @@ export class GoogleOAuthController {
     })
 
     this.logger.log(`Google account connected: ${data.email}`)
-    return res.redirect('http://localhost:3000/admin/google?connected=1')
+    return res.redirect(
+      adminGoogleRedirect(this.config.get('FRONTEND_URL', { infer: true })),
+    )
   }
 
   @Delete('disconnect')

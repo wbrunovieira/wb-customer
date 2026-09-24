@@ -17,6 +17,10 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_REDIRECT_URI: z.string().optional(),
+  // Base do frontend, para onde o callback do Google volta. Opcional: sem ela
+  // o redirect cai em localhost, que é o certo em desenvolvimento e quebra em
+  // produção — ver google-oauth.controller.
+  FRONTEND_URL: z.string().url().optional(),
   // Transcription service (optional)
   TRANSCRIPTOR_BASE_URL: z.string().url().optional(),
   TRANSCRIPTOR_API_KEY: z.string().optional(),
