@@ -31,7 +31,10 @@ type RawPublication = {
 }
 
 /** Estados sem volta: chegaram ao fim e não precisam ser perguntados de novo. */
-const TERMINAL_STATES = ['PUBLISHED', 'ERROR']
+// CANCELED entra aqui porque o post cancelado sumiu da fila do motor: a
+// reconciliação, por desenho, deixa em paz o que sumiu, então sem isto ele
+// voltaria a ser consultado para sempre sem nunca mudar de estado.
+const TERMINAL_STATES = ['PUBLISHED', 'ERROR', 'CANCELED']
 
 @Injectable()
 export class PrismaSocialPublicationRepository

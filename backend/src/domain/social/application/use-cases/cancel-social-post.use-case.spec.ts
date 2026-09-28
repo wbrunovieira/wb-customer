@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { CancelSocialPostUseCase } from './cancel-social-post.use-case'
 import { InMemorySocialEngineGateway } from './_test/in-memory-social-engine.gateway'
 import { InMemoryCustomerRepository } from '@/domain/creatives/application/use-cases/_test/in-memory-customer.repository'
+import { InMemorySocialPublicationRepository } from './_test/in-memory-social-publication.repository'
 import { makeCustomer } from '@/domain/creatives/application/use-cases/_test/factories'
 import { CustomerNotFoundError } from '@/domain/customers/domain/exceptions/customer-not-found.error'
 import { CustomerNotLinkedToGroupError } from '../../domain/exceptions/customer-not-linked-to-group.error'
@@ -11,6 +12,7 @@ import { PostNotInCustomerQueueError } from '../../domain/exceptions/post-not-in
 describe('CancelSocialPostUseCase', () => {
   let engine: InMemorySocialEngineGateway
   let customers: InMemoryCustomerRepository
+  let publications: InMemorySocialPublicationRepository
   let sut: CancelSocialPostUseCase
 
   const NOW = new Date('2026-09-13T12:00:00.000Z')
@@ -34,7 +36,8 @@ describe('CancelSocialPostUseCase', () => {
     const customer = makeCustomer({ id: 'customer-1' })
     customer.linkPostizGroup('g1')
     await customers.save(customer)
-    sut = new CancelSocialPostUseCase(customers, engine)
+    publications = new InMemorySocialPublicationRepository()
+    sut = new CancelSocialPostUseCase(customers, engine, publications)
   })
 
   it('recusa cliente inexistente', async () => {
@@ -95,5 +98,41 @@ describe('CancelSocialPostUseCase', () => {
     const { from, to } = engine.queueQueries[0]
     expect(from.getTime()).toBeLessThan(NOW.getTime())
     expect(to.getTime()).toBeGreaterThan(NOW.getTime())
+  })
+
+  it('marca o destino como CANCELED do nosso lado', async () => {
+    // Sem isto o registro ficava em QUEUE para sempre: o post some da fila do
+    // motor e a reconciliação, por desenho, deixa em paz o que sumiu. O sistema
+    // anunciaria um agendamento que nunca vai publicar.
+    await publications.create({
+      customerId: 'customer-1',
+      postizGroupId: 'g1',
+      content: 'texto',
+      mode: 'schedule',
+      scheduledFor: new Date('2027-01-15T12:00:00.000Z'),
+      createdByUserId: 'user-1',
+      targets: [{ channelId: 'c1', provider: 'instagram', postizPostId: 'p1' }],
+    })
+
+    await sut.execute({ customerId: 'customer-1', postId: 'p1', now: NOW })
+
+    const [salva] = await publications.findByCustomerId('customer-1')
+    expect(salva.targets[0].state).toBe('CANCELED')
+  })
+
+  it('cancelado não volta para a reconciliação', async () => {
+    await publications.create({
+      customerId: 'customer-1',
+      postizGroupId: 'g1',
+      content: 'texto',
+      mode: 'schedule',
+      scheduledFor: new Date('2027-01-15T12:00:00.000Z'),
+      createdByUserId: 'user-1',
+      targets: [{ channelId: 'c1', provider: 'instagram', postizPostId: 'p1' }],
+    })
+
+    await sut.execute({ customerId: 'customer-1', postId: 'p1', now: NOW })
+
+    expect(await publications.findTargetsToReconcile()).toHaveLength(0)
   })
 })
