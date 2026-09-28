@@ -136,6 +136,18 @@ failure state is stored rather than only pushed over SSE.
 
 **Two things have no public route:** creating a client group and connecting a social
 account. Both stay a one-off step per customer in the Postiz UI (see issue #1905).
+The group is born by assigning a channel to a Customer — there is no separate screen
+for creating one.
+
+**The networks' provider keys are environment variables on the engine's container,
+not a settings screen.** Instagram reads `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`
+(Facebook Login for Business, the old scope names); the standalone Instagram provider
+reads `INSTAGRAM_APP_*` and is a different path we do not use. They live in
+`/opt/postiz/.env` (mode 600) and are referenced from `docker-compose.yml`, because
+that file is world-readable and a secret does not belong in it. `docker restart` does
+**not** pick them up — environment is fixed when the container is created, so it takes
+`docker compose up -d --force-recreate`. Hunting for a screen that does not exist cost
+an afternoon once.
 
 **Rules that must not drift:**
 - house editorial rules run *before* the engine, never after — validating afterwards
